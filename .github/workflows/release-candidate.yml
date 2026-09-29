@@ -1,0 +1,112 @@
+name: Verify public release candidate
+
+run-name: Verify public release candidate ${{ inputs.commit_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full SHA already merged to main and passing CI
+        required: true
+        type: string
+      change_ticket:
+        description: Approved change or release ticket reference
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-release-candidate
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Rebuild and verify exact commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RELEASE_SHA: ${{ inputs.commit_sha }}
+      CHANGE_TICKET: ${{ inputs.change_ticket }}
+
+    steps:
+      - name: Check out complete main history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Select an exact commit already merged to main
+        shell: bash
+        run: |
+          if [[ ! "$RELEASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "commit_sha must be a full 40-character Git SHA" >&2
+            exit 1
+          fi
+          release_sha="${RELEASE_SHA,,}"
+          git cat-file -e "${release_sha}^{commit}"
+          git merge-base --is-ancestor "$release_sha" HEAD
+          git checkout --detach "$release_sha"
+          test "$(git rev-parse HEAD)" = "$release_sha"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.22.2
+          cache: npm
+          cache-dependency-path: backup/package-lock.json
+
+      - name: Install locked dependencies
+        working-directory: backup
+        run: npm ci
+
+      - name: Check API routing contract
+        working-directory: backup
+        run: npm run check:api-routing
+
+      - name: Lint
+        working-directory: backup
+        run: npm run lint
+
+      - name: Build
+        working-directory: backup
+        run: npm run build
+
+      - name: Scan checked-out source with Gitleaks
+        run: >-
+          docker run --rm --network=none
+          --volume "$GITHUB_WORKSPACE:/repo:ro"
+          --workdir /repo
+          ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+          dir . --redact --no-banner
+
+      - name: Create release-candidate evidence
+        shell: bash
+        run: |
+          mkdir -p release-candidate
+          {
+            printf 'repository=%s\n' "$GITHUB_REPOSITORY"
+            printf 'commit_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'change_ticket=%s\n' "$CHANGE_TICKET"
+            printf 'workflow_run=%s\n' "$GITHUB_RUN_ID"
+            printf 'created_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > release-candidate/manifest.txt
+          find backup/dist -type f -print0 \
+            | LC_ALL=C sort -z \
+            | xargs -0 sha256sum > release-candidate/build-checksums.txt
+          sha256sum worker-entry.js wrangler.jsonc backup/package-lock.json \
+            > release-candidate/deployment-checksums.txt
+
+      - name: Upload verified release candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: public-release-candidate-${{ inputs.commit_sha }}
+          path: |
+            backup/dist
+            worker-entry.js
+            wrangler.jsonc
+            release-candidate
+          if-no-files-found: error
+          retention-days: 30
