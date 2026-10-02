@@ -3,6 +3,7 @@
   "name": "cyberrange",
   "main": "worker-entry.js",
   "compatibility_date": "2026-08-10",
+  // Required for Cloudflare Workers Builds pull-request previews.
   "previews": {},
   "observability": {
     "enabled": true
