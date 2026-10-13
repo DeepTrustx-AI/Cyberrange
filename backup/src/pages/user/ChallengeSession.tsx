@@ -13,7 +13,11 @@ import {
   Lock,
   LogOut,
   Play,
-  TerminalSquare
+  TerminalSquare,
+  BookOpen,
+  ClipboardList,
+  ExternalLink,
+  CircleDot
 } from 'lucide-react';
 import { parseApiErrorMessage } from '../../lib/api';
 
@@ -35,6 +39,17 @@ interface ReconModule {
   hints: string[];
   /** Populated from backend after completing the module */
   correctFlag?: string;
+}
+
+interface StudyMaterialItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  readTime?: string;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+  pdfUrl?: string;
+  content?: string[];
 }
 
 export const ChallengeSession: React.FC = () => {
@@ -128,6 +143,9 @@ export const ChallengeSession: React.FC = () => {
   const [commandInput, setCommandInput] = useState('');
   const [isRoot, setIsRoot] = useState(false);
   const terminalBottomRef = useRef<HTMLDivElement>(null);
+  const [otStudyMaterials, setOTStudyMaterials] = useState<StudyMaterialItem[]>([]);
+  const [otStudyLoading, setOTStudyLoading] = useState(false);
+  const [activeStudyMaterialId, setActiveStudyMaterialId] = useState<string | null>(null);
 
   const startOTWaterLab = useCallback(async () => {
     if (!isOTWaterLab || otProvisioning || otProvisioned) return;
@@ -173,6 +191,27 @@ export const ChallengeSession: React.FC = () => {
         setTerminalConnected(true);
       })
       .catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiFetch, isOTWaterLab]);
+
+  useEffect(() => {
+    if (!isOTWaterLab) return;
+    let cancelled = false;
+    setOTStudyLoading(true);
+    apiFetch('/api/v1/study-materials')
+      .then((response) => response.ok ? response.json() : [])
+      .then((items: StudyMaterialItem[]) => {
+        if (cancelled) return;
+        const relevant = (Array.isArray(items) ? items : []).filter((item) =>
+          `${item.title} ${item.category} ${item.description} ${(item.content || []).join(' ')}`
+            .toLowerCase()
+            .match(/\b(ot|ics|water|plc|modbus|industrial|scada)\b/)
+        );
+        setOTStudyMaterials(relevant);
+        setActiveStudyMaterialId(relevant[0]?.id ?? null);
+      })
+      .catch(() => { if (!cancelled) setOTStudyMaterials([]); })
+      .finally(() => { if (!cancelled) setOTStudyLoading(false); });
     return () => { cancelled = true; };
   }, [apiFetch, isOTWaterLab]);
 
@@ -547,15 +586,23 @@ export const ChallengeSession: React.FC = () => {
 
   const completedObjCount = activeModule.objectives.filter((_, i) => getObjDone(activeChallengeIdx, i)).length;
   const currentHints = unlockedHints[activeModule.id] || [];
+  const activeStudyMaterial = otStudyMaterials.find((item) => item.id === activeStudyMaterialId) ?? otStudyMaterials[0];
+  const completedModules = currentModules.filter((module) => solvedModules.has(module.id)).length;
 
   if (contentError) return <div role="alert">{contentError}</div>;
   if (!currentModules.length) return <div role="status">Loading lab content…</div>;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen bg-[#F8FAFC] dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors overflow-hidden">
+    <div className={`h-screen flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors overflow-hidden ${
+      isOTWaterLab ? 'bg-[#eef4f2] dark:bg-[#071817]' : 'bg-[#F8FAFC] dark:bg-slate-950'
+    }`}>
       {/* Top Nav */}
-      <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-20 flex-shrink-0 shadow-xs">
+      <header className={`h-16 border-b px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 ${
+        isOTWaterLab
+          ? 'bg-[#fbfdfc] dark:bg-[#0b211e] border-[#d9e5e1] dark:border-[#1d3934]'
+          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs'
+      }`}>
         <div className="flex items-center gap-4">
           {!isOTLabSession && (
             <button
@@ -567,17 +614,30 @@ export const ChallengeSession: React.FC = () => {
             </button>
           )}
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 uppercase tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              ACTIVE SESSION
-            </span>
-            <span className="font-bold text-slate-800 dark:text-white text-sm">{labTitle}</span>
+            {isOTWaterLab ? (
+              <>
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f766e] text-white shadow-sm">
+                  <CircleDot className="h-4 w-4" />
+                </span>
+                <span className="font-semibold text-slate-900 dark:text-white text-sm">Water treatment lab</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  ACTIVE SESSION
+                </span>
+                <span className="font-bold text-slate-800 dark:text-white text-sm">{labTitle}</span>
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl">
-            <span className="text-slate-400 dark:text-slate-500">Module</span>
+          <div className={`hidden sm:flex items-center gap-2 text-xs font-bold border px-3 py-1.5 rounded-lg ${
+            isOTWaterLab ? 'bg-[#f1f7f5] dark:bg-[#102b27] border-[#d9e5e1] dark:border-[#26443e]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+          }`}>
+            <span className="text-slate-400 dark:text-slate-500">{isOTWaterLab ? 'Stage' : 'Module'}</span>
             <span className="text-slate-800 dark:text-slate-100">{activeChallengeIdx + 1} of {currentModules.length}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-100 dark:border-blue-900 px-3.5 py-1.5 rounded-xl">
@@ -601,15 +661,21 @@ export const ChallengeSession: React.FC = () => {
       </header>
 
       {/* Main split */}
-      <div className="flex-1 p-6 flex flex-col md:flex-row gap-6 min-h-0 overflow-hidden">
+      <div className={`flex-1 min-h-0 ${isOTWaterLab
+        ? 'grid grid-cols-1 xl:grid-cols-[18rem_minmax(0,1fr)_19rem] gap-4 p-4 lg:p-5 overflow-y-auto xl:overflow-hidden'
+        : 'p-6 flex flex-col md:flex-row gap-6 overflow-hidden'
+      }`}>
 
         {/* ── Left Panel ── */}
-        <div className="w-full md:w-[45%] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col min-h-0 overflow-y-auto space-y-6">
+        <div className={`bg-white dark:bg-slate-900 border flex flex-col min-h-0 overflow-y-auto ${isOTWaterLab
+          ? 'w-full rounded-xl border-[#d9e5e1] dark:border-[#1d3934] p-5 space-y-5 shadow-[0_10px_30px_rgba(15,118,110,0.06)]'
+          : 'w-full md:w-[45%] border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6'
+        }`}>
 
           {/* Module pill selector */}
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              Network Recon Modules
+              {isOTWaterLab ? 'Lab sequence' : 'Network Recon Modules'}
             </span>
             <div className="flex gap-2">
               {currentModules.map((mod, idx) => {
@@ -653,7 +719,7 @@ export const ChallengeSession: React.FC = () => {
           {/* Module title */}
           <div className="space-y-2">
             <span className="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-100 dark:border-blue-900 uppercase tracking-wider">
-              NETWORK RECON — MODULE {activeChallengeIdx + 1}
+              {isOTWaterLab ? `WATER FACILITY · STAGE ${activeChallengeIdx + 1}` : `NETWORK RECON — MODULE ${activeChallengeIdx + 1}`}
             </span>
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
               {activeModule.title.replace(/^Module \d+: /, '')}
@@ -808,7 +874,9 @@ export const ChallengeSession: React.FC = () => {
         </div>
 
         {/* ── Right Terminal Panel ── */}
-        <div className="flex-1 bg-[#0B1020] rounded-2xl border border-slate-800 shadow-xl flex flex-col min-h-0 overflow-hidden">
+        <div className={`bg-[#091513] border border-[#18342f] flex flex-col min-h-[32rem] overflow-hidden ${
+          isOTWaterLab ? 'rounded-xl shadow-[0_18px_48px_rgba(7,24,23,0.2)]' : 'flex-1 rounded-2xl border-slate-800 shadow-xl'
+        }`}>
           {/* Terminal Header */}
           <div className="h-11 bg-[#0F172A] border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -818,7 +886,7 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
               </div>
               <span className="font-mono text-xs font-bold text-slate-300">
-                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : 'Terminal Emulator — Execution Environment'}
+                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isOTWaterLab ? 'Operator console · isolated environment' : 'Terminal Emulator — Execution Environment'}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -828,7 +896,7 @@ export const ChallengeSession: React.FC = () => {
                   ? (reconProvisioned ? 'CONTAINER LIVE' : reconProvisionError ? 'PROVISION FAILED' : reconProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : isOTWaterLab
                     ? (otProvisioned ? 'OT TASK LIVE' : otProvisionError ? 'PROVISION FAILED' : otProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
-                    : 'INFRASTRUCTURE ONLINE'}
+                  : 'INFRASTRUCTURE ONLINE'}
               </span>
               {isReconLab && (
                 <>
@@ -925,9 +993,9 @@ export const ChallengeSession: React.FC = () => {
           ) : terminalConnected ? (
             <>
               {isOTWaterLab && otUrls && (
-                <div className="px-5 py-2 bg-slate-900 border-b border-slate-800 flex gap-3 text-xs font-bold">
-                  <a className="text-emerald-400 hover:text-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer">Open SCADA</a>
-                  <a className="text-emerald-400 hover:text-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer">Open Wireshark</a>
+                <div className="px-5 py-2.5 bg-[#0d211e] border-b border-[#18342f] flex flex-wrap gap-2 text-xs font-bold">
+                  <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> SCADA workspace</a>
+                  <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Packet analysis</a>
                 </div>
               )}
               {/* Simulated terminal output (OT labs + fallback) */}
@@ -962,14 +1030,93 @@ export const ChallengeSession: React.FC = () => {
               <div className="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center">
                 <TerminalSquare className="w-6 h-6 text-slate-500" />
               </div>
-              <p className="text-slate-400 font-mono text-sm">
-                Click <span className="text-[#00FF9D] font-bold">"Start Terminal"</span> to connect to your execution
-                workstation environment.
+              <p className="max-w-sm text-slate-400 font-mono text-sm">
+                {isOTWaterLab
+                  ? <>Start a private water-treatment environment. Your SCADA and packet-analysis tools will appear here when it is ready.</>
+                  : <>Click <span className="text-[#00FF9D] font-bold">"Start Terminal"</span> to connect to your execution workstation environment.</>}
               </p>
               {isOTWaterLab && otProvisionError && <p className="text-rose-400 font-mono text-xs">{otProvisionError}</p>}
             </div>
           )}
         </div>
+
+        {isOTWaterLab && (
+          <aside className="min-h-0 overflow-y-auto rounded-xl border border-[#d9e5e1] bg-[#fbfdfc] p-5 text-slate-800 shadow-[0_10px_30px_rgba(15,118,110,0.06)] dark:border-[#1d3934] dark:bg-[#0b211e] dark:text-slate-100 xl:order-none">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#dcefe9] text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300">
+                <BookOpen className="h-4 w-4" />
+              </span>
+              <div>
+                <h2 className="text-sm font-semibold">Field guide</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Keep the brief, reference notes, and console in one workspace.</p>
+              </div>
+            </div>
+
+            <section className="mt-6 border-y border-[#d9e5e1] py-4 dark:border-[#1d3934]">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Lab progress</span>
+                <span className="font-semibold tabular-nums text-[#0f766e] dark:text-emerald-300">{completedModules}/{currentModules.length} stages</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#dce8e4] dark:bg-[#17342f]" aria-label={`${completedModules} of ${currentModules.length} stages complete`}>
+                <div className="h-full rounded-full bg-[#0f766e] transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} />
+              </div>
+            </section>
+
+            <section className="mt-5">
+              <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Working method</h3>
+              <ol className="mt-3 space-y-3 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Read the mission, then use the operator console to observe the target before changing anything.</span></li>
+                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Record the registers and services that answer the current stage objective.</span></li>
+                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Use SCADA and packet analysis only after the environment shows as live.</span></li>
+              </ol>
+            </section>
+
+            <section className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Assigned reading</h3>
+                {otStudyLoading && <RefreshCw className="h-3.5 w-3.5 animate-spin text-slate-400" aria-label="Loading study material" />}
+              </div>
+              {otStudyMaterials.length > 0 ? (
+                <div className="mt-3 space-y-1.5">
+                  {otStudyMaterials.slice(0, 4).map((material) => {
+                    const active = material.id === activeStudyMaterial?.id;
+                    return (
+                      <button
+                        key={material.id}
+                        type="button"
+                        onClick={() => setActiveStudyMaterialId(material.id)}
+                        className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#0f766e] ${active
+                          ? 'bg-[#dcefe9] text-[#0b554e] dark:bg-[#12332d] dark:text-emerald-200'
+                          : 'text-slate-600 hover:bg-[#f0f6f4] dark:text-slate-300 dark:hover:bg-[#102b27]'}`}
+                      >
+                        <span className="block truncate font-medium">{material.title}</span>
+                        <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{material.readTime || material.category}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : !otStudyLoading && (
+                <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">No OT-specific notes have been assigned yet. The current mission and objectives remain your runbook.</p>
+              )}
+
+              {activeStudyMaterial && (
+                <div className="mt-3 border-t border-[#d9e5e1] pt-3 dark:border-[#1d3934]">
+                  <p className="text-xs leading-5 text-slate-600 dark:text-slate-300">{activeStudyMaterial.description}</p>
+                  {!!activeStudyMaterial.content?.length && (
+                    <ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
+                      {activeStudyMaterial.content.slice(0, 3).map((point, index) => <li key={index} className="flex gap-2"><span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#0f766e]" />{point}</li>)}
+                    </ul>
+                  )}
+                  {activeStudyMaterial.pdfUrl && (
+                    <button type="button" onClick={() => navigate(`/study-material/view/${activeStudyMaterial.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0f766e] hover:text-[#0a5b54] focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:text-emerald-300">
+                      Open full reference <ExternalLink className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </section>
+          </aside>
+        )}
       </div>
 
       {/* Module / Lab Completion Popup Modal */}
