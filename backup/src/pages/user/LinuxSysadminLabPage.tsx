@@ -135,6 +135,17 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
       nodes.push(<div key={`space-${index}`} className="h-2" />);
       return;
     }
+    if (line.startsWith('### ')) {
+      nodes.push(
+        <h4
+            key={index}
+            className="mt-4 mb-2 text-sm font-bold text-slate-900 dark:text-white"
+          >
+          {renderInline(line.slice(4))}
+        </h4>,
+      );
+      return;
+    }
     if (line.startsWith('## ')) {
       nodes.push(
         <h3 key={index} className="mt-5 mb-2 text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
