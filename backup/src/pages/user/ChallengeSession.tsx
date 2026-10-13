@@ -45,6 +45,7 @@ export const ChallengeSession: React.FC = () => {
   const labId = routeLabId || labSlug;
 
   const isReconLab = labId === 'lab1-recon' || labId === 'recon-lab';
+  const isOTWaterLab = labId === 'ot-water-treatment';
 
   const [currentModules, setCurrentModules] = useState<ReconModule[]>([]);
   const [contentError, setContentError] = useState('');
@@ -118,10 +119,55 @@ export const ChallengeSession: React.FC = () => {
 
   // Terminal
   const [terminalConnected, setTerminalConnected] = useState(false);
+  const [otProvisioning, setOTProvisioning] = useState(false);
+  const [otProvisioned, setOTProvisioned] = useState(false);
+  const [otProvisionError, setOTProvisionError] = useState<string | null>(null);
+  const [otUrls, setOTUrls] = useState<{ scada: string; wireshark: string } | null>(null);
   const [terminalHistory, setTerminalHistory] = useState<string[]>([]);
   const [commandInput, setCommandInput] = useState('');
   const [isRoot, setIsRoot] = useState(false);
   const terminalBottomRef = useRef<HTMLDivElement>(null);
+
+  const startOTWaterLab = useCallback(async () => {
+    if (!isOTWaterLab || otProvisioning || otProvisioned) return;
+    setOTProvisioning(true);
+    setOTProvisionError(null);
+    try {
+      const response = await apiFetch('/api/v1/ot-water/sessions', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Could not start the OT environment.');
+      setOTUrls(data.urls ?? null);
+      setOTProvisioned(true);
+      setTerminalConnected(true);
+    } catch (error) {
+      setOTProvisionError(error instanceof Error ? error.message : 'Could not start the OT environment.');
+    } finally {
+      setOTProvisioning(false);
+    }
+  }, [apiFetch, isOTWaterLab, otProvisioned, otProvisioning]);
+
+  const stopOTWaterLab = useCallback(() => {
+    if (!isOTWaterLab || (!otProvisioned && !terminalConnected)) return;
+    setTerminalConnected(false);
+    setOTProvisioned(false);
+    setOTUrls(null);
+    apiFetch('/api/v1/ot-water/sessions/current', { method: 'DELETE' }).catch(() => {});
+  }, [apiFetch, isOTWaterLab, otProvisioned, terminalConnected]);
+
+  useEffect(() => {
+    if (!isOTWaterLab) return;
+    let cancelled = false;
+    apiFetch('/api/v1/ot-water/sessions/current')
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (cancelled || !data) return;
+        setOTUrls(data.urls ?? null);
+        setOTProvisioned(true);
+        setTerminalConnected(true);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiFetch, isOTWaterLab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -538,7 +584,7 @@ export const ChallengeSession: React.FC = () => {
             </div>
           )}
           <button
-            onClick={() => { if (window.confirm('Exit this challenge session?')) handleReturn(); }}
+            onClick={() => { if (window.confirm('Exit this challenge session?')) { stopOTWaterLab(); handleReturn(); } }}
             className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -773,7 +819,9 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00FF9D] animate-pulse" />
                 {isReconLab
                   ? (reconProvisioned ? 'CONTAINER LIVE' : reconProvisionError ? 'PROVISION FAILED' : reconProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
-                  : 'INFRASTRUCTURE ONLINE'}
+                  : isOTWaterLab
+                    ? (otProvisioned ? 'OT TASK LIVE' : otProvisionError ? 'PROVISION FAILED' : otProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
+                    : 'INFRASTRUCTURE ONLINE'}
               </span>
               {isReconLab && (
                 <>
@@ -797,15 +845,15 @@ export const ChallengeSession: React.FC = () => {
               {!isReconLab && (
                 <>
                   <button
-                    onClick={() => setTerminalConnected(true)}
-                    disabled={terminalConnected}
+                    onClick={isOTWaterLab ? startOTWaterLab : () => setTerminalConnected(true)}
+                    disabled={terminalConnected || otProvisioning}
                     className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <Play className="w-3.5 h-3.5" />
-                    <span>Start Terminal</span>
+                    <span>{otProvisioning ? 'Starting...' : 'Start Terminal'}</span>
                   </button>
                   <button
-                    onClick={() => setTerminalConnected(false)}
+                    onClick={isOTWaterLab ? stopOTWaterLab : () => setTerminalConnected(false)}
                     disabled={!terminalConnected || commandBusy}
                     className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
@@ -869,6 +917,12 @@ export const ChallengeSession: React.FC = () => {
             )
           ) : terminalConnected ? (
             <>
+              {isOTWaterLab && otUrls && (
+                <div className="px-5 py-2 bg-slate-900 border-b border-slate-800 flex gap-3 text-xs font-bold">
+                  <a className="text-emerald-400 hover:text-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer">Open SCADA</a>
+                  <a className="text-emerald-400 hover:text-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer">Open Wireshark</a>
+                </div>
+              )}
               {/* Simulated terminal output (OT labs + fallback) */}
               <div className="flex-1 p-5 overflow-y-auto font-mono text-xs text-[#00FF9D] space-y-2 selection:bg-blue-900 selection:text-white">
                 {terminalHistory.map((line, idx) => (
@@ -905,6 +959,7 @@ export const ChallengeSession: React.FC = () => {
                 Click <span className="text-[#00FF9D] font-bold">"Start Terminal"</span> to connect to your execution
                 workstation environment.
               </p>
+              {isOTWaterLab && otProvisionError && <p className="text-rose-400 font-mono text-xs">{otProvisionError}</p>}
             </div>
           )}
         </div>
