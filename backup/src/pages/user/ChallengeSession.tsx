@@ -15,6 +15,7 @@ import {
   Play,
   TerminalSquare
 } from 'lucide-react';
+import { parseApiErrorMessage } from '../../lib/api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -133,9 +134,15 @@ export const ChallengeSession: React.FC = () => {
     setOTProvisioning(true);
     setOTProvisionError(null);
     try {
-      const response = await apiFetch('/api/v1/ot-water/sessions', { method: 'POST' });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Could not start the OT environment.');
+      const response = await apiFetch('/api/v1/ot-water/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // FastAPI still requires a request body for the StartSession model,
+        // even though assignment_id is optional.
+        body: JSON.stringify({}),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Could not start the OT environment.'));
       setOTUrls(data.urls ?? null);
       setOTProvisioned(true);
       setTerminalConnected(true);
