@@ -908,7 +908,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={startReconLab}
                     disabled={reconProvisioning || reconProvisioned}
-                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     {reconProvisioning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                     <span>{reconProvisioning ? 'Starting...' : 'Start Terminal'}</span>
@@ -927,7 +927,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={isOTWaterLab ? startOTWaterLab : () => setTerminalConnected(true)}
                     disabled={terminalConnected || otProvisioning}
-                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <Play className="w-3.5 h-3.5" />
                     <span>{otProvisioning ? 'Starting...' : 'Start Terminal'}</span>
