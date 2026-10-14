@@ -558,22 +558,27 @@ export const ChallengeSession: React.FC = () => {
     return solvedModules.has(currentModules[idx - 1].id);
   };
 
-  const handleCommandSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commandInput.trim() || busyRef.current) return;
+  const recordTerminalCommand = async (command: string) => {
+    if (!command.trim() || busyRef.current) return;
     busyRef.current = true; setCommandBusy(true);
     try {
       const r = await apiFetch('/api/v1/private-lab-content/' + encodeURIComponent(labId || '') + '/command', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module: activeModule.id, command: commandInput, session: sessionState }),
+        body: JSON.stringify({ module: activeModule.id, command, session: sessionState }),
       });
       if (!r.ok) throw new Error('Command failed. Please reload the session if it expired.');
       const data = await r.json();
       setSessionState(data.session); setIsRoot(data.root); setObjProgress(data.objectives);
       setTerminalHistory(prev => data.clear ? data.lines : [...prev, ...data.lines]);
-      setCommandInput('');
     } catch (e) { setSubmissionStatus('error'); setSubmissionMessage(e instanceof Error ? e.message : 'Command failed.'); }
     finally { busyRef.current = false; setCommandBusy(false); }
+  };
+
+  const handleCommandSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const command = commandInput;
+    setCommandInput('');
+    await recordTerminalCommand(command);
   };
 
   // ── Derived helpers ───────────────────────────────────────────────────────
@@ -934,7 +939,7 @@ export const ChallengeSession: React.FC = () => {
                   >
                     <span>Disconnect</span>
                   </button>
-                  <button
+                  {!isOTWaterLab && <button
                     disabled={commandBusy}
                     onClick={async () => {
                       if (busyRef.current) return;
@@ -952,7 +957,7 @@ export const ChallengeSession: React.FC = () => {
                     title="Reset console state"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
-                  </button>
+                  </button>}
                 </>
               )}
             </div>
@@ -990,15 +995,27 @@ export const ChallengeSession: React.FC = () => {
                 </p>
               </div>
             )
-          ) : terminalConnected ? (
+          ) : isOTWaterLab && terminalConnected ? (
             <>
-              {isOTWaterLab && otUrls && (
+              {otUrls && (
                 <div className="px-5 py-2.5 bg-[#0d211e] border-b border-[#18342f] flex flex-wrap gap-2 text-xs font-bold">
                   <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> SCADA workspace</a>
                   <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Packet analysis</a>
                 </div>
               )}
-              {/* Simulated terminal output (OT labs + fallback) */}
+              <RealTerminal
+                labId="ot-water-treatment"
+                token={token ?? undefined}
+                wsPath="/api/v1/ot-water/terminal"
+                terminalTitle="AquaShield OT Security Workstation"
+                height="100%"
+                className="min-h-0 flex-1 rounded-none border-x-0 border-b-0 shadow-none"
+                onCommand={recordTerminalCommand}
+              />
+            </>
+          ) : terminalConnected ? (
+            <>
+              {/* Simulated terminal output for legacy non-OT labs. */}
               <div className="flex-1 p-5 overflow-y-auto font-mono text-xs text-[#00FF9D] space-y-2 selection:bg-blue-900 selection:text-white">
                 {terminalHistory.map((line, idx) => (
                   <div key={idx} className="whitespace-pre-wrap leading-relaxed">{line}</div>
