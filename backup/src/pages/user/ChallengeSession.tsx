@@ -62,6 +62,7 @@ export const ChallengeSession: React.FC = () => {
 
   const isReconLab = labId === 'lab1-recon' || labId === 'recon-lab';
   const isOTWaterLab = labId === 'ot-water-treatment';
+  const isRuntimeShieldLab = labId === 'iso-runtime-shield-workshop';
 
   const [currentModules, setCurrentModules] = useState<ReconModule[]>([]);
   const [contentError, setContentError] = useState('');
@@ -74,6 +75,8 @@ export const ChallengeSession: React.FC = () => {
     ? 'OT Railroad Signaling & Control Track'
     : labId === 'ot-water-treatment'
     ? 'OT Water Treatment Facility Track'
+    : isRuntimeShieldLab
+    ? 'ISO/IEC 42001 Runtime Shield Workshop'
     : isReconLab
     ? 'Network Reconnaissance Track'
     : 'CyberRange Interactive Lab Session';
@@ -139,6 +142,10 @@ export const ChallengeSession: React.FC = () => {
   const [otProvisioned, setOTProvisioned] = useState(false);
   const [otProvisionError, setOTProvisionError] = useState<string | null>(null);
   const [otUrls, setOTUrls] = useState<{ scada: string; wireshark: string } | null>(null);
+  const [runtimeProvisioning, setRuntimeProvisioning] = useState(false);
+  const [runtimeProvisioned, setRuntimeProvisioned] = useState(false);
+  const [runtimeProvisionError, setRuntimeProvisionError] = useState<string | null>(null);
+  const [runtimeUrls, setRuntimeUrls] = useState<{ workshop: string } | null>(null);
   const [terminalHistory, setTerminalHistory] = useState<string[]>([]);
   const [commandInput, setCommandInput] = useState('');
   const [isRoot, setIsRoot] = useState(false);
@@ -194,6 +201,35 @@ export const ChallengeSession: React.FC = () => {
     return () => { cancelled = true; };
   }, [apiFetch, isOTWaterLab]);
 
+  const startRuntimeShieldLab = useCallback(async () => {
+    if (!isRuntimeShieldLab || runtimeProvisioning || runtimeProvisioned) return;
+    setRuntimeProvisioning(true); setRuntimeProvisionError(null);
+    try {
+      const response = await apiFetch('/api/v1/runtime-shield/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(parseApiErrorMessage(data, 'Could not start the Runtime Shield workshop.'));
+      setRuntimeUrls(data.urls ?? null); setRuntimeProvisioned(true);
+    } catch (error) {
+      setRuntimeProvisionError(error instanceof Error ? error.message : 'Could not start the Runtime Shield workshop.');
+    } finally { setRuntimeProvisioning(false); }
+  }, [apiFetch, isRuntimeShieldLab, runtimeProvisioned, runtimeProvisioning]);
+
+  const stopRuntimeShieldLab = useCallback(() => {
+    if (!isRuntimeShieldLab || !runtimeProvisioned) return;
+    setRuntimeProvisioned(false); setRuntimeUrls(null);
+    apiFetch('/api/v1/runtime-shield/sessions/current', { method: 'DELETE' }).catch(() => {});
+  }, [apiFetch, isRuntimeShieldLab, runtimeProvisioned]);
+
+  useEffect(() => {
+    if (!isRuntimeShieldLab) return;
+    let cancelled = false;
+    apiFetch('/api/v1/runtime-shield/sessions/current')
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => { if (!cancelled && data) { setRuntimeUrls(data.urls ?? null); setRuntimeProvisioned(true); } })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiFetch, isRuntimeShieldLab]);
+
   useEffect(() => {
     if (!isOTWaterLab) return;
     let cancelled = false;
@@ -216,6 +252,7 @@ export const ChallengeSession: React.FC = () => {
   }, [apiFetch, isOTWaterLab]);
 
   useEffect(() => {
+    if (isRuntimeShieldLab) { setCurrentModules([]); setContentError(''); setTerminalHistory([]); return; }
     let cancelled = false;
     setCurrentModules([]); setContentError(''); setSessionState('');
     apiFetch('/api/v1/private-lab-content/' + encodeURIComponent(labId || 'lab1-recon'))
@@ -223,7 +260,7 @@ export const ChallengeSession: React.FC = () => {
       .then(data => { if (!cancelled) { setCurrentModules(data.modules); setTerminalHistory(data.banner); setSessionState(data.session); } })
       .catch(e => { if (!cancelled) setContentError(e.message); });
     return () => { cancelled = true; };
-  }, [labId, apiFetch]);
+  }, [labId, apiFetch, isRuntimeShieldLab]);
 
   // ── Recon lab: student starts containers explicitly via "Start Lab", tear down on exit ──
   const [reconStarted, setReconStarted] = useState(false);
@@ -891,7 +928,7 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
               </div>
               <span className="font-mono text-xs font-bold text-slate-300">
-                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isOTWaterLab ? 'Operator console · isolated environment' : 'Terminal Emulator — Execution Environment'}
+                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isOTWaterLab ? 'Operator console · isolated environment' : isRuntimeShieldLab ? 'Runtime Shield · isolated AI security workshop' : 'Terminal Emulator — Execution Environment'}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -901,6 +938,8 @@ export const ChallengeSession: React.FC = () => {
                   ? (reconProvisioned ? 'CONTAINER LIVE' : reconProvisionError ? 'PROVISION FAILED' : reconProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : isOTWaterLab
                     ? (otProvisioned ? 'OT TASK LIVE' : otProvisionError ? 'PROVISION FAILED' : otProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
+                  : isRuntimeShieldLab
+                    ? (runtimeProvisioned ? 'WORKSHOP LIVE' : runtimeProvisionError ? 'PROVISION FAILED' : runtimeProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : 'INFRASTRUCTURE ONLINE'}
               </span>
               {isReconLab && (
@@ -925,21 +964,21 @@ export const ChallengeSession: React.FC = () => {
               {!isReconLab && (
                 <>
                   <button
-                    onClick={isOTWaterLab ? startOTWaterLab : () => setTerminalConnected(true)}
-                    disabled={terminalConnected || otProvisioning}
+                    onClick={isOTWaterLab ? startOTWaterLab : isRuntimeShieldLab ? startRuntimeShieldLab : () => setTerminalConnected(true)}
+                    disabled={isRuntimeShieldLab ? (runtimeProvisioned || runtimeProvisioning) : (terminalConnected || otProvisioning)}
                     className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <Play className="w-3.5 h-3.5" />
-                    <span>{otProvisioning ? 'Starting...' : 'Start Terminal'}</span>
+                    <span>{isRuntimeShieldLab ? (runtimeProvisioning ? 'Starting...' : 'Start Workshop') : (otProvisioning ? 'Starting...' : 'Start Terminal')}</span>
                   </button>
                   <button
-                    onClick={isOTWaterLab ? stopOTWaterLab : () => setTerminalConnected(false)}
-                    disabled={!terminalConnected || commandBusy}
+                    onClick={isOTWaterLab ? stopOTWaterLab : isRuntimeShieldLab ? stopRuntimeShieldLab : () => setTerminalConnected(false)}
+                    disabled={isRuntimeShieldLab ? !runtimeProvisioned : (!terminalConnected || commandBusy)}
                     className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <span>Disconnect</span>
                   </button>
-                  {!isOTWaterLab && <button
+                  {!isOTWaterLab && !isRuntimeShieldLab && <button
                     disabled={commandBusy}
                     onClick={async () => {
                       if (busyRef.current) return;
@@ -995,6 +1034,13 @@ export const ChallengeSession: React.FC = () => {
                 </p>
               </div>
             )
+          ) : isRuntimeShieldLab && runtimeProvisioned && runtimeUrls ? (
+            <iframe
+              title="ISO/IEC 42001 Runtime Shield Workshop"
+              src={runtimeUrls.workshop}
+              className="min-h-0 flex-1 border-0 bg-white"
+              sandbox="allow-forms allow-modals allow-scripts allow-same-origin"
+            />
           ) : isOTWaterLab && terminalConnected ? (
             <>
               {otUrls && (
@@ -1048,11 +1094,14 @@ export const ChallengeSession: React.FC = () => {
                 <TerminalSquare className="w-6 h-6 text-slate-500" />
               </div>
               <p className="max-w-sm text-slate-400 font-mono text-sm">
-                {isOTWaterLab
+                {isRuntimeShieldLab
+                  ? <>Start the isolated Runtime Shield workshop. The AI security console will open here when its private session is ready.</>
+                  : isOTWaterLab
                   ? <>Start a private water-treatment environment. Your SCADA and packet-analysis tools will appear here when it is ready.</>
                   : <>Click <span className="text-[#00FF9D] font-bold">"Start Terminal"</span> to connect to your execution workstation environment.</>}
               </p>
               {isOTWaterLab && otProvisionError && <p className="text-rose-400 font-mono text-xs">{otProvisionError}</p>}
+              {isRuntimeShieldLab && runtimeProvisionError && <p className="text-rose-400 font-mono text-xs">{runtimeProvisionError}</p>}
             </div>
           )}
         </div>
