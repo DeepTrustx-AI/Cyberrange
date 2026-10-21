@@ -631,6 +631,93 @@ export const ChallengeSession: React.FC = () => {
   const activeStudyMaterial = otStudyMaterials.find((item) => item.id === activeStudyMaterialId) ?? otStudyMaterials[0];
   const completedModules = currentModules.filter((module) => solvedModules.has(module.id)).length;
 
+  // Runtime Shield is a self-contained workshop, not a sequence of flag modules.
+  // Rendering it before the generic module loading guard prevents an intentional
+  // empty module list from being mistaken for a stalled content request.
+  if (isRuntimeShieldLab) {
+    return (
+      <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
+        <header className="h-16 flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-emerald-700/60 bg-emerald-950/50">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black tracking-tight text-white">ISO/IEC 42001 Runtime Shield Workshop</p>
+              <p className="truncate text-xs text-slate-400">Isolated AI security training environment</p>
+            </div>
+          </div>
+          <div className="flex flex-shrink-0 items-center gap-2">
+            <span className={`hidden sm:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
+              runtimeProvisioned
+                ? 'border-emerald-800 bg-emerald-950/60 text-emerald-300'
+                : runtimeProvisionError
+                  ? 'border-rose-900 bg-rose-950/50 text-rose-300'
+                  : 'border-slate-700 bg-slate-800 text-slate-400'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${runtimeProvisioned ? 'bg-emerald-400' : runtimeProvisionError ? 'bg-rose-400' : 'bg-slate-500'}`} />
+              {runtimeProvisioned ? 'Workshop live' : runtimeProvisionError ? 'Start failed' : runtimeProvisioning ? 'Starting' : 'Ready'}
+            </span>
+            <button
+              onClick={handleReturn}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-800"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Exit
+            </button>
+          </div>
+        </header>
+
+        <main className="min-h-0 flex-1 p-4 sm:p-6">
+          <section className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
+            <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
+              <div>
+                <h1 className="text-base font-bold text-white">Runtime Shield Console</h1>
+                <p className="mt-0.5 text-xs text-slate-400">Launch a private workshop session to inspect and protect the AI runtime.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={startRuntimeShieldLab}
+                  disabled={runtimeProvisioned || runtimeProvisioning}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-400 px-3.5 py-2 text-xs font-extrabold text-emerald-950 transition-colors hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  {runtimeProvisioning ? 'Starting workshop…' : runtimeProvisioned ? 'Workshop running' : 'Start workshop'}
+                </button>
+                <button
+                  onClick={stopRuntimeShieldLab}
+                  disabled={!runtimeProvisioned}
+                  className="rounded-lg border border-slate-700 px-3.5 py-2 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Stop
+                </button>
+              </div>
+            </div>
+
+            {runtimeProvisioned && runtimeUrls?.workshop ? (
+              <iframe
+                title="ISO/IEC 42001 Runtime Shield Workshop"
+                src={runtimeUrls.workshop}
+                className="min-h-0 flex-1 border-0 bg-white"
+                sandbox="allow-forms allow-modals allow-scripts allow-same-origin"
+              />
+            ) : (
+              <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+                <div className="max-w-md text-center">
+                  <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-800/60 bg-emerald-950/40">
+                    <ShieldCheck className="h-7 w-7 text-emerald-400" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white">Your workshop is ready to launch</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">Start an isolated Runtime Shield session. It may take a few minutes to prepare when the training environment is cold.</p>
+                  {runtimeProvisionError && <p role="alert" className="mt-4 rounded-lg border border-rose-900/70 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">{runtimeProvisionError}</p>}
+                </div>
+              </div>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   if (contentError) return <div role="alert">{contentError}</div>;
   if (!currentModules.length) return <div role="status">Loading lab content…</div>;
 
