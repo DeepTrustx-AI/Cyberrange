@@ -852,7 +852,7 @@ export const ChallengeSession: React.FC = () => {
         </header>
 
         <main className="min-h-0 flex-1 p-4 sm:p-6">
-          <section className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
+          <section className="mx-auto flex h-full w-full max-w-[1600px] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
             <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
               <div>
                 <h1 className="text-base font-bold text-white">Runtime Shield Console</h1>
@@ -878,7 +878,7 @@ export const ChallengeSession: React.FC = () => {
             </div>
 
             {runtimeProvisioned && runtimeUrls?.workshop ? (
-              <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-2 bg-slate-950">
+              <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] bg-slate-950">
                 <div className="min-h-0 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800">
                   <div className="h-8 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[11px] font-bold tracking-wide text-emerald-300">
                     RUNTIME SHIELD
