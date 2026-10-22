@@ -17,7 +17,10 @@ import {
   BookOpen,
   ClipboardList,
   ExternalLink,
-  CircleDot
+  CircleDot,
+  Eye,
+  FileText,
+  MessageSquareText
 } from 'lucide-react';
 import { parseApiErrorMessage } from '../../lib/api';
 
@@ -51,6 +54,79 @@ interface StudyMaterialItem {
   pdfUrl?: string;
   content?: string[];
 }
+
+type WaterStageGuide = {
+  journeyLabel: string;
+  duration: string;
+  brief: string;
+  safetyNote: string;
+  interpretation: string;
+  evidenceQuestion: string;
+  answers: readonly string[];
+  correctAnswer: number;
+  challengeReady: string;
+};
+
+type ControlRecord = {
+  prediction: string;
+  target: string;
+  verification: string;
+  restoration: string;
+};
+
+type OperationalReview = {
+  currentState: string;
+  evidence: string;
+  nextAction: string;
+};
+
+const WATER_STAGE_GUIDES: readonly WaterStageGuide[] = [
+  {
+    journeyLabel: 'Establish visibility', duration: '2 min',
+    brief: 'Find the ClearWater PLC, confirm what services answer, and map the control points you can safely observe.',
+    safetyNote: 'Read-only investigation. Do not write to the controller in this stage.',
+    interpretation: 'Port 502 identifies Modbus TCP. Coils are binary command states: record their meaning before deciding what the plant is doing.',
+    evidenceQuestion: 'Which observation identifies a binary control state?',
+    answers: ['A coil state such as INTAKE_PUMP_1_CMD = ON', 'A listening service such as 502/tcp'], correctAnswer: 0,
+    challengeReady: 'Challenge ready after you capture the service and coil map.'
+  },
+  {
+    journeyLabel: 'Interpret process conditions', duration: '4 min',
+    brief: 'Use the existing register dump to translate raw values into engineering meaning and identify what needs attention.',
+    safetyNote: 'Interpret scaled telemetry before drawing a conclusion. Observation remains read-only.',
+    interpretation: 'A value marked x10 or x100 needs scaling before it represents its physical unit. Compare related readings, not one number in isolation.',
+    evidenceQuestion: 'What should you do before interpreting a scaled register value?',
+    answers: ['Apply the documented scale and unit', 'Treat the raw integer as the physical value'], correctAnswer: 0,
+    challengeReady: 'Challenge ready after you support a finding with two related readings.'
+  },
+  {
+    journeyLabel: 'Triage SCADA alarms', duration: '5 min',
+    brief: 'Compare the existing SCADA view with PLC evidence and decide what needs escalation, monitoring, or more evidence.',
+    safetyNote: 'Acknowledging an alarm changes its visibility, not the underlying process condition.',
+    interpretation: 'Use PLC telemetry to test whether an HMI alarm reflects a process condition, a display issue, or incomplete evidence.',
+    evidenceQuestion: 'What does acknowledging an alarm prove?',
+    answers: ['Only that its acknowledgement was recorded', 'That the process fault has been repaired'], correctAnswer: 0,
+    challengeReady: 'Challenge ready after you classify one alarm with supporting evidence.'
+  },
+  {
+    journeyLabel: 'Control safely', duration: '6 min',
+    brief: 'Use the existing controlled defense task to plan, predict, verify, and restore a bounded simulated change.',
+    safetyNote: 'Safety gate: state the expected effect and restoration path before making a write-capable action.',
+    interpretation: 'A safe intervention includes a target, predicted result, observed verification, and confirmation that the baseline is restored.',
+    evidenceQuestion: 'What completes a safe simulated control change?',
+    answers: ['Prediction, bounded change, verification, and restoration', 'A successful write command'], correctAnswer: 0,
+    challengeReady: 'Challenge ready after the safety record is complete.'
+  },
+  {
+    journeyLabel: 'Operational review', duration: '5 min',
+    brief: 'Use the evidence gathered across the current lab to produce a concise, defensible operational handover.',
+    safetyNote: 'Separate observed facts from assumptions, and preserve evidence before escalating a suspected unauthorized change.',
+    interpretation: 'The capstone is a synthesis task: explain the current state, safety-critical evidence, and the next safe action.',
+    evidenceQuestion: 'What makes an operational handover defensible?',
+    answers: ['Evidence, assessment, safety impact, and next action', 'A list of commands run during the lab'], correctAnswer: 0,
+    challengeReady: 'Challenge ready when your handover connects evidence to a safe next step.'
+  }
+];
 
 export const ChallengeSession: React.FC = () => {
   const navigate = useNavigate();
@@ -100,6 +176,15 @@ export const ChallengeSession: React.FC = () => {
   const [activeChallengeIdx, setActiveChallengeIdx] = useState(0);
   const activeModule = currentModules[activeChallengeIdx] || currentModules[0] || { id: "", title: "", points: 0, description: "", mission: "", objectives: [], hints: [] };
   const isSolved = solvedModules.has(activeModule.id);
+  const waterGuide = WATER_STAGE_GUIDES[activeChallengeIdx] || WATER_STAGE_GUIDES[0];
+  const [learningChecks, setLearningChecks] = useState<Record<string, number>>({});
+  const [handoverNotes, setHandoverNotes] = useState<Record<string, string>>({});
+  const [handoverSaved, setHandoverSaved] = useState<Record<string, boolean>>({});
+  const [controlRecords, setControlRecords] = useState<Record<string, ControlRecord>>({});
+  const [controlRecordSaved, setControlRecordSaved] = useState<Record<string, boolean>>({});
+  const [operationalReviews, setOperationalReviews] = useState<Record<string, OperationalReview>>({});
+  const [operationalReviewSaved, setOperationalReviewSaved] = useState<Record<string, boolean>>({});
+  const [learningSaveError, setLearningSaveError] = useState('');
 
   const [completionModal, setCompletionModal] = useState<{
     show: boolean;
@@ -198,6 +283,37 @@ export const ChallengeSession: React.FC = () => {
         setTerminalConnected(true);
       })
       .catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiFetch, isOTWaterLab]);
+
+  useEffect(() => {
+    if (!isOTWaterLab) return;
+    let cancelled = false;
+    apiFetch('/api/v1/private-lab-content/ot-water-treatment/learning')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Your learning evidence could not be loaded.');
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const checks: Record<string, number> = {};
+        const notes: Record<string, string> = {};
+        const noteSaved: Record<string, boolean> = {};
+        const controls: Record<string, ControlRecord> = {};
+        const controlSaved: Record<string, boolean> = {};
+        const reviews: Record<string, OperationalReview> = {};
+        const reviewSaved: Record<string, boolean> = {};
+        (data.records || []).forEach((record: { module: string; evidence_check?: number; handover_note?: string; control_record?: ControlRecord; operational_review?: OperationalReview }) => {
+          if (record.evidence_check !== undefined) checks[record.module] = record.evidence_check;
+          if (record.handover_note) { notes[record.module] = record.handover_note; noteSaved[record.module] = true; }
+          if (record.control_record) { controls[record.module] = record.control_record; controlSaved[record.module] = true; }
+          if (record.operational_review) { reviews[record.module] = record.operational_review; reviewSaved[record.module] = true; }
+        });
+        setLearningChecks(checks); setHandoverNotes(notes); setHandoverSaved(noteSaved);
+        setControlRecords(controls); setControlRecordSaved(controlSaved);
+        setOperationalReviews(reviews); setOperationalReviewSaved(reviewSaved);
+      })
+      .catch((error) => { if (!cancelled) setLearningSaveError(error instanceof Error ? error.message : 'Your learning evidence could not be loaded.'); });
     return () => { cancelled = true; };
   }, [apiFetch, isOTWaterLab]);
 
@@ -630,6 +746,51 @@ export const ChallengeSession: React.FC = () => {
   const currentHints = unlockedHints[activeModule.id] || [];
   const activeStudyMaterial = otStudyMaterials.find((item) => item.id === activeStudyMaterialId) ?? otStudyMaterials[0];
   const completedModules = currentModules.filter((module) => solvedModules.has(module.id)).length;
+  const activeCheckAnswer = learningChecks[activeModule.id];
+  const hasCorrectLearningCheck = activeCheckAnswer === waterGuide.correctAnswer;
+  const handoverNote = handoverNotes[activeModule.id] || '';
+  const controlRecord = controlRecords[activeModule.id] || { prediction: '', target: '', verification: '', restoration: '' };
+  const operationalReview = operationalReviews[activeModule.id] || { currentState: '', evidence: '', nextAction: '' };
+
+  const persistLearningRecord = async (moduleId: string, updates: Record<string, unknown>) => {
+    try {
+      const response = await apiFetch(`/api/v1/private-lab-content/ot-water-treatment/learning/${moduleId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Your learning evidence could not be saved.');
+      setLearningSaveError('');
+      return response.json();
+    } catch (error) {
+      setLearningSaveError(error instanceof Error ? error.message : 'Your learning evidence could not be saved.');
+      throw error;
+    }
+  };
+
+  const updateLearningCheck = (answer: number) => {
+    setLearningChecks((previous) => ({ ...previous, [activeModule.id]: answer }));
+    setLearningSaveError('');
+    void persistLearningRecord(activeModule.id, { evidence_check: answer }).catch(() => {});
+  };
+  const saveHandoverNote = async () => {
+    if (!handoverNote.trim()) return;
+    try { await persistLearningRecord(activeModule.id, { handover_note: handoverNote.trim() }); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: true })); } catch { /* Recovery is visible in the save error. */ }
+  };
+  const updateControlRecord = (field: keyof ControlRecord, value: string) => {
+    setControlRecords((previous) => ({ ...previous, [activeModule.id]: { ...controlRecord, [field]: value } }));
+    setControlRecordSaved((previous) => ({ ...previous, [activeModule.id]: false }));
+  };
+  const saveControlRecord = async () => {
+    if (!Object.values(controlRecord).every((value) => value.trim())) return;
+    try { await persistLearningRecord(activeModule.id, { control_record: controlRecord }); setControlRecordSaved((previous) => ({ ...previous, [activeModule.id]: true })); } catch { /* Recovery is visible in the save error. */ }
+  };
+  const updateOperationalReview = (field: keyof OperationalReview, value: string) => {
+    setOperationalReviews((previous) => ({ ...previous, [activeModule.id]: { ...operationalReview, [field]: value } }));
+    setOperationalReviewSaved((previous) => ({ ...previous, [activeModule.id]: false }));
+  };
+  const saveOperationalReview = async () => {
+    if (!Object.values(operationalReview).every((value) => value.trim())) return;
+    try { await persistLearningRecord(activeModule.id, { operational_review: operationalReview }); setOperationalReviewSaved((previous) => ({ ...previous, [activeModule.id]: true })); } catch { /* Recovery is visible in the save error. */ }
+  };
 
   // Runtime Shield is a self-contained workshop, not a sequence of flag modules.
   // Rendering it before the generic module loading guard prevents an intentional
@@ -802,6 +963,20 @@ export const ChallengeSession: React.FC = () => {
         }`}>
 
           {/* Module pill selector */}
+          {isOTWaterLab && (
+            <nav aria-label="OT Water Treatment learning journey" className="space-y-1 border-b border-[#d9e5e1] pb-4 dark:border-[#1d3934]">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Learning journey</p>
+              {currentModules.map((module, index) => {
+                const locked = index === 3 && (!currentModules[2] || !solvedModules.has(currentModules[2].id));
+                const active = index === activeChallengeIdx;
+                return <button key={module.id} type="button" disabled={locked} onClick={() => { setActiveChallengeIdx(index); setFlagInput(''); setSubmissionStatus('idle'); }} className={`grid w-full grid-cols-[1.5rem_1fr_auto] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs transition-colors ${locked ? 'cursor-not-allowed opacity-45' : active ? 'bg-[#0f766e] text-white' : 'text-slate-700 hover:bg-[#f0f6f4] dark:text-slate-300 dark:hover:bg-[#102b27]'}`}>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${solvedModules.has(module.id) ? 'bg-emerald-400 text-emerald-950' : active ? 'bg-white text-[#0f766e]' : 'border border-current'}`}>{solvedModules.has(module.id) ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}</span>
+                  <span className="font-medium">{WATER_STAGE_GUIDES[index]?.journeyLabel}</span>
+                  {locked ? <Lock className="h-3.5 w-3.5 text-amber-600" aria-label="Safety gate" /> : <span className="tabular-nums opacity-70">{WATER_STAGE_GUIDES[index]?.duration}</span>}
+                </button>;
+              })}
+            </nav>
+          )}
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {isOTWaterLab ? 'Lab sequence' : 'Network Recon Modules'}
@@ -1222,6 +1397,18 @@ export const ChallengeSession: React.FC = () => {
                 <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Record the registers and services that answer the current stage objective.</span></li>
                 <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Use SCADA and packet analysis only after the environment shows as live.</span></li>
               </ol>
+            </section>
+
+            <section className="mt-6 border-y border-[#d9e5e1] py-5 dark:border-[#1d3934]">
+              {learningSaveError && <p role="alert" className="mb-3 text-xs font-medium text-rose-700 dark:text-rose-300">{learningSaveError} Retry the learning record; console work is unaffected.</p>}
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Evidence guide · {waterGuide.duration}</h3>
+              <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.brief}</p>
+              <p className="mt-3 border-y border-amber-300/70 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:text-amber-200">{waterGuide.safetyNote}</p>
+              <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" />{waterGuide.interpretation}</div>
+              <fieldset className="mt-4"><legend className="text-xs font-semibold text-slate-700 dark:text-slate-200">Evidence check</legend><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.evidenceQuestion}</p><div className="mt-2 space-y-2">{waterGuide.answers.map((answer, index) => <label key={answer} className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><input type="radio" name={`evidence-${activeModule.id}`} checked={activeCheckAnswer === index} onChange={() => updateLearningCheck(index)} className="mt-1 accent-emerald-600" />{answer}</label>)}</div>{activeCheckAnswer !== undefined && <p className={`mt-2 text-xs font-medium ${hasCorrectLearningCheck ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{hasCorrectLearningCheck ? waterGuide.challengeReady : 'Revisit the interpretation note, then try again.'}</p>}</fieldset>
+              <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Operational finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, next safe action" className="mt-2 min-h-20 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-md bg-[#24303A] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{handoverSaved[activeModule.id] ? 'Handover saved' : 'Save handover'}</button>
+              {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{(['prediction', 'target', 'verification', 'restoration'] as (keyof ControlRecord)[]).map((field) => <input key={field} value={controlRecord[field]} onChange={(event) => updateControlRecord(field, event.target.value)} placeholder={field} className="w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" />)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
+              {activeChallengeIdx === 4 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operational review</h4>{(['currentState', 'evidence', 'nextAction'] as (keyof OperationalReview)[]).map((field) => <textarea key={field} value={operationalReview[field]} onChange={(event) => updateOperationalReview(field, event.target.value)} placeholder={field} className="min-h-16 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" />)}<button type="button" disabled={!Object.values(operationalReview).every((value) => value.trim())} onClick={saveOperationalReview} className="rounded-md bg-[#0f766e] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{operationalReviewSaved[activeModule.id] ? 'Operational review saved' : 'Save review'}</button></div>}
             </section>
 
             <section className="mt-6">
