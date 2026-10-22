@@ -225,6 +225,11 @@ export function App() {
                   <LinuxSysadminLabPage workshop />
                 </ProtectedRoute>
               } />
+              <Route path="/labs/race-conditions-lab/:labId?" element={
+                <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <LinuxSysadminLabPage race />
+                </ProtectedRoute>
+              } />
               {/* Linux Sysadmin — terminal-first workspace + trusted autograding */}
               <Route
                 path="/labs/linux-sysadmin"

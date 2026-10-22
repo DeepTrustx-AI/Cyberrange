@@ -101,6 +101,8 @@ export const MyLabsPage: React.FC = () => {
           const isCloud = targetLabId === 'cloud-security-lab' || targetLabId === 'cloudcorp-aws-lab' || normalizedLabId.includes('cloud');
           if (targetLabId === 'linux-security-workshop') {
             navigate('/labs/linux-security-workshop');
+          } else if (targetLabId === 'race-conditions-lab') {
+            navigate('/labs/race-conditions-lab');
           } else if (isSysadmin) {
             navigate('/labs/linux-sysadmin');
           } else if (isCll) {

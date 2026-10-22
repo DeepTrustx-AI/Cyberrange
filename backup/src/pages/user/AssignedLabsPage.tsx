@@ -148,6 +148,8 @@ export const AssignedLabsPage: React.FC = () => {
           const isPuzzle = targetLabId === 'techcorp-sysadmin-labs' || targetLabId === 'puzzle-lab' || targetLabId.toLowerCase().includes('puzzle');
           if (targetLabId === 'linux-security-workshop') {
             navigate('/labs/linux-security-workshop');
+          } else if (targetLabId === 'race-conditions-lab') {
+            navigate('/labs/race-conditions-lab');
           } else if (isSysadmin) {
             navigate('/labs/linux-sysadmin');
           } else if (isCll) {
