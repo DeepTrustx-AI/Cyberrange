@@ -878,12 +878,39 @@ export const ChallengeSession: React.FC = () => {
             </div>
 
             {runtimeProvisioned && runtimeUrls?.workshop ? (
-              <iframe
-                title="ISO/IEC 42001 Runtime Shield Workshop"
-                src={runtimeUrls.workshop}
-                className="min-h-0 flex-1 border-0 bg-white"
-                sandbox="allow-forms allow-modals allow-scripts allow-same-origin"
-              />
+              <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-2 bg-slate-950">
+                <div className="min-h-0 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800">
+                  <div className="h-8 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[11px] font-bold tracking-wide text-emerald-300">
+                    RUNTIME SHIELD
+                  </div>
+                  <iframe
+                    title="ISO/IEC 42001 Runtime Shield Workshop"
+                    src={runtimeUrls.workshop}
+                    className="min-h-0 flex-1 border-0 bg-white"
+                    sandbox="allow-forms allow-modals allow-scripts allow-same-origin"
+                  />
+                </div>
+
+                <div className="min-h-0 flex flex-col">
+                  <div className="h-8 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[11px] font-bold tracking-wide text-blue-300">
+                    VS CODE · LEARNER WORKSPACE
+                  </div>
+
+                  {runtimeUrls.editor ? (
+                    <iframe
+                      title="Runtime Shield VS Code Workspace"
+                      src={runtimeUrls.editor}
+                      className="min-h-0 flex-1 border-0 bg-[#1e1e1e]"
+                      allow="clipboard-read; clipboard-write"
+                      onLoad={(event) => bindRuntimeEditorActivity(event.currentTarget)}
+                    />
+                  ) : (
+                    <div className="flex-1 grid place-items-center p-6 text-center text-xs text-slate-400">
+                      Restart this workshop session to enable the VS Code learner workspace.
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="flex min-h-0 flex-1 items-center justify-center p-6">
                 <div className="max-w-md text-center">
