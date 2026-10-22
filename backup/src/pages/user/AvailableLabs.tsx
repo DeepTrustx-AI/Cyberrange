@@ -249,6 +249,7 @@ export const AvailableLabs: React.FC = () => {
   const launchLab = (lab: Lab) => {
     const id = lab.id.toLowerCase().replace(/[\s_-]+/g, '-');
     if (id === 'linux-security-workshop') navigate('/labs/linux-security-workshop');
+    else if (id === 'race-conditions-lab') navigate('/labs/race-conditions-lab');
     else if (id === 'linux-sysadmin-lab') navigate('/labs/linux-sysadmin');
     else if (id === 'command-line-lab') navigate('/labs/command-line-lab/session/sess-cll-01');
     else if (id === 'cryptography-lab') navigate('/labs/cryptography-lab/session/sess-crypto-01');
@@ -397,10 +398,10 @@ export const AvailableLabs: React.FC = () => {
                   {/* Card top */}
                   <div className="p-5 border-b border-slate-100 dark:border-slate-800 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full truncate max-w-[180px] uppercase tracking-wide">
+                      <span className="min-w-0 text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full truncate max-w-[180px] uppercase tracking-wide">
                         {lab.categoryLabel}
                       </span>
-                      <span className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full capitalize ${DIFFICULTY_COLORS[lab.difficulty] || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
+                      <span className={`shrink-0 whitespace-nowrap text-[11px] font-bold border px-2.5 py-0.5 rounded-full capitalize ${DIFFICULTY_COLORS[lab.difficulty] || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                         {lab.difficulty}
                       </span>
                     </div>
@@ -598,6 +599,7 @@ export const AvailableLabs: React.FC = () => {
                         onClick={() => {
                           const id = lab.lab_id.toLowerCase().replace(/[\s_-]+/g, '-');
                           if (id === 'linux-security-workshop') navigate('/labs/linux-security-workshop');
+                          else if (id === 'race-conditions-lab') navigate('/labs/race-conditions-lab');
                           else if (id === 'linux-sysadmin-lab') navigate('/labs/linux-sysadmin');
                           else if (id === 'compliance-portal') navigate('/labs/compliance-portal/session/sess-compliance-01');
                           else navigate(`/labs/${lab.lab_id}/session/sess-123`);

@@ -51,6 +51,27 @@ function initialSubmissionPollDelayMs(): number {
   return 500 + Math.floor(Math.random() * 500);
 }
 
+const CATALOGS = {
+  sysadmin: {
+    id: 'linux-sysadmin-lab',
+    basePath: '/labs/linux-sysadmin',
+    title: 'Linux System Administration',
+    subtitle: 'Red Hat-aligned terminal challenges with state-based autograding',
+  },
+  workshop: {
+    id: 'linux-security-workshop',
+    basePath: '/labs/linux-security-workshop',
+    title: 'Linux Security and Cyber Defense Workshop',
+    subtitle: 'Two days · Foundation → Practitioner → Advanced · 12 exercises',
+  },
+  race: {
+    id: 'race-conditions-lab',
+    basePath: '/labs/race-conditions-lab',
+    title: 'Race Conditions: The Front Desk Case',
+    subtitle: 'A week at the Front Desk · 15 modules · your own case folder for every module',
+  },
+};
+
 const ACTIVE_SUBMISSION_STATUSES = new Set(['QUEUED', 'STARTING', 'RUNNING']);
 const TERMINAL_SUBMISSION_STATUSES = new Set(['PASS', 'FAIL', 'ERROR', 'TIMED_OUT']);
 
@@ -78,11 +99,23 @@ function difficultyClasses(value: string): string {
   }
 }
 
-function renderInline(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+const PLAIN_PATTERN = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+const ITALIC_PATTERN = (() => {
+  try {
+    return new RegExp('(\\*\\*[^*]+\\*\\*|(?<![\\w*])\\*[^\\s*][^*]*[^\\s*]\\*(?![\\w*])|`[^`]+`)', 'g');
+  } catch {
+    return PLAIN_PATTERN;
+  }
+})();
+
+function renderInline(text: string, italic = false): React.ReactNode[] {
+  const parts = text.split(italic ? ITALIC_PATTERN : PLAIN_PATTERN).filter(Boolean);
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    if (italic && part.length > 2 && part.startsWith('*') && part.endsWith('*')) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
@@ -98,12 +131,73 @@ function renderInline(text: string): React.ReactNode[] {
   });
 }
 
-const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
-  const lines = markdown.split(/\r?\n/);
+function joinWrappedLines(lines: string[]): string[] {
+  const joined: string[] = [];
+  let inFence = false;
+  let canJoin = false;
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (line.trimStart().startsWith('```')) {
+      inFence = !inFence;
+      joined.push(line);
+      canJoin = false;
+    } else if (inFence) {
+      joined.push(raw);
+    } else if (canJoin && line.trim() && !/^(#{1,2} |- |\d+\.\s|\||>)/.test(line)) {
+      joined[joined.length - 1] += ` ${line.trim()}`;
+    } else {
+      joined.push(line);
+      canJoin = Boolean(line.trim()) && !/^(#{1,2} |\||>)/.test(line);
+    }
+  }
+  return joined;
+}
+
+const QuestionMarkdown: React.FC<{ markdown: string; rich?: boolean }> = ({ markdown, rich = false }) => {
+  const split = markdown.split(/\r?\n/);
+  const lines = rich ? joinWrappedLines(split) : split;
   const nodes: React.ReactNode[] = [];
   let inCode = false;
   let codeLanguage = '';
   let codeLines: string[] = [];
+  let tableRows: string[][] = [];
+  let quoteLines: string[] = [];
+
+  const flushQuote = (key: string) => {
+    nodes.push(
+      <div key={key} className="border-l-4 border-blue-300 pl-3 text-sm leading-6 text-slate-600 dark:border-blue-800 dark:text-slate-400">
+        {renderInline(quoteLines.join(' '), true)}
+      </div>,
+    );
+    quoteLines = [];
+  };
+
+  const flushTable = (key: string) => {
+    const [head, ...body] = tableRows;
+    nodes.push(
+      <div key={key} className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-slate-50 dark:bg-slate-950/50">
+            <tr>
+              {head.map((cell, i) => (
+                <th key={i} className="px-3 py-2 font-black text-slate-900 dark:text-white">{renderInline(cell, true)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {body.map((row, r) => (
+              <tr key={r} className="border-t border-slate-200 dark:border-slate-800">
+                {row.map((cell, i) => (
+                  <td key={i} className="px-3 py-2 align-top text-slate-700 dark:text-slate-300">{renderInline(cell, true)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>,
+    );
+    tableRows = [];
+  };
 
   const flushCode = (key: string) => {
     nodes.push(
@@ -120,7 +214,8 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
 
   lines.forEach((rawLine, index) => {
     const line = rawLine.trimEnd();
-    const fence = line.match(/^```(.*)$/);
+    if (quoteLines.length && !(rich && line.startsWith('>'))) flushQuote(`quote-${index}`);
+    const fence = (rich ? line.trimStart() : line).match(/^```(.*)$/);
     if (fence) {
       if (inCode) flushCode(`code-${index}`);
       else codeLanguage = fence[1].trim();
@@ -129,6 +224,22 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
     }
     if (inCode) {
       codeLines.push(rawLine);
+      return;
+    }
+    if (rich && line.startsWith('|')) {
+      const cells = line.replace(/^\||\|$/g, '').split('|').map((cell) => cell.trim());
+      if (!cells.every((cell) => /^:?-+:?$/.test(cell))) tableRows.push(cells);
+      return;
+    }
+    if (tableRows.length) flushTable(`table-${index}`);
+    if (rich && line.startsWith('>')) {
+      const quote = line.replace(/^>\s?/, '').trim();
+      if (quote) {
+        quoteLines.push(quote);
+      } else {
+        if (quoteLines.length) flushQuote(`quote-${index}`);
+        nodes.push(<div key={index} className="h-1.5 border-l-4 border-blue-300 dark:border-blue-800" />);
+      }
       return;
     }
     if (!line.trim()) {
@@ -149,7 +260,7 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
     if (line.startsWith('## ')) {
       nodes.push(
         <h3 key={index} className="mt-5 mb-2 text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
-          {renderInline(line.slice(3))}
+          {renderInline(line.slice(3), rich)}
         </h3>,
       );
       return;
@@ -157,7 +268,7 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
     if (line.startsWith('# ')) {
       nodes.push(
         <h2 key={index} className="mb-3 text-lg font-black text-slate-950 dark:text-white">
-          {renderInline(line.slice(2))}
+          {renderInline(line.slice(2), rich)}
         </h2>,
       );
       return;
@@ -167,7 +278,7 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
       nodes.push(
         <div key={index} className="my-1.5 flex gap-2.5 text-sm leading-6 text-slate-700 dark:text-slate-300">
           <span className="min-w-5 font-bold text-blue-600 dark:text-blue-400">{ordered[1]}.</span>
-          <span>{renderInline(ordered[2])}</span>
+          <span>{renderInline(ordered[2], rich)}</span>
         </div>,
       );
       return;
@@ -176,19 +287,21 @@ const QuestionMarkdown: React.FC<{ markdown: string }> = ({ markdown }) => {
       nodes.push(
         <div key={index} className="my-1.5 flex gap-2.5 text-sm leading-6 text-slate-700 dark:text-slate-300">
           <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-          <span>{renderInline(line.slice(2))}</span>
+          <span>{renderInline(line.slice(2), rich)}</span>
         </div>,
       );
       return;
     }
     nodes.push(
       <p key={index} className="text-sm leading-6 text-slate-700 dark:text-slate-300">
-        {renderInline(line)}
+        {renderInline(line, rich)}
       </p>,
     );
   });
 
   if (inCode && codeLines.length) flushCode('code-final');
+  if (quoteLines.length) flushQuote('quote-final');
+  if (tableRows.length) flushTable('table-final');
   return <div>{nodes}</div>;
 };
 
@@ -196,7 +309,8 @@ const ResultPanel: React.FC<{
   submission: SysadminSubmission | null;
   waitingForResult: boolean;
   onRefresh: () => void;
-}> = ({ submission, waitingForResult, onRefresh }) => {
+  submissionFilename?: string;
+}> = ({ submission, waitingForResult, onRefresh, submissionFilename = 'your_script' }) => {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
@@ -227,7 +341,7 @@ const ResultPanel: React.FC<{
 
       {!submission ? (
         <div className="px-5 py-8 text-center text-sm text-slate-500">
-          No submission yet. Create your script in the terminal, then run <code className="font-mono">submit &lt;script.sh&gt;</code>.
+          No submission yet. Create your solution in the terminal, then run <code className="font-mono">submit {submissionFilename}</code>.
         </div>
       ) : (
         <div className="p-5">
@@ -296,9 +410,10 @@ const ResultPanel: React.FC<{
   );
 };
 
-export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ workshop = false }) => {
+export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean; race?: boolean }> = ({ workshop = false, race = false }) => {
   const navigate = useNavigate();
-  const basePath = workshop ? "/labs/linux-security-workshop" : "/labs/linux-sysadmin";
+  const catalog = CATALOGS[workshop ? 'workshop' : race ? 'race' : 'sysadmin'];
+  const basePath = catalog.basePath;
   const { labId } = useParams<{ labId?: string }>();
   const { apiFetch, token } = useAuth();
 
@@ -343,7 +458,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
       setLoadingLabs(true);
       setError(null);
       try {
-        const rows = await sysadminGradingService.listLabs(apiFetch, workshop ? "linux-security-workshop" : "linux-sysadmin-lab");
+        const rows = await sysadminGradingService.listLabs(apiFetch, catalog.id);
         if (cancelled) return;
         setLabs(rows);
         if (!labId && rows.length) {
@@ -359,10 +474,10 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
     };
     void load();
     return () => { cancelled = true; };
-  }, [apiFetch, labId, navigate, workshop, basePath]);
+  }, [apiFetch, labId, navigate, catalog.id, basePath]);
 
   useEffect(() => {
-    if (!selectedLabId) return;
+    if (!selectedLabId || loadingLabs || !labs.some((row) => row.lab_id === selectedLabId)) return;
     let cancelled = false;
     const load = async () => {
       setLoadingDetail(true);
@@ -387,7 +502,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
     setWaitingForResult(false);
     void load();
     return () => { cancelled = true; };
-  }, [apiFetch, selectedLabId]);
+  }, [apiFetch, selectedLabId, loadingLabs, labs]);
 
   useEffect(() => () => { pollGeneration.current += 1; }, []);
 
@@ -536,7 +651,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-600" /> Loading Linux Sysadmin lab…
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" /> Loading {catalog.title}…
         </div>
       </div>
     );
@@ -558,9 +673,9 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 shrink-0 text-blue-600" />
-                <h1 className="truncate text-base font-black sm:text-lg">{workshop ? "Linux Security and Cyber Defense Workshop" : "Linux System Administration"}</h1>
+                <h1 className="truncate text-base font-black sm:text-lg">{catalog.title}</h1>
               </div>
-              <p className="truncate text-[11px] text-slate-500">{workshop ? "Two days · Foundation → Practitioner → Advanced · 12 exercises" : "Red Hat-aligned terminal challenges with state-based autograding"}</p>
+              <p className="truncate text-[11px] text-slate-500">{catalog.subtitle}</p>
             </div>
           </div>
           <div className="hidden items-center gap-2 text-xs text-slate-500 sm:flex">
@@ -704,7 +819,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
                     <BookOpen className="h-4 w-4 text-blue-600" />
                     <h2 className="text-sm font-black">Challenge Instructions</h2>
                   </div>
-                  <QuestionMarkdown markdown={detail.question_markdown} />
+                  <QuestionMarkdown markdown={detail.question_markdown} rich={race} />
 
                   <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
                     <div className="flex items-center gap-2 text-xs font-black text-blue-800 dark:text-blue-300">
@@ -726,6 +841,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
                       terminalTitle={`RHSA — ${detail.title}`}
                       height="clamp(420px, 58vh, 600px)"
                       onCommand={handleTerminalCommand}
+                      editor={race ? { defaultFile: detail.submission_filename } : undefined}
                     />
                   ) : (
                     <div className="flex min-h-[440px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -734,7 +850,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
                       </div>
                       <h3 className="text-base font-black">Terminal workspace is not running</h3>
                       <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                        Start a disposable Linux workspace scoped to {detail.lab_id}. Your Bash work happens there; grading runs separately on trusted infrastructure.
+                        Start a disposable Linux workspace scoped to {detail.lab_id}. Your work happens there; grading runs separately on trusted infrastructure.
                       </p>
                       <button
                         type="button"
@@ -758,6 +874,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean }> = ({ worksho
                   submission={latestSubmission}
                   waitingForResult={waitingForResult}
                   onRefresh={() => { void refreshSubmissions(); void refreshWorkspace(); }}
+                  submissionFilename={detail.submission_filename}
                 />
 
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
