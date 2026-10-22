@@ -15,7 +15,6 @@ import {
   Play,
   TerminalSquare,
   BookOpen,
-  ClipboardList,
   ExternalLink,
   CircleDot,
   Eye,
@@ -977,7 +976,7 @@ export const ChallengeSession: React.FC = () => {
               })}
             </nav>
           )}
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className={`flex items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 ${isOTWaterLab ? 'hidden' : ''}`}>
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {isOTWaterLab ? 'Lab sequence' : 'Network Recon Modules'}
             </span>
@@ -1022,11 +1021,8 @@ export const ChallengeSession: React.FC = () => {
 
           {/* Module title */}
           <div className="space-y-2">
-            <span className="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-100 dark:border-blue-900 uppercase tracking-wider">
-              {isOTWaterLab ? `WATER FACILITY · STAGE ${activeChallengeIdx + 1}` : `NETWORK RECON — MODULE ${activeChallengeIdx + 1}`}
-            </span>
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              {activeModule.title.replace(/^Module \d+: /, '')}
+              {isOTWaterLab ? `Stage ${activeChallengeIdx + 1}: ${activeModule.title.replace(/^Module \d+: /, '')}` : activeModule.title.replace(/^Module \d+: /, '')}
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {activeModule.description}
@@ -1034,14 +1030,15 @@ export const ChallengeSession: React.FC = () => {
           </div>
 
           {/* Mission box */}
-          <div className="bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 rounded-xl p-4 space-y-1.5">
+          <div className={`border rounded-xl p-4 space-y-2 ${isOTWaterLab ? 'bg-[#e9f6f2] border-[#b8e3d8] dark:bg-[#102b27] dark:border-[#1d5d50]' : 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'}`}>
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#2563EB] dark:text-blue-400 uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>MISSION</span>
+              <span>{isOTWaterLab ? 'Mission brief — start here' : 'Mission'}</span>
             </div>
             <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
               {activeModule.mission}
             </p>
+            {isOTWaterLab && <p className="border-t border-[#b8e3d8] pt-2 text-xs leading-relaxed text-[#0b554e] dark:border-[#1d5d50] dark:text-emerald-200"><strong>Next:</strong> Start the operator console, then complete the first objective below. Keep this stage read-only.</p>}
           </div>
 
           {/* Objectives with per-objective green tick */}
@@ -1375,8 +1372,8 @@ export const ChallengeSession: React.FC = () => {
                 <BookOpen className="h-4 w-4" />
               </span>
               <div>
-                <h2 className="text-sm font-semibold">Field guide</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Keep the brief, reference notes, and console in one workspace.</p>
+                <h2 className="text-sm font-semibold">Stage support</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Use this after reading the mission brief on the left.</p>
               </div>
             </div>
 
@@ -1390,18 +1387,10 @@ export const ChallengeSession: React.FC = () => {
               </div>
             </section>
 
-            <section className="mt-5">
-              <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Working method</h3>
-              <ol className="mt-3 space-y-3 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Read the mission, then use the operator console to observe the target before changing anything.</span></li>
-                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Record the registers and services that answer the current stage objective.</span></li>
-                <li className="flex gap-2.5"><ClipboardList className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><span>Use SCADA and packet analysis only after the environment shows as live.</span></li>
-              </ol>
-            </section>
-
             <section className="mt-6 border-y border-[#d9e5e1] py-5 dark:border-[#1d3934]">
               {learningSaveError && <p role="alert" className="mb-3 text-xs font-medium text-rose-700 dark:text-rose-300">{learningSaveError} Retry the learning record; console work is unaffected.</p>}
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Evidence guide · {waterGuide.duration}</h3>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">When the console is live</h3>
+              <p className="mt-1 text-xs font-medium text-[#0f766e] dark:text-emerald-300">Observe first. Use this guidance to interpret what you find.</p>
               <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.brief}</p>
               <p className="mt-3 border-y border-amber-300/70 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:text-amber-200">{waterGuide.safetyNote}</p>
               <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" />{waterGuide.interpretation}</div>
