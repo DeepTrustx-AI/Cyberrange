@@ -386,6 +386,7 @@ export const AvailableLabs: React.FC = () => {
             {filteredLabs.map(lab => {
               const isFree = lab.isFree || lab.priceInr === 0;
               const isInCart = cartItems.some(i => i.lab_id === lab.id);
+              const isRuntimeShield = lab.id === 'iso-runtime-shield-workshop';
               const moduleCount = lab.modules.length || lab.totalChallenges || 5;
 
               return (
@@ -415,15 +416,17 @@ export const AvailableLabs: React.FC = () => {
 
                   {/* Card middle */}
                   <div className="p-5 bg-slate-50/50 dark:bg-slate-800/40 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      <span className="flex items-center gap-1">
-                        <Layers className="w-3.5 h-3.5 text-slate-400" />
-                        {moduleCount} Modules
-                      </span>
-                    </div>
+                    {!isRuntimeShield && (
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        <span className="flex items-center gap-1">
+                          <Layers className="w-3.5 h-3.5 text-slate-400" />
+                          {moduleCount} Modules
+                        </span>
+                      </div>
+                    )}
 
                     {/* Progress indicator — shows when user has started the lab */}
-                    {((lab.solvedChallenges ?? 0) > 0 || lab.isCompleted) && (
+                    {!isRuntimeShield && ((lab.solvedChallenges ?? 0) > 0 || lab.isCompleted) && (
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-[11px] font-bold">
                           <span className={lab.isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#2563EB] dark:text-blue-400'}>
