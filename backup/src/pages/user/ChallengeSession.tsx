@@ -79,6 +79,22 @@ type OperationalReview = {
   nextAction: string;
 };
 
+type RuntimeShieldBadge = {
+  module: number;
+  name: string;
+  points: number;
+  description: string;
+};
+
+const RUNTIME_SHIELD_BADGES: readonly RuntimeShieldBadge[] = [
+  { module: 1, name: 'Least Privilege Enforcer', points: 150, description: 'Completed the RBAC policy control.' },
+  { module: 2, name: 'Injection Hunter', points: 175, description: 'Contained the prompt-injection attempt.' },
+  { module: 3, name: 'Identity Sentinel', points: 175, description: 'Defeated authorization drift after an identity change.' },
+  { module: 4, name: 'Human Gatekeeper', points: 200, description: 'Completed the HITL sandbox approval workflow.' },
+  { module: 5, name: 'Forensic Observer', points: 150, description: 'Collected sufficient runtime telemetry evidence.' },
+  { module: 6, name: 'Runtime Defender', points: 150, description: 'Passed all automated Runtime Shield drills.' },
+];
+
 const WATER_STAGE_GUIDES: readonly WaterStageGuide[] = [
   {
     journeyLabel: 'Establish visibility', duration: '2 min',
@@ -254,6 +270,71 @@ export const ChallengeSession: React.FC = () => {
       // task remains a second signal if a browser blocks iframe document access.
     }
   }, [signalRuntimeEditorActivity]);
+
+  const [runtimeEarnedModules, setRuntimeEarnedModules] = useState<Set<number>>(new Set());
+  const [runtimeRewardScore, setRuntimeRewardScore] = useState(0);
+  const [runtimeBadgeToast, setRuntimeBadgeToast] = useState<RuntimeShieldBadge | null>(null);
+  const runtimeEarnedModulesRef = useRef<Set<number>>(new Set());
+  const runtimeRewardsHydratedRef = useRef(false);
+
+  const refreshRuntimeShieldRewards = useCallback(async (announceNew: boolean) => {
+    if (!isRuntimeShieldLab) return;
+    try {
+      const response = await apiFetch(
+        `/api/v1/reporting/progress?lab_id=${encodeURIComponent(labId || 'iso-runtime-shield-workshop')}`,
+      );
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const completed = new Set<number>();
+
+      for (const rawModuleId of Array.isArray(data.completed_modules) ? data.completed_modules : []) {
+        const match = String(rawModuleId).match(/_module([1-6])$/);
+        if (match) completed.add(Number(match[1]));
+      }
+
+      if (runtimeRewardsHydratedRef.current && announceNew) {
+        const newlyEarned = RUNTIME_SHIELD_BADGES.filter(
+          (badge) => completed.has(badge.module) && !runtimeEarnedModulesRef.current.has(badge.module),
+        );
+        if (newlyEarned.length > 0) {
+          setRuntimeBadgeToast(newlyEarned[newlyEarned.length - 1]);
+        }
+      }
+
+      runtimeEarnedModulesRef.current = completed;
+      setRuntimeEarnedModules(completed);
+
+      const fallbackScore = RUNTIME_SHIELD_BADGES
+        .filter((badge) => completed.has(badge.module))
+        .reduce((sum, badge) => sum + badge.points, 0);
+
+      setRuntimeRewardScore(Number(data.total_score) || fallbackScore);
+      runtimeRewardsHydratedRef.current = true;
+    } catch {
+      // Rewards are additive UI; reporting failures must not interrupt the workshop.
+    }
+  }, [apiFetch, isRuntimeShieldLab, labId]);
+
+  useEffect(() => {
+    if (!isRuntimeShieldLab) return;
+
+    void refreshRuntimeShieldRewards(false);
+    if (!runtimeProvisioned) return;
+
+    const interval = window.setInterval(() => {
+      void refreshRuntimeShieldRewards(true);
+    }, 2500);
+
+    return () => window.clearInterval(interval);
+  }, [isRuntimeShieldLab, runtimeProvisioned, refreshRuntimeShieldRewards]);
+
+  useEffect(() => {
+    if (!runtimeBadgeToast) return;
+    const timeout = window.setTimeout(() => setRuntimeBadgeToast(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [runtimeBadgeToast]);
+
   const [terminalHistory, setTerminalHistory] = useState<string[]>([]);
   const [commandInput, setCommandInput] = useState('');
   const [isRoot, setIsRoot] = useState(false);
@@ -851,6 +932,27 @@ export const ChallengeSession: React.FC = () => {
           </div>
         </header>
 
+        {runtimeBadgeToast && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="fixed right-5 top-20 z-[70] w-[min(360px,calc(100vw-2.5rem))] rounded-2xl border border-emerald-700/70 bg-slate-900 p-4 shadow-2xl shadow-black/40"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-400 text-emerald-950">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">Badge earned</p>
+                <p className="mt-1 text-sm font-black text-white">{runtimeBadgeToast.name}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  {runtimeBadgeToast.description} +{runtimeBadgeToast.points} XP
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <main className="min-h-0 flex-1 p-4 sm:p-6">
           <section className="mx-auto flex h-full w-full max-w-[1600px] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
             <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
@@ -875,6 +977,42 @@ export const ChallengeSession: React.FC = () => {
                   Stop
                 </button>
               </div>
+            </div>
+
+            <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-800 bg-slate-950/70 px-4 py-2.5">
+              <div className="mr-1 flex flex-shrink-0 items-center gap-2 border-r border-slate-800 pr-3">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs font-black text-white">
+                  {runtimeEarnedModules.size}/6
+                </span>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {runtimeRewardScore}/1000 XP
+                </span>
+              </div>
+
+              {RUNTIME_SHIELD_BADGES.map((badge) => {
+                const earned = runtimeEarnedModules.has(badge.module);
+                return (
+                  <div
+                    key={badge.module}
+                    title={`${badge.name} · ${badge.points} XP`}
+                    className={`flex flex-shrink-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors ${
+                      earned
+                        ? 'border-emerald-700/70 bg-emerald-950/50 text-emerald-200'
+                        : 'border-slate-800 bg-slate-900/60 text-slate-600'
+                    }`}
+                  >
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-black ${
+                      earned ? 'bg-emerald-400 text-emerald-950' : 'bg-slate-800 text-slate-500'
+                    }`}>
+                      {earned ? '✓' : badge.module}
+                    </span>
+                    <span className="hidden text-[10px] font-extrabold xl:inline">
+                      {badge.name}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
             {runtimeProvisioned && runtimeUrls?.workshop ? (
