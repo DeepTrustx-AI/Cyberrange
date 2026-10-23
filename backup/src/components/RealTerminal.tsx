@@ -19,7 +19,7 @@ interface RealTerminalProps {
   height?: string;
   className?: string;
   /** Called every time the user submits a command (presses Enter) */
-  onCommand?: (cmd: string) => void;
+  onCommand?: (cmd: string) => void | Promise<void>;
   /** Optional WebSocket path override. Auth token is appended automatically. */
   wsPath?: string;
   /** Optional terminal title override. */
@@ -48,7 +48,19 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
   const commandBufferRef = useRef<string>('');
   // Keep a stable ref to the onCommand callback so the onData closure is never stale
   const onCommandRef = useRef(onCommand);
+  // Serialize objective callbacks. A pasted multi-line block can produce several
+  // completed commands in a single xterm event; without a queue the parent may
+  // still be processing the previous command and silently drop the next one.
+  const commandDispatchRef = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => { onCommandRef.current = onCommand; }, [onCommand]);
+
+  const dispatchTrackedCommand = useCallback((command: string) => {
+    const cmd = command.trim();
+    if (!cmd) return;
+    commandDispatchRef.current = commandDispatchRef.current
+      .then(async () => { await onCommandRef.current?.(cmd); })
+      .catch((error) => { console.warn('[RealTerminal] command tracking failed:', error); });
+  }, []);
 
   const editorEnabledRef = useRef(Boolean(editor));
   useEffect(() => { editorEnabledRef.current = Boolean(editor); }, [editor]);
@@ -219,20 +231,27 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
         socketRef.current.send(data);
       }
 
-      // Track typed characters to build the command buffer
-      if (data === '\r' || data === '\n') {
-        // Enter pressed — fire onCommand with the buffered command
-        const cmd = commandBufferRef.current.trim();
-        if (cmd && onCommandRef.current) {
-          onCommandRef.current(cmd);
+      // Track the input stream character-by-character. xterm may deliver a
+      // paste (including its trailing Enter) as one multi-character chunk, so
+      // comparing the whole event with "\r"/"\n" misses real commands.
+      // Strip CSI wrappers such as bracketed-paste and arrow-key sequences from
+      // the tracking copy only; the original bytes were already sent to the PTY.
+      const trackingData = data.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '');
+      for (const char of trackingData) {
+        if (char === '\r' || char === '\n') {
+          dispatchTrackedCommand(commandBufferRef.current);
+          commandBufferRef.current = '';
+        } else if (char === '\x7f' || char === '\b') {
+          commandBufferRef.current = commandBufferRef.current.slice(0, -1);
+        } else if (char === '\x15' || char === '\x03') {
+          // Ctrl-U / Ctrl-C clear the in-progress shell line.
+          commandBufferRef.current = '';
+        } else if (char === '\x17') {
+          // Ctrl-W removes the previous shell word.
+          commandBufferRef.current = commandBufferRef.current.replace(/\S+\s*$/, '');
+        } else if (char.charCodeAt(0) >= 32) {
+          commandBufferRef.current += char;
         }
-        commandBufferRef.current = '';
-      } else if (data === '\x7f' || data === '\b') {
-        // Backspace
-        commandBufferRef.current = commandBufferRef.current.slice(0, -1);
-      } else if (data.charCodeAt(0) >= 32) {
-        // Printable character
-        commandBufferRef.current += data;
       }
     });
 
@@ -334,7 +353,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     sendRaw('\r');
     const cmd = commandBufferRef.current.trim();
     commandBufferRef.current = '';
-    if (cmd && onCommandRef.current) onCommandRef.current(cmd);
+    dispatchTrackedCommand(cmd);
     termInstanceRef.current?.focus();
   };
 
