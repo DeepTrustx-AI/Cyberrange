@@ -902,7 +902,7 @@ export const ChallengeSession: React.FC = () => {
   if (isRuntimeShieldLab) {
     return (
       <div className="h-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden">
-        <header className="h-16 flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 sm:px-6 flex items-center justify-between gap-4">
+        <header className="h-14 flex-shrink-0 border-b border-slate-800 bg-slate-900 px-4 sm:px-5 flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-emerald-700/60 bg-emerald-950/50">
               <ShieldCheck className="h-5 w-5 text-emerald-400" />
@@ -953,9 +953,9 @@ export const ChallengeSession: React.FC = () => {
           </div>
         )}
 
-        <main className="min-h-0 flex-1 p-4 sm:p-6">
-          <section className="mx-auto flex h-full w-full max-w-[1600px] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
-            <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
+        <main className="min-h-0 flex-1 p-2 sm:p-3">
+          <section className="mx-auto flex h-full w-full max-w-none flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/20">
+            <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-2.5">
               <div>
                 <h1 className="text-base font-bold text-white">Runtime Shield Console</h1>
                 <p className="mt-0.5 text-xs text-slate-400">Launch a private workshop session to inspect and protect the AI runtime.</p>
@@ -979,7 +979,7 @@ export const ChallengeSession: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-800 bg-slate-950/70 px-4 py-2.5">
+            <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-800 bg-slate-950/70 px-3 py-1.5">
               <div className="mr-1 flex flex-shrink-0 items-center gap-2 border-r border-slate-800 pr-3">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 <span className="text-xs font-black text-white">
@@ -1016,9 +1016,9 @@ export const ChallengeSession: React.FC = () => {
             </div>
 
             {runtimeProvisioned && runtimeUrls?.workshop ? (
-              <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] bg-slate-950">
+              <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] bg-slate-950">
                 <div className="min-h-0 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800">
-                  <div className="h-8 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[11px] font-bold tracking-wide text-emerald-300">
+                  <div className="h-7 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[10px] font-bold tracking-wide text-emerald-300">
                     RUNTIME SHIELD
                   </div>
                   <iframe
@@ -1030,7 +1030,7 @@ export const ChallengeSession: React.FC = () => {
                 </div>
 
                 <div className="min-h-0 flex flex-col">
-                  <div className="h-8 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[11px] font-bold tracking-wide text-blue-300">
+                  <div className="h-7 px-3 flex items-center bg-slate-900 border-b border-slate-800 text-[10px] font-bold tracking-wide text-blue-300">
                     VS CODE · LEARNER WORKSPACE
                   </div>
 
