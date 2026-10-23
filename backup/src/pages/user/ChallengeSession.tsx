@@ -153,7 +153,12 @@ export const ChallengeSession: React.FC = () => {
 
   const isReconLab = labId === 'lab1-recon' || labId === 'recon-lab';
   const isOTWaterLab = labId === 'ot-water-treatment';
+  const isOTRailroadLab = labId === 'ot-railroad-north';
+  const isManagedOTLab = isOTWaterLab || isOTRailroadLab;
   const isRuntimeShieldLab = labId === 'iso-runtime-shield-workshop';
+  const otLab = isOTRailroadLab
+    ? { apiBase: '/api/v1/ot-railroad', terminalLabId: 'ot-railroad-north', terminalTitle: 'IronTrack OT Security Workstation', heading: 'Railroad control lab', emptyState: 'Start a private railroad-control environment. Your SCADA and packet-analysis tools will appear here when it is ready.' }
+    : { apiBase: '/api/v1/ot-water', terminalLabId: 'ot-water-treatment', terminalTitle: 'AquaShield OT Security Workstation', heading: 'Water treatment lab', emptyState: 'Start a private water-treatment environment. Your SCADA and packet-analysis tools will appear here when it is ready.' };
 
   const [currentModules, setCurrentModules] = useState<ReconModule[]>([]);
   const [contentError, setContentError] = useState('');
@@ -343,12 +348,12 @@ export const ChallengeSession: React.FC = () => {
   const [otStudyLoading, setOTStudyLoading] = useState(false);
   const [activeStudyMaterialId, setActiveStudyMaterialId] = useState<string | null>(null);
 
-  const startOTWaterLab = useCallback(async () => {
-    if (!isOTWaterLab || otProvisioning || otProvisioned) return;
+  const startManagedOTLab = useCallback(async () => {
+    if (!isManagedOTLab || otProvisioning || otProvisioned) return;
     setOTProvisioning(true);
     setOTProvisionError(null);
     try {
-      const response = await apiFetch('/api/v1/ot-water/sessions', {
+      const response = await apiFetch(`${otLab.apiBase}/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // FastAPI still requires a request body for the StartSession model,
@@ -365,20 +370,20 @@ export const ChallengeSession: React.FC = () => {
     } finally {
       setOTProvisioning(false);
     }
-  }, [apiFetch, isOTWaterLab, otProvisioned, otProvisioning]);
+  }, [apiFetch, isManagedOTLab, otLab.apiBase, otProvisioned, otProvisioning]);
 
-  const stopOTWaterLab = useCallback(() => {
-    if (!isOTWaterLab || (!otProvisioned && !terminalConnected)) return;
+  const stopManagedOTLab = useCallback(() => {
+    if (!isManagedOTLab || (!otProvisioned && !terminalConnected)) return;
     setTerminalConnected(false);
     setOTProvisioned(false);
     setOTUrls(null);
-    apiFetch('/api/v1/ot-water/sessions/current', { method: 'DELETE' }).catch(() => {});
-  }, [apiFetch, isOTWaterLab, otProvisioned, terminalConnected]);
+    apiFetch(`${otLab.apiBase}/sessions/current`, { method: 'DELETE' }).catch(() => {});
+  }, [apiFetch, isManagedOTLab, otLab.apiBase, otProvisioned, terminalConnected]);
 
   useEffect(() => {
-    if (!isOTWaterLab) return;
+    if (!isManagedOTLab) return;
     let cancelled = false;
-    apiFetch('/api/v1/ot-water/sessions/current')
+    apiFetch(`${otLab.apiBase}/sessions/current`)
       .then(async (response) => response.ok ? response.json() : null)
       .then((data) => {
         if (cancelled || !data) return;
@@ -388,7 +393,7 @@ export const ChallengeSession: React.FC = () => {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [apiFetch, isOTWaterLab]);
+  }, [apiFetch, isManagedOTLab, otLab.apiBase]);
 
   useEffect(() => {
     if (!isOTWaterLab) return;
@@ -1073,11 +1078,11 @@ export const ChallengeSession: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={`h-screen flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors overflow-hidden ${
-      isOTWaterLab ? 'bg-[#eef4f2] dark:bg-[#071817]' : 'bg-[#F8FAFC] dark:bg-slate-950'
+      isManagedOTLab ? 'bg-[#eef4f2] dark:bg-[#071817]' : 'bg-[#F8FAFC] dark:bg-slate-950'
     }`}>
       {/* Top Nav */}
       <header className={`h-16 border-b px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 ${
-        isOTWaterLab
+        isManagedOTLab
           ? 'bg-[#fbfdfc] dark:bg-[#0b211e] border-[#d9e5e1] dark:border-[#1d3934]'
           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs'
       }`}>
@@ -1092,12 +1097,12 @@ export const ChallengeSession: React.FC = () => {
             </button>
           )}
           <div className="flex items-center gap-2">
-            {isOTWaterLab ? (
+            {isManagedOTLab ? (
               <>
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f766e] text-white shadow-sm">
                   <CircleDot className="h-4 w-4" />
                 </span>
-                <span className="font-semibold text-slate-900 dark:text-white text-sm">Water treatment lab</span>
+                <span className="font-semibold text-slate-900 dark:text-white text-sm">{otLab.heading}</span>
               </>
             ) : (
               <>
@@ -1113,9 +1118,9 @@ export const ChallengeSession: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <div className={`hidden sm:flex items-center gap-2 text-xs font-bold border px-3 py-1.5 rounded-lg ${
-            isOTWaterLab ? 'bg-[#f1f7f5] dark:bg-[#102b27] border-[#d9e5e1] dark:border-[#26443e]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+            isManagedOTLab ? 'bg-[#f1f7f5] dark:bg-[#102b27] border-[#d9e5e1] dark:border-[#26443e]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
           }`}>
-            <span className="text-slate-400 dark:text-slate-500">{isOTWaterLab ? 'Stage' : 'Module'}</span>
+            <span className="text-slate-400 dark:text-slate-500">{isManagedOTLab ? 'Stage' : 'Module'}</span>
             <span className="text-slate-800 dark:text-slate-100">{activeChallengeIdx + 1} of {currentModules.length}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 border border-blue-100 dark:border-blue-900 px-3.5 py-1.5 rounded-xl">
@@ -1129,7 +1134,7 @@ export const ChallengeSession: React.FC = () => {
             </div>
           )}
           <button
-            onClick={() => { if (window.confirm('Exit this challenge session?')) { stopOTWaterLab(); handleReturn(); } }}
+            onClick={() => { if (window.confirm('Exit this challenge session?')) { stopManagedOTLab(); handleReturn(); } }}
             className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -1139,13 +1144,13 @@ export const ChallengeSession: React.FC = () => {
       </header>
 
       {/* Main split */}
-      <div className={`flex-1 min-h-0 ${isOTWaterLab
+      <div className={`flex-1 min-h-0 ${isManagedOTLab
         ? 'grid grid-cols-1 xl:grid-cols-[18rem_minmax(0,1fr)_19rem] gap-4 p-4 lg:p-5 overflow-y-auto xl:overflow-hidden'
         : 'p-6 flex flex-col md:flex-row gap-6 overflow-hidden'
       }`}>
 
         {/* ── Left Panel ── */}
-        <div className={`bg-white dark:bg-slate-900 border flex flex-col min-h-0 overflow-y-auto ${isOTWaterLab
+        <div className={`bg-white dark:bg-slate-900 border flex flex-col min-h-0 overflow-y-auto ${isManagedOTLab
           ? 'w-full rounded-xl border-[#d9e5e1] dark:border-[#1d3934] p-5 space-y-5 shadow-[0_10px_30px_rgba(15,118,110,0.06)]'
           : 'w-full md:w-[45%] border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6'
         }`}>
@@ -1165,7 +1170,7 @@ export const ChallengeSession: React.FC = () => {
               })}
             </nav>
           )}
-          <div className={`flex items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 ${isOTWaterLab ? 'hidden' : ''}`}>
+          <div className={`flex items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 ${isManagedOTLab ? 'hidden' : ''}`}>
             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {isOTWaterLab ? 'Lab sequence' : 'Network Recon Modules'}
             </span>
@@ -1365,7 +1370,7 @@ export const ChallengeSession: React.FC = () => {
 
         {/* ── Right Terminal Panel ── */}
         <div className={`bg-[#091513] border border-[#18342f] flex flex-col min-h-[32rem] overflow-hidden ${
-          isOTWaterLab ? 'rounded-xl shadow-[0_18px_48px_rgba(7,24,23,0.2)]' : 'flex-1 rounded-2xl border-slate-800 shadow-xl'
+          isManagedOTLab ? 'rounded-xl shadow-[0_18px_48px_rgba(7,24,23,0.2)]' : 'flex-1 rounded-2xl border-slate-800 shadow-xl'
         }`}>
           {/* Terminal Header */}
           <div className="h-11 bg-[#0F172A] border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
@@ -1376,7 +1381,7 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
               </div>
               <span className="font-mono text-xs font-bold text-slate-300">
-                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isOTWaterLab ? 'Operator console · isolated environment' : isRuntimeShieldLab ? 'Runtime Shield · isolated AI security workshop' : 'Terminal Emulator — Execution Environment'}
+                {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isManagedOTLab ? 'Operator console · isolated environment' : isRuntimeShieldLab ? 'Runtime Shield · isolated AI security workshop' : 'Terminal Emulator — Execution Environment'}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -1384,7 +1389,7 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00FF9D] animate-pulse" />
                 {isReconLab
                   ? (reconProvisioned ? 'CONTAINER LIVE' : reconProvisionError ? 'PROVISION FAILED' : reconProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
-                  : isOTWaterLab
+                  : isManagedOTLab
                     ? (otProvisioned ? 'OT TASK LIVE' : otProvisionError ? 'PROVISION FAILED' : otProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : isRuntimeShieldLab
                     ? (runtimeProvisioned ? 'WORKSHOP LIVE' : runtimeProvisionError ? 'PROVISION FAILED' : runtimeProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
@@ -1412,7 +1417,7 @@ export const ChallengeSession: React.FC = () => {
               {!isReconLab && (
                 <>
                   <button
-                    onClick={isOTWaterLab ? startOTWaterLab : isRuntimeShieldLab ? startRuntimeShieldLab : () => setTerminalConnected(true)}
+                    onClick={isManagedOTLab ? startManagedOTLab : isRuntimeShieldLab ? startRuntimeShieldLab : () => setTerminalConnected(true)}
                     disabled={isRuntimeShieldLab ? (runtimeProvisioned || runtimeProvisioning) : (terminalConnected || otProvisioning)}
                     className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
@@ -1420,13 +1425,13 @@ export const ChallengeSession: React.FC = () => {
                     <span>{isRuntimeShieldLab ? (runtimeProvisioning ? 'Starting...' : 'Start Workshop') : (otProvisioning ? 'Starting...' : 'Start Terminal')}</span>
                   </button>
                   <button
-                    onClick={isOTWaterLab ? stopOTWaterLab : isRuntimeShieldLab ? stopRuntimeShieldLab : () => setTerminalConnected(false)}
+                    onClick={isManagedOTLab ? stopManagedOTLab : isRuntimeShieldLab ? stopRuntimeShieldLab : () => setTerminalConnected(false)}
                     disabled={isRuntimeShieldLab ? !runtimeProvisioned : (!terminalConnected || commandBusy)}
                     className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <span>Disconnect</span>
                   </button>
-                  {!isOTWaterLab && !isRuntimeShieldLab && <button
+                  {!isManagedOTLab && !isRuntimeShieldLab && <button
                     disabled={commandBusy}
                     onClick={async () => {
                       if (busyRef.current) return;
@@ -1510,7 +1515,7 @@ export const ChallengeSession: React.FC = () => {
                 )}
               </div>
             </div>
-          ) : isOTWaterLab && terminalConnected ? (
+          ) : isManagedOTLab && terminalConnected ? (
             <>
               {otUrls && (
                 <div className="px-5 py-2.5 bg-[#0d211e] border-b border-[#18342f] flex flex-wrap gap-2 text-xs font-bold">
@@ -1519,10 +1524,10 @@ export const ChallengeSession: React.FC = () => {
                 </div>
               )}
               <RealTerminal
-                labId="ot-water-treatment"
+                labId={otLab.terminalLabId}
                 token={token ?? undefined}
-                wsPath="/api/v1/ot-water/terminal"
-                terminalTitle="AquaShield OT Security Workstation"
+                wsPath={`${otLab.apiBase}/terminal`}
+                terminalTitle={otLab.terminalTitle}
                 height="100%"
                 className="min-h-0 flex-1 rounded-none border-x-0 border-b-0 shadow-none"
                 onCommand={recordTerminalCommand}
@@ -1565,11 +1570,11 @@ export const ChallengeSession: React.FC = () => {
               <p className="max-w-sm text-slate-400 font-mono text-sm">
                 {isRuntimeShieldLab
                   ? <>Start the isolated Runtime Shield workshop. The AI security console will open here when its private session is ready.</>
-                  : isOTWaterLab
-                  ? <>Start a private water-treatment environment. Your SCADA and packet-analysis tools will appear here when it is ready.</>
+                  : isManagedOTLab
+                  ? <>{otLab.emptyState}</>
                   : <>Click <span className="text-[#00FF9D] font-bold">"Start Terminal"</span> to connect to your execution workstation environment.</>}
               </p>
-              {isOTWaterLab && otProvisionError && <p className="text-rose-400 font-mono text-xs">{otProvisionError}</p>}
+              {isManagedOTLab && otProvisionError && <p className="text-rose-400 font-mono text-xs">{otProvisionError}</p>}
               {isRuntimeShieldLab && runtimeProvisionError && <p className="text-rose-400 font-mono text-xs">{runtimeProvisionError}</p>}
             </div>
           )}
@@ -1654,6 +1659,24 @@ export const ChallengeSession: React.FC = () => {
                 </div>
               )}
             </section>
+          </aside>
+        )}
+        {isOTRailroadLab && (
+          <aside className="min-h-0 overflow-y-auto rounded-xl border border-[#d9e5e1] bg-[#fbfdfc] p-5 text-slate-800 shadow-[0_10px_30px_rgba(15,118,110,0.06)] dark:border-[#1d3934] dark:bg-[#0b211e] dark:text-slate-100 xl:order-none">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#dcefe9] text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300"><BookOpen className="h-4 w-4" /></span>
+              <div><h2 className="text-sm font-semibold">Operations support</h2><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Use the mission brief and console evidence together.</p></div>
+            </div>
+            <section className="mt-6 border-y border-[#d9e5e1] py-4 dark:border-[#1d3934]">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Lab progress</span><span className="font-semibold tabular-nums text-[#0f766e] dark:text-emerald-300">{completedModules}/{currentModules.length} stages</span></div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#dce8e4] dark:bg-[#17342f]"><div className="h-full rounded-full bg-[#0f766e] transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} /></div>
+            </section>
+            <section className="mt-6 space-y-4 text-xs leading-5 text-slate-600 dark:text-slate-300">
+              <div className="flex gap-2"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Observe signal, switch, and route state before making a conclusion.</p></div>
+              <div className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Record the expected safety effect before attempting any simulated action.</p></div>
+              <div className="flex gap-2"><FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Use the SCADA view and packet evidence to support your answer.</p></div>
+            </section>
+            <section className="mt-6 border-t border-[#d9e5e1] pt-4 dark:border-[#1d3934]"><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Current stage</p><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{activeModule.title}</p></section>
           </aside>
         )}
       </div>
