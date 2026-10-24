@@ -693,9 +693,10 @@ export const ChallengeSession: React.FC = () => {
     const submittedFlag = flagInput.trim();
     const currentLabId = labId || 'lab1-recon';
 
-    // For the real-container recon lab, students find flags inside the live
-    // terminal — there are no simulated objectives to tick off.
-    if (!isReconLab) {
+    // Recon flags and Railroad stage evidence come from live containers.
+    // Railroad investigation steps are advisory and must never gate a valid
+    // solution just because the learner used a different investigation path.
+    if (!isReconLab && !isOTRailroadLab) {
       const currentObjs = objProgress[activeModule.id] || [];
       const allObjectivesCompleted = activeModule.objectives.length > 0 &&
         currentObjs.length === activeModule.objectives.length &&
@@ -774,7 +775,9 @@ export const ChallengeSession: React.FC = () => {
         setTimeout(() => { setSubmissionStatus('idle'); setFlagInput(''); }, 3000);
       } else {
         setSubmissionStatus('error');
-        setSubmissionMessage('Incorrect flag. Try again.');
+        setSubmissionMessage(isOTRailroadLab
+          ? 'Evidence not accepted yet. Re-check the live Railroad environment and try again.'
+          : 'Incorrect flag. Try again.');
         setTimeout(() => setSubmissionStatus('idle'), 1800);
       }
     } catch {
@@ -1216,7 +1219,7 @@ export const ChallengeSession: React.FC = () => {
           {/* Module title */}
           <div className="space-y-2">
             <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              {isOTWaterLab ? `Stage ${activeChallengeIdx + 1}: ${activeModule.title.replace(/^Module \d+: /, '')}` : activeModule.title.replace(/^Module \d+: /, '')}
+              {isManagedOTLab ? `Stage ${activeChallengeIdx + 1}: ${activeModule.title.replace(/^Module \d+: /, '')}` : activeModule.title.replace(/^Module \d+: /, '')}
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {activeModule.description}
@@ -1235,44 +1238,67 @@ export const ChallengeSession: React.FC = () => {
             {isOTWaterLab && <p className="border-t border-[#b8e3d8] pt-2 text-xs leading-relaxed text-[#0b554e] dark:border-[#1d5d50] dark:text-emerald-200"><strong>Next:</strong> Start the operator console, then complete the first objective below. Keep this stage read-only.</p>}
           </div>
 
-          {/* Objectives with per-objective green tick */}
+          {/* Railroad uses investigation guidance rather than hard command-detection gates. */}
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              <span>OBJECTIVES ({activeModule.objectives.length} REQUIRED)</span>
-              <span className={completedObjCount === activeModule.objectives.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}>
-                {completedObjCount}/{activeModule.objectives.length} COMPLETED
-              </span>
+              <span>{isOTRailroadLab ? 'INVESTIGATION STEPS' : `OBJECTIVES (${activeModule.objectives.length} REQUIRED)`}</span>
+              {!isOTRailroadLab && (
+                <span className={completedObjCount === activeModule.objectives.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}>
+                  {completedObjCount}/{activeModule.objectives.length} COMPLETED
+                </span>
+              )}
             </div>
 
-            <div className="space-y-2">
-              {activeModule.objectives.map((obj, i) => {
-                const done = getObjDone(activeChallengeIdx, i);
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-medium transition-all border ${
-                      done
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
-                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-800'
-                    }`}
-                  >
-                    <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                      done ? 'bg-[#10B981] text-white' : 'border-2 border-slate-300 dark:border-slate-600'
-                    }`}>
-                      {done && <CheckCircle2 className="w-3.5 h-3.5" />}
-                    </span>
-                    <span className="leading-snug">{obj.label}</span>
-                  </div>
-                );
-              })}
-            </div>
+            {isOTRailroadLab ? (
+              <>
+                <p className="text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                  Guidance only — investigate in any order. Stage completion is based on the evidence you submit, not on detecting specific terminal commands.
+                </p>
+                <div className="space-y-2">
+                  {activeModule.objectives.map((obj, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-xs font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300"
+                    >
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#dcefe9] text-[10px] font-black text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300">
+                        {i + 1}
+                      </span>
+                      <span className="leading-snug">{obj.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                {activeModule.objectives.map((obj, i) => {
+                  const done = getObjDone(activeChallengeIdx, i);
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-medium transition-all border ${
+                        done
+                          ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                          : 'bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-100 dark:border-slate-800'
+                      }`}
+                    >
+                      <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                        done ? 'bg-[#10B981] text-white' : 'border-2 border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {done && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </span>
+                      <span className="leading-snug">{obj.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Hints */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              <span>MODULE HINTS ({activeModule.hints.length} MAX)</span>
-              <span className="text-amber-600 dark:text-amber-400">-25 pts per hint</span>
+              <span>{isOTRailroadLab ? 'STAGE HINTS' : 'MODULE HINTS'} ({activeModule.hints.length} MAX)</span>
+              <span className="text-amber-600 dark:text-amber-400">-20 pts per hint</span>
             </div>
             <div className="space-y-2">
               {activeModule.hints.map((hint, idx) => {
@@ -1317,13 +1343,13 @@ export const ChallengeSession: React.FC = () => {
           {/* Flag submission */}
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              SUBMIT STAGE FLAG
+              {isOTRailroadLab ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
             </label>
             <form onSubmit={handleFlagSubmit} className="space-y-3">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="FLAG{...}"
+                  placeholder={isOTRailroadLab ? 'Evidence value' : 'FLAG{...}'}
                   value={flagInput}
                   onChange={(e) => setFlagInput(e.target.value)}
                   disabled={isSolved}
@@ -1530,7 +1556,7 @@ export const ChallengeSession: React.FC = () => {
                 terminalTitle={otLab.terminalTitle}
                 height="100%"
                 className="min-h-0 flex-1 rounded-none border-x-0 border-b-0 shadow-none"
-                onCommand={recordTerminalCommand}
+                onCommand={isOTRailroadLab ? undefined : recordTerminalCommand}
               />
             </>
           ) : terminalConnected ? (
