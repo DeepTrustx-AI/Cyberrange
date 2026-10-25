@@ -154,9 +154,12 @@ export const ChallengeSession: React.FC = () => {
   const isReconLab = labId === 'lab1-recon' || labId === 'recon-lab';
   const isOTWaterLab = labId === 'ot-water-treatment';
   const isOTRailroadLab = labId === 'ot-railroad-north';
-  const isManagedOTLab = isOTWaterLab || isOTRailroadLab;
+  const isOTSecurityLab = labId === 'ot-security-lab';
+  const isManagedOTLab = isOTWaterLab || isOTRailroadLab || isOTSecurityLab;
   const isRuntimeShieldLab = labId === 'iso-runtime-shield-workshop';
-  const otLab = isOTRailroadLab
+  const otLab = isOTSecurityLab
+    ? { apiBase: '/api/v1/ot-security', terminalLabId: 'ot-security-lab', terminalTitle: 'SimulOT ICS Security Workstation', heading: 'ICS security simulator', emptyState: 'Start a private ICS-security environment. The plant simulator and PCAP analysis tools will appear here when it is ready.' }
+    : isOTRailroadLab
     ? { apiBase: '/api/v1/ot-railroad', terminalLabId: 'ot-railroad-north', terminalTitle: 'IronTrack OT Security Workstation', heading: 'Railroad control lab', emptyState: 'Start a private railroad-control environment. Your SCADA and packet-analysis tools will appear here when it is ready.' }
     : { apiBase: '/api/v1/ot-water', terminalLabId: 'ot-water-treatment', terminalTitle: 'AquaShield OT Security Workstation', heading: 'Water treatment lab', emptyState: 'Start a private water-treatment environment. Your SCADA and packet-analysis tools will appear here when it is ready.' };
 
@@ -182,7 +185,7 @@ export const ChallengeSession: React.FC = () => {
   };
 
   // ── Session state ────────────────────────────────────────────────────────
-  const isOTLabSession = labId === 'ot-water-treatment' || labId === 'ot-railroad-north' || labId === 'ot-security-lab';
+  const isOTLabSession = isManagedOTLab;
   // null while loading; undefined-equivalent "no timer" for free labs (isFreeLab=true)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isFreeLab, setIsFreeLab] = useState(false);
@@ -246,7 +249,7 @@ export const ChallengeSession: React.FC = () => {
   const [otProvisioning, setOTProvisioning] = useState(false);
   const [otProvisioned, setOTProvisioned] = useState(false);
   const [otProvisionError, setOTProvisionError] = useState<string | null>(null);
-  const [otUrls, setOTUrls] = useState<{ scada: string; wireshark: string } | null>(null);
+  const [otUrls, setOTUrls] = useState<{ scada?: string; wireshark?: string; simulator?: string } | null>(null);
   const [runtimeProvisioning, setRuntimeProvisioning] = useState(false);
   const [runtimeProvisioned, setRuntimeProvisioned] = useState(false);
   const [runtimeProvisionError, setRuntimeProvisionError] = useState<string | null>(null);
@@ -1448,7 +1451,7 @@ export const ChallengeSession: React.FC = () => {
                     className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
                   >
                     <Play className="w-3.5 h-3.5" />
-                    <span>{isRuntimeShieldLab ? (runtimeProvisioning ? 'Starting...' : 'Start Workshop') : (otProvisioning ? 'Starting...' : 'Start Terminal')}</span>
+                    <span>{isRuntimeShieldLab ? (runtimeProvisioning ? 'Starting...' : 'Start Workshop') : (otProvisioning ? 'Starting...' : isOTSecurityLab ? 'Start Simulator' : 'Start Terminal')}</span>
                   </button>
                   <button
                     onClick={isManagedOTLab ? stopManagedOTLab : isRuntimeShieldLab ? stopRuntimeShieldLab : () => setTerminalConnected(false)}
@@ -1541,9 +1544,16 @@ export const ChallengeSession: React.FC = () => {
                 )}
               </div>
             </div>
+          ) : isOTSecurityLab && terminalConnected && otUrls?.simulator ? (
+            <iframe
+              title="SimulOT ICS Security Simulator"
+              src={otUrls.simulator}
+              className="min-h-0 flex-1 border-0 bg-white"
+              sandbox="allow-downloads allow-forms allow-modals allow-scripts allow-same-origin"
+            />
           ) : isManagedOTLab && terminalConnected ? (
             <>
-              {otUrls && (
+              {otUrls?.scada && otUrls.wireshark && (
                 <div className="px-5 py-2.5 bg-[#0d211e] border-b border-[#18342f] flex flex-wrap gap-2 text-xs font-bold">
                   <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> SCADA workspace</a>
                   <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Packet analysis</a>
