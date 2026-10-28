@@ -790,6 +790,30 @@ export const ChallengeSession: React.FC = () => {
     }
   };
 
+  const completeWaterStage = async () => {
+    if (!waterStageReady || isSolved) return;
+    try {
+      const response = await apiFetch('/api/v1/private-lab-content/ot-water-treatment/complete-stage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module: activeModule.id, session: sessionState }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.detail || data.message || 'Stage completion could not be recorded.');
+      const earnedPoints = data.points_awarded ?? activeModule.points;
+      const totalScore = data.total_score ?? score + earnedPoints;
+      setScore(totalScore);
+      setSolvedModules((previous) => new Set([...previous, activeModule.id]));
+      setSubmissionStatus('success'); setSubmissionMessage(`+${earnedPoints} pts — Stage evidence recorded.`);
+      setCompletionModal({ show: true, isLastModule: solvedModules.size + 1 >= currentModules.length,
+        moduleNum: activeChallengeIdx + 1, moduleTitle: activeModule.title, points: earnedPoints, totalScore,
+        accuracy: 'Evidence complete', challengesCompleted: activeModule.objectives.length,
+        totalChallenges: activeModule.objectives.length, timeTaken: '—' });
+    } catch (error) {
+      setSubmissionStatus('error');
+      setSubmissionMessage(error instanceof Error ? error.message : 'Stage completion could not be recorded.');
+    }
+  };
+
   // ── Hint unlock ──────────────────────────────────────────────────────────
   const handleUnlockHint = async (hintIdx: number) => {
     if (!window.confirm('Unlock this hint? A 20-point penalty applies when the module is completed.')) return;
@@ -866,6 +890,9 @@ export const ChallengeSession: React.FC = () => {
   const handoverNote = handoverNotes[activeModule.id] || '';
   const controlRecord = controlRecords[activeModule.id] || { prediction: '', target: '', verification: '', restoration: '' };
   const operationalReview = operationalReviews[activeModule.id] || { currentState: '', evidence: '', nextAction: '' };
+  const waterStageReady = hasCorrectLearningCheck && handoverSaved[activeModule.id]
+    && (activeChallengeIdx !== 3 || controlRecordSaved[activeModule.id])
+    && (activeChallengeIdx !== 4 || operationalReviewSaved[activeModule.id]);
 
   const persistLearningRecord = async (moduleId: string, updates: Record<string, unknown>) => {
     try {
@@ -1345,10 +1372,20 @@ export const ChallengeSession: React.FC = () => {
 
           {/* Flag submission */}
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-            <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              {(isOTWaterLab || isOTRailroadLab) ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
-            </label>
-            <form onSubmit={handleFlagSubmit} className="space-y-3">
+            {isOTWaterLab ? <>
+              <p className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Complete stage</p>
+              <p className="text-xs leading-5 text-slate-600 dark:text-slate-300">Completion is based on your saved evidence check and stage record. No flag is required.</p>
+              <button type="button" onClick={completeWaterStage} disabled={isSolved || !waterStageReady} className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">
+                {isSolved ? 'Stage completed' : 'Complete stage from evidence'}
+              </button>
+              {!isSolved && !waterStageReady && <p className="text-xs text-amber-700 dark:text-amber-300">Save the evidence check and stage finding{activeChallengeIdx === 3 ? ', plus the safety record' : activeChallengeIdx === 4 ? ', plus the operational handover' : ''} to enable completion.</p>}
+              {submissionStatus === 'success' && <p className="text-xs font-bold text-[#10B981]">{submissionMessage}</p>}
+              {submissionStatus === 'error' && <p className="text-xs font-bold text-rose-500">{submissionMessage}</p>}
+            </> : <>
+              <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                {isOTRailroadLab ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
+              </label>
+              <form onSubmit={handleFlagSubmit} className="space-y-3">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1394,6 +1431,7 @@ export const ChallengeSession: React.FC = () => {
                 </p>
               )}
             </form>
+            </>}
           </div>
         </div>
 
