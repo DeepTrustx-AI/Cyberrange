@@ -116,21 +116,21 @@ const WATER_STAGE_GUIDES: readonly WaterStageGuide[] = [
   },
   {
     journeyLabel: 'Triage SCADA alarms', duration: '5 min',
-    brief: 'Compare the SCADA alarm with read-only PLC evidence, then decide whether it reflects a process condition, a display discrepancy, or insufficient evidence.',
+    brief: 'Open SCADA Alarm & Event History and compare any recorded transition with a fresh read-only PLC register and coil scan. If no event exists, report that evidence is insufficient rather than inventing an alarm.',
     safetyNote: 'Acknowledging an alarm changes its visibility, not the underlying process condition.',
     interpretation: 'Use PLC telemetry to test whether an HMI alarm reflects a process condition, a display issue, or incomplete evidence.',
     evidenceQuestion: 'What does acknowledging an alarm tell you?',
     answers: ['Only that its acknowledgement was recorded', 'That the process fault has been repaired'], correctAnswer: 0,
-    challengeReady: 'You can now classify the alarm and support that conclusion with evidence.'
+    challengeReady: 'Record whether an observed alarm is supported by PLC telemetry; distinguish an empty history from a cleared or acknowledged alarm.'
   },
   {
     journeyLabel: 'Control safely', duration: '6 min',
-    brief: 'Use the controlled defense task for one bounded simulated change: plan it, predict its effect, verify it, and restore the baseline.',
-    safetyNote: 'Safety gate: state the expected effect and restoration path before making a write-capable action.',
+    brief: 'Record the baseline, save your four-part safety plan, then run the approved bounded intake-pump exercise in the AquaShield terminal. Inspect its before/during/after readings and confirm restoration before documenting the result.',
+    safetyNote: 'Only run the provided controlled_change.py in the isolated training PLC after saving your plan. It requires explicit APPLY confirmation and attempts restoration; if restoration fails, stop and report it.',
     interpretation: 'A safe intervention includes a target, predicted result, observed verification, and confirmation that the baseline is restored.',
     evidenceQuestion: 'What completes a safe simulated control change?',
     answers: ['Prediction, bounded change, verification, and restoration', 'A successful write command'], correctAnswer: 0,
-    challengeReady: 'Your safety record is complete; proceed only with the approved simulated change.'
+    challengeReady: 'Your plan is ready. Run the supervised simulation and preserve its actual output before claiming the change was verified.'
   },
   {
     journeyLabel: 'Operational review', duration: '5 min',
@@ -1683,6 +1683,25 @@ export const ChallengeSession: React.FC = () => {
               <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.brief}</p>
               <p className="mt-3 border-y border-amber-300/70 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:text-amber-200">{waterGuide.safetyNote}</p>
               <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" />{waterGuide.interpretation}</div>
+              {activeChallengeIdx === 2 && (
+                <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-950 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-100">
+                  <p className="font-bold">Stage 3 — find actual alarm evidence</p>
+                  <p>Inspect Alarm &amp; Event History in the SCADA dashboard, then run <code className="font-mono">python3 /opt/tools/scripts/read_registers.py</code> and <code className="font-mono">python3 /opt/tools/scripts/read_coils.py</code>. The history shows events recorded since the SCADA service started; an empty history does not prove that no prior alarm ever occurred.</p>
+                </div>
+              )}
+              {activeChallengeIdx === 3 && (
+                <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                  <p className="font-bold">Stage 4 — approved simulator exercise</p>
+                  <ol className="mt-1 list-decimal space-y-1 pl-5">
+                    <li>Record the initial intake speed (R00) and raw flow (R01) using <code className="font-mono">python3 /opt/tools/scripts/read_registers.py</code>.</li>
+                    <li>Save the safety record below before executing a change.</li>
+                    <li>In the AquaShield terminal, run <code className="font-mono">python3 /opt/tools/scripts/controlled_change.py</code> and review the displayed plan before typing <code>APPLY</code>.</li>
+                    <li>Check the reported before/during/after measurements and ensure <code>restored: true</code>. If restoration fails, stop and report the condition.</li>
+                    <li>Describe the real measurements and restoration result in your stage finding. Do not invent evidence or submit a flag.</li>
+                  </ol>
+                  <p className="mt-2 font-medium">Completion currently checks the saved learning record; it does not independently attest that the PLC change occurred. Treat this exercise output as student-collected evidence, not a signed certificate.</p>
+                </div>
+              )}
               <fieldset className="mt-4"><legend className="text-xs font-semibold text-slate-700 dark:text-slate-200">Evidence check</legend><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.evidenceQuestion}</p><div className="mt-2 space-y-2">{waterGuide.answers.map((answer, index) => <label key={answer} className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><input type="radio" name={`evidence-${activeModule.id}`} checked={activeCheckAnswer === index} onChange={() => updateLearningCheck(index)} className="mt-1 accent-emerald-600" />{answer}</label>)}</div>{activeCheckAnswer !== undefined && <p className={`mt-2 text-xs font-medium ${hasCorrectLearningCheck ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{hasCorrectLearningCheck ? waterGuide.challengeReady : 'Revisit the interpretation note, then try again.'}</p>}</fieldset>
               <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Stage finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, and next safe action" className="mt-2 min-h-20 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-md bg-[#24303A] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{handoverSaved[activeModule.id] ? 'Finding saved' : 'Save finding'}</button>
               {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{([{ key: 'prediction', label: 'Expected effect' }, { key: 'target', label: 'Approved target' }, { key: 'verification', label: 'How you will verify the effect' }, { key: 'restoration', label: 'How you will restore the baseline' }] as const).map(({ key, label }) => <label key={key} className="block text-[11px] font-medium text-slate-600 dark:text-slate-300">{label}<input value={controlRecord[key]} onChange={(event) => updateControlRecord(key, event.target.value)} className="mt-1 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
