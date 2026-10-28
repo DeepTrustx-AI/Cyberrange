@@ -98,48 +98,48 @@ const RUNTIME_SHIELD_BADGES: readonly RuntimeShieldBadge[] = [
 const WATER_STAGE_GUIDES: readonly WaterStageGuide[] = [
   {
     journeyLabel: 'Establish visibility', duration: '2 min',
-    brief: 'Find the ClearWater PLC, confirm what services answer, and map the control points you can safely observe.',
+    brief: 'Locate the ClearWater PLC, confirm Modbus TCP is available, and record the control states you can safely observe.',
     safetyNote: 'Read-only investigation. Do not write to the controller in this stage.',
-    interpretation: 'Port 502 identifies Modbus TCP. Coils are binary command states: record their meaning before deciding what the plant is doing.',
-    evidenceQuestion: 'Which observation identifies a binary control state?',
-    answers: ['A coil state such as INTAKE_PUMP_1_CMD = ON', 'A listening service such as 502/tcp'], correctAnswer: 0,
-    challengeReady: 'Challenge ready after you capture the service and coil map.'
+    interpretation: 'Port 502 identifies Modbus TCP. A coil is a binary command state; a listening service is not a control state.',
+    evidenceQuestion: 'Which item tells you that a pump is commanded on or off?',
+    answers: ['The pump’s coil state', 'The PLC’s listening port'], correctAnswer: 0,
+    challengeReady: 'You have the evidence needed to document the PLC service and coil map.'
   },
   {
     journeyLabel: 'Interpret process conditions', duration: '4 min',
-    brief: 'Use the existing register dump to translate raw values into engineering meaning and identify what needs attention.',
+    brief: 'Read the process registers, convert scaled values to engineering units, and identify one condition that needs follow-up.',
     safetyNote: 'Interpret scaled telemetry before drawing a conclusion. Observation remains read-only.',
     interpretation: 'A value marked x10 or x100 needs scaling before it represents its physical unit. Compare related readings, not one number in isolation.',
     evidenceQuestion: 'What should you do before interpreting a scaled register value?',
     answers: ['Apply the documented scale and unit', 'Treat the raw integer as the physical value'], correctAnswer: 0,
-    challengeReady: 'Challenge ready after you support a finding with two related readings.'
+    challengeReady: 'You have a defensible finding when two related readings support it.'
   },
   {
     journeyLabel: 'Triage SCADA alarms', duration: '5 min',
-    brief: 'Compare the existing SCADA view with PLC evidence and decide what needs escalation, monitoring, or more evidence.',
+    brief: 'Compare the SCADA alarm with read-only PLC evidence, then decide whether it reflects a process condition, a display discrepancy, or insufficient evidence.',
     safetyNote: 'Acknowledging an alarm changes its visibility, not the underlying process condition.',
     interpretation: 'Use PLC telemetry to test whether an HMI alarm reflects a process condition, a display issue, or incomplete evidence.',
-    evidenceQuestion: 'What does acknowledging an alarm prove?',
+    evidenceQuestion: 'What does acknowledging an alarm tell you?',
     answers: ['Only that its acknowledgement was recorded', 'That the process fault has been repaired'], correctAnswer: 0,
-    challengeReady: 'Challenge ready after you classify one alarm with supporting evidence.'
+    challengeReady: 'You can now classify the alarm and support that conclusion with evidence.'
   },
   {
     journeyLabel: 'Control safely', duration: '6 min',
-    brief: 'Use the existing controlled defense task to plan, predict, verify, and restore a bounded simulated change.',
+    brief: 'Use the controlled defense task for one bounded simulated change: plan it, predict its effect, verify it, and restore the baseline.',
     safetyNote: 'Safety gate: state the expected effect and restoration path before making a write-capable action.',
     interpretation: 'A safe intervention includes a target, predicted result, observed verification, and confirmation that the baseline is restored.',
     evidenceQuestion: 'What completes a safe simulated control change?',
     answers: ['Prediction, bounded change, verification, and restoration', 'A successful write command'], correctAnswer: 0,
-    challengeReady: 'Challenge ready after the safety record is complete.'
+    challengeReady: 'Your safety record is complete; proceed only with the approved simulated change.'
   },
   {
     journeyLabel: 'Operational review', duration: '5 min',
-    brief: 'Use the evidence gathered across the current lab to produce a concise, defensible operational handover.',
+    brief: 'Turn your evidence into a concise operational handover: current state, safety-critical evidence, and the next safe action.',
     safetyNote: 'Separate observed facts from assumptions, and preserve evidence before escalating a suspected unauthorized change.',
     interpretation: 'The capstone is a synthesis task: explain the current state, safety-critical evidence, and the next safe action.',
-    evidenceQuestion: 'What makes an operational handover defensible?',
+    evidenceQuestion: 'What makes an operational handover useful to the next operator?',
     answers: ['Evidence, assessment, safety impact, and next action', 'A list of commands run during the lab'], correctAnswer: 0,
-    challengeReady: 'Challenge ready when your handover connects evidence to a safe next step.'
+    challengeReady: 'Your handover is ready when it connects evidence, safety impact, and a safe next action.'
   }
 ];
 
@@ -1238,7 +1238,7 @@ export const ChallengeSession: React.FC = () => {
             <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
               {activeModule.mission}
             </p>
-            {isOTWaterLab && <p className="border-t border-[#b8e3d8] pt-2 text-xs leading-relaxed text-[#0b554e] dark:border-[#1d5d50] dark:text-emerald-200"><strong>Next:</strong> Start the operator console, then complete the first objective below. Keep this stage read-only.</p>}
+            {isOTWaterLab && <p className="border-t border-[#b8e3d8] pt-2 text-xs leading-relaxed text-[#0b554e] dark:border-[#1d5d50] dark:text-emerald-200"><strong>Next:</strong> {activeChallengeIdx === 3 ? 'Complete the safety record on the right, then use only the approved simulated change.' : activeChallengeIdx === 4 ? 'Use the evidence you collected to complete the operational review on the right.' : 'Start the operator console, then complete the first objective below. This stage is read-only.'}</p>}
           </div>
 
           {/* Railroad uses investigation guidance rather than hard command-detection gates. */}
@@ -1624,7 +1624,7 @@ export const ChallengeSession: React.FC = () => {
               </span>
               <div>
                 <h2 className="text-sm font-semibold">Stage support</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Use this after reading the mission brief on the left.</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Interpret the evidence you collect in the current stage.</p>
               </div>
             </div>
 
@@ -1640,15 +1640,15 @@ export const ChallengeSession: React.FC = () => {
 
             <section className="mt-6 border-y border-[#d9e5e1] py-5 dark:border-[#1d3934]">
               {learningSaveError && <p role="alert" className="mb-3 text-xs font-medium text-rose-700 dark:text-rose-300">{learningSaveError} Retry the learning record; console work is unaffected.</p>}
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">When the console is live</h3>
-              <p className="mt-1 text-xs font-medium text-[#0f766e] dark:text-emerald-300">Observe first. Use this guidance to interpret what you find.</p>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">What to look for</h3>
+              <p className="mt-1 text-xs font-medium text-[#0f766e] dark:text-emerald-300">Observe first. Use the evidence to support a specific conclusion.</p>
               <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.brief}</p>
               <p className="mt-3 border-y border-amber-300/70 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:text-amber-200">{waterGuide.safetyNote}</p>
               <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" />{waterGuide.interpretation}</div>
               <fieldset className="mt-4"><legend className="text-xs font-semibold text-slate-700 dark:text-slate-200">Evidence check</legend><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.evidenceQuestion}</p><div className="mt-2 space-y-2">{waterGuide.answers.map((answer, index) => <label key={answer} className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><input type="radio" name={`evidence-${activeModule.id}`} checked={activeCheckAnswer === index} onChange={() => updateLearningCheck(index)} className="mt-1 accent-emerald-600" />{answer}</label>)}</div>{activeCheckAnswer !== undefined && <p className={`mt-2 text-xs font-medium ${hasCorrectLearningCheck ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{hasCorrectLearningCheck ? waterGuide.challengeReady : 'Revisit the interpretation note, then try again.'}</p>}</fieldset>
-              <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Operational finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, next safe action" className="mt-2 min-h-20 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-md bg-[#24303A] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{handoverSaved[activeModule.id] ? 'Handover saved' : 'Save handover'}</button>
-              {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{(['prediction', 'target', 'verification', 'restoration'] as (keyof ControlRecord)[]).map((field) => <input key={field} value={controlRecord[field]} onChange={(event) => updateControlRecord(field, event.target.value)} placeholder={field} className="w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" />)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
-              {activeChallengeIdx === 4 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operational review</h4>{(['currentState', 'evidence', 'nextAction'] as (keyof OperationalReview)[]).map((field) => <textarea key={field} value={operationalReview[field]} onChange={(event) => updateOperationalReview(field, event.target.value)} placeholder={field} className="min-h-16 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" />)}<button type="button" disabled={!Object.values(operationalReview).every((value) => value.trim())} onClick={saveOperationalReview} className="rounded-md bg-[#0f766e] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{operationalReviewSaved[activeModule.id] ? 'Operational review saved' : 'Save review'}</button></div>}
+              <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Stage finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, and next safe action" className="mt-2 min-h-20 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-md bg-[#24303A] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{handoverSaved[activeModule.id] ? 'Finding saved' : 'Save finding'}</button>
+              {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{([{ key: 'prediction', label: 'Expected effect' }, { key: 'target', label: 'Approved target' }, { key: 'verification', label: 'How you will verify the effect' }, { key: 'restoration', label: 'How you will restore the baseline' }] as const).map(({ key, label }) => <label key={key} className="block text-[11px] font-medium text-slate-600 dark:text-slate-300">{label}<input value={controlRecord[key]} onChange={(event) => updateControlRecord(key, event.target.value)} className="mt-1 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
+              {activeChallengeIdx === 4 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operational handover</h4>{([{ key: 'currentState', label: 'Current state' }, { key: 'evidence', label: 'Safety-critical evidence' }, { key: 'nextAction', label: 'Next safe action' }] as const).map(({ key, label }) => <label key={key} className="block text-[11px] font-medium text-slate-600 dark:text-slate-300">{label}<textarea value={operationalReview[key]} onChange={(event) => updateOperationalReview(key, event.target.value)} className="mt-1 min-h-16 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(operationalReview).every((value) => value.trim())} onClick={saveOperationalReview} className="rounded-md bg-[#0f766e] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{operationalReviewSaved[activeModule.id] ? 'Handover saved' : 'Save handover'}</button></div>}
             </section>
 
             <section className="mt-6">
