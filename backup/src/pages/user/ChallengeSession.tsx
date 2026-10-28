@@ -699,7 +699,7 @@ export const ChallengeSession: React.FC = () => {
     // Recon flags and Railroad stage evidence come from live containers.
     // Railroad investigation steps are advisory and must never gate a valid
     // solution just because the learner used a different investigation path.
-    if (!isReconLab && !isOTRailroadLab) {
+    if (!isReconLab && !(isOTWaterLab || isOTRailroadLab)) {
       const currentObjs = objProgress[activeModule.id] || [];
       const allObjectivesCompleted = activeModule.objectives.length > 0 &&
         currentObjs.length === activeModule.objectives.length &&
@@ -778,8 +778,8 @@ export const ChallengeSession: React.FC = () => {
         setTimeout(() => { setSubmissionStatus('idle'); setFlagInput(''); }, 3000);
       } else {
         setSubmissionStatus('error');
-        setSubmissionMessage(isOTRailroadLab
-          ? 'Evidence not accepted yet. Re-check the live Railroad environment and try again.'
+        setSubmissionMessage((isOTWaterLab || isOTRailroadLab)
+          ? 'Evidence not accepted yet. Re-check the live OT environment and try again.'
           : 'Incorrect flag. Try again.');
         setTimeout(() => setSubmissionStatus('idle'), 1800);
       }
@@ -1244,15 +1244,15 @@ export const ChallengeSession: React.FC = () => {
           {/* Railroad uses investigation guidance rather than hard command-detection gates. */}
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              <span>{isOTRailroadLab ? 'INVESTIGATION STEPS' : `OBJECTIVES (${activeModule.objectives.length} REQUIRED)`}</span>
-              {!isOTRailroadLab && (
+              <span>{(isOTWaterLab || isOTRailroadLab) ? 'INVESTIGATION STEPS' : `OBJECTIVES (${activeModule.objectives.length} REQUIRED)`}</span>
+              {!(isOTWaterLab || isOTRailroadLab) && (
                 <span className={completedObjCount === activeModule.objectives.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}>
                   {completedObjCount}/{activeModule.objectives.length} COMPLETED
                 </span>
               )}
             </div>
 
-            {isOTRailroadLab ? (
+            {(isOTWaterLab || isOTRailroadLab) ? (
               <>
                 <p className="text-[11px] leading-5 text-slate-500 dark:text-slate-400">
                   Guidance only — investigate in any order. Stage completion is based on the evidence you submit, not on detecting specific terminal commands.
@@ -1300,7 +1300,7 @@ export const ChallengeSession: React.FC = () => {
           {/* Hints */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              <span>{isOTRailroadLab ? 'STAGE HINTS' : 'MODULE HINTS'} ({activeModule.hints.length} MAX)</span>
+              <span>{(isOTWaterLab || isOTRailroadLab) ? 'STAGE HINTS' : 'MODULE HINTS'} ({activeModule.hints.length} MAX)</span>
               <span className="text-amber-600 dark:text-amber-400">-20 pts per hint</span>
             </div>
             <div className="space-y-2">
@@ -1346,13 +1346,13 @@ export const ChallengeSession: React.FC = () => {
           {/* Flag submission */}
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <label className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-              {isOTRailroadLab ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
+              {(isOTWaterLab || isOTRailroadLab) ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
             </label>
             <form onSubmit={handleFlagSubmit} className="space-y-3">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder={isOTRailroadLab ? 'Evidence value' : 'FLAG{...}'}
+                  placeholder={(isOTWaterLab || isOTRailroadLab) ? 'Evidence value' : 'FLAG{...}'}
                   value={flagInput}
                   onChange={(e) => setFlagInput(e.target.value)}
                   disabled={isSolved}
@@ -1566,7 +1566,7 @@ export const ChallengeSession: React.FC = () => {
                 terminalTitle={otLab.terminalTitle}
                 height="100%"
                 className="min-h-0 flex-1 rounded-none border-x-0 border-b-0 shadow-none"
-                onCommand={isOTRailroadLab ? undefined : recordTerminalCommand}
+                onCommand={(isOTWaterLab || isOTRailroadLab) ? undefined : recordTerminalCommand}
               />
             </>
           ) : terminalConnected ? (
