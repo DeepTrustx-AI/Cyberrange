@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { requestConfirmation } from '../../lib/feedback';
 import {
   Bell,
   Search,
@@ -83,7 +84,7 @@ export const NotificationCenterPage: React.FC = () => {
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm('Are you sure you want to clear all notifications?')) return;
+    if (!await requestConfirmation('This will permanently clear every notification.', { title: 'Clear all notifications?', confirmLabel: 'Clear all', destructive: true })) return;
     await clearAllNotifications();
     setNotifications([]);
     setTotal(0);

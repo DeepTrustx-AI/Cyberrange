@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -32,7 +33,7 @@ export const CTFListPage: React.FC = () => {
   }, []);
 
   const handleStart = async (ctfId: number) => {
-    if (!window.confirm('Are you sure you want to manually activate this CTF? All active students will be enrolled.')) return;
+    if (!await requestConfirmation('All active students will be enrolled.', { title: 'Activate this CTF?', confirmLabel: 'Activate CTF' })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -48,7 +49,7 @@ export const CTFListPage: React.FC = () => {
   };
 
   const handleStop = async (ctfId: number) => {
-    if (!window.confirm('Are you sure you want to manually stop this CTF? This will disable all challenge URLs.')) return;
+    if (!await requestConfirmation('This will disable all challenge URLs.', { title: 'Stop this CTF?', confirmLabel: 'Stop CTF', destructive: true })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -64,7 +65,7 @@ export const CTFListPage: React.FC = () => {
   };
 
   const handleDelete = async (ctfId: number) => {
-    if (!window.confirm('Are you sure you want to delete this CTF event? This action is permanent and will delete all submissions and participation records.')) return;
+    if (!await requestConfirmation('This is permanent and will delete all submissions and participation records.', { title: 'Delete this CTF event?', confirmLabel: 'Delete event', destructive: true })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};

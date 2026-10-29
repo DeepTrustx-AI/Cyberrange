@@ -21,6 +21,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageLoader } from './components/PageLoader';
+import { FeedbackSurface } from './components/FeedbackSurface';
 
 // ─── Layouts (statically imported — shared shell, loaded once) ───────────────
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -106,6 +107,7 @@ export function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+          <FeedbackSurface />
           {/*
            * Single top-level Suspense boundary.
            * PageLoader is shown while any lazy chunk is downloading.
