@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Book, Search, Eye, FileText, CheckCircle, Clock, Plus, Trash2, Upload, X } from 'lucide-react';
@@ -131,7 +132,7 @@ export const StudyMaterial: React.FC = () => {
   };
 
   const handleDeleteMaterial = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this study material?')) return;
+    if (!await requestConfirmation('This study material will be permanently deleted.', { title: 'Delete study material?', confirmLabel: 'Delete material', destructive: true })) return;
     try {
       const token = localStorage.getItem('token');
       const res = await routedApiFetch(`/api/v1/study-materials/admin/${id}`, {

@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -64,7 +65,7 @@ export const CTFDetailPage: React.FC = () => {
 
   const handleStart = async () => {
     if (!ctf) return;
-    if (!window.confirm('Start this CTF? Active students will be enrolled.')) return;
+    if (!await requestConfirmation('Active students will be enrolled when this CTF starts.', { title: 'Start this CTF?', confirmLabel: 'Start CTF' })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -78,7 +79,7 @@ export const CTFDetailPage: React.FC = () => {
 
   const handleStop = async () => {
     if (!ctf) return;
-    if (!window.confirm('Stop this CTF? This will close all target URLs.')) return;
+    if (!await requestConfirmation('This will close all target URLs.', { title: 'Stop this CTF?', confirmLabel: 'Stop CTF', destructive: true })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -109,7 +110,7 @@ export const CTFDetailPage: React.FC = () => {
   };
 
   const handleDeleteChallenge = async (cid: number) => {
-    if (!window.confirm('Are you sure you want to permanently delete this challenge and all uploaded attachments?')) return;
+    if (!await requestConfirmation('This challenge and all uploaded attachments will be permanently deleted.', { title: 'Delete this challenge?', confirmLabel: 'Delete challenge', destructive: true })) return;
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};

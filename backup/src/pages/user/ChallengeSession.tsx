@@ -22,6 +22,7 @@ import {
   MessageSquareText
 } from 'lucide-react';
 import { parseApiErrorMessage } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -830,7 +831,7 @@ export const ChallengeSession: React.FC = () => {
 
   // ── Hint unlock ──────────────────────────────────────────────────────────
   const handleUnlockHint = async (hintIdx: number) => {
-    if (!window.confirm('Unlock this hint? A 20-point penalty applies when the module is completed.')) return;
+    if (!await requestConfirmation('A 20-point penalty applies when the module is completed.', { title: 'Unlock this hint?', confirmLabel: 'Unlock hint' })) return;
 
     const modId = activeModule.id;
     try {
@@ -1181,7 +1182,16 @@ export const ChallengeSession: React.FC = () => {
             </div>
           )}
           <button
-            onClick={() => { if (window.confirm('Exit this challenge session?')) { stopManagedOTLab(); handleReturn(); } }}
+            onClick={async () => {
+              const confirmed = await requestConfirmation(
+                'Your current connection will be stopped before you return to the lab catalogue.',
+                { title: 'Exit this challenge session?', confirmLabel: 'Exit session', destructive: true },
+              );
+              if (confirmed) {
+                stopManagedOTLab();
+                handleReturn();
+              }
+            }}
             className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />

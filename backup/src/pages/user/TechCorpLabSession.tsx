@@ -26,6 +26,7 @@ import {
   Zap
 } from 'lucide-react';
 import '@xterm/xterm/css/xterm.css';
+import { requestConfirmation } from '../../lib/feedback';
 
 // ─── Phase Data ────────────────────────────────────────────────────────────────
 interface Level {
@@ -406,7 +407,11 @@ export const TechCorpLabSession: React.FC = () => {
 
   // ─── End Lab Session ──────────────────────────────────────────────────────────
   const handleEndLab = async () => {
-    if (!window.confirm("Are you sure you want to end this lab? Your progress will be saved but the container will be stopped.")) return;
+    const confirmed = await requestConfirmation(
+      'Your progress will be saved, but the lab container will be stopped.',
+      { title: 'End this lab?', confirmLabel: 'End lab', destructive: true },
+    );
+    if (!confirmed) return;
     try {
       await apiFetch('/api/v1/labs/techcorp/provision', {
         method: 'DELETE'

@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect } from 'react';
 import {
   Folder,
@@ -230,7 +231,7 @@ export const LabAllocation: React.FC = () => {
   };
 
   const handleEndAssignment = async (assign: any) => {
-    if (!window.confirm('Are you sure you want to end this assignment?')) return;
+    if (!await requestConfirmation('Students will no longer be able to use this assignment.', { title: 'End this assignment?', confirmLabel: 'End assignment', destructive: true })) return;
     const token = localStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) {

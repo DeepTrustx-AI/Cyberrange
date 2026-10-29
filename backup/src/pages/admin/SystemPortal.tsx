@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -376,7 +377,7 @@ export const SystemPortal: React.FC = () => {
   };
 
   const handleDeleteCtfAllocation = async (allocationId: number, ctfTitle: string) => {
-    if (!window.confirm(`Permanently delete this CTF allocation for "${ctfTitle}"? This cannot be undone.`)) return;
+    if (!await requestConfirmation(`The allocation for "${ctfTitle}" will be permanently deleted.`, { title: 'Delete CTF allocation?', confirmLabel: 'Delete allocation', destructive: true })) return;
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch(`/api/v1/system/ctf-allocations/${allocationId}`, {
@@ -535,7 +536,7 @@ export const SystemPortal: React.FC = () => {
   };
 
   const handleDeleteLab = async (labId: string) => {
-    if (!window.confirm("Are you absolutely sure you want to permanently delete this lab?")) return;
+    if (!await requestConfirmation('This lab will be permanently deleted and cannot be recovered.', { title: 'Delete this lab?', confirmLabel: 'Delete lab', destructive: true })) return;
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch(`/api/v1/system/labs/${labId}`, {
@@ -794,7 +795,7 @@ export const SystemPortal: React.FC = () => {
 
   // Delete Organization
   const handleDeleteOrg = async (orgId: number) => {
-    if (!window.confirm('Are you sure you want to permanently delete this organization?')) return;
+    if (!await requestConfirmation('This organization will be permanently deleted.', { title: 'Delete this organization?', confirmLabel: 'Delete organization', destructive: true })) return;
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch(`/api/v1/system/organizations/${orgId}`, {
@@ -886,7 +887,7 @@ export const SystemPortal: React.FC = () => {
 
   // Delete User permanently
   const handleDeleteUser = async (userId: number) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user from the database? This action cannot be undone.")) return;
+    if (!await requestConfirmation('This user will be permanently deleted and cannot be recovered.', { title: 'Delete this user?', confirmLabel: 'Delete user', destructive: true })) return;
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch(`/api/v1/system/users/${userId}`, {

@@ -19,8 +19,8 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
 
   const [fullName, setFullName] = useState(userToEdit?.fullName || '');
   const [email, setEmail] = useState(userToEdit?.email || '');
-  const [year, setYear] = useState<string>(userToEdit?.year || 'III Year');
-  const [department, setDepartment] = useState<string>(userToEdit?.department || 'Cyber Security');
+  const [year, setYear] = useState<string>(userToEdit?.year || '');
+  const [department, setDepartment] = useState<string>(userToEdit?.department || '');
   const [rollNumber, setRollNumber] = useState<string>(userToEdit?.rollNumber || '');
   const [errors, setErrors] = useState<{ fullName?: string; email?: string }>({});
 
@@ -72,7 +72,7 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
               <h2 className="text-base font-extrabold text-slate-900">
                 {isEditMode ? 'Edit Student Details' : 'Add New Student'}
               </h2>
-              <p className="text-xs text-slate-500">Basic academic details for this student</p>
+              <p className="text-xs text-slate-500">Name and email are required; academic details are optional</p>
             </div>
           </div>
 
@@ -115,12 +115,13 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
           {/* Academic Year & Department Selection */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Academic Year</label>
+              <label className="font-bold text-slate-700 block mb-1">Academic Year (Optional)</label>
               <select
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
                 className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none"
               >
+                <option value="">Not provided</option>
                 <option value="I Year">I Year</option>
                 <option value="II Year">II Year</option>
                 <option value="III Year">III Year</option>
@@ -129,12 +130,13 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Department</label>
+              <label className="font-bold text-slate-700 block mb-1">Department (Optional)</label>
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none"
               >
+                <option value="">Not provided</option>
                 <option value="Cyber Security">Cyber Security</option>
                 <option value="Computer Science">Computer Science</option>
                 <option value="Information Technology">Information Technology</option>
