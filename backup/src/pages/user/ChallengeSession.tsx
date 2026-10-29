@@ -240,6 +240,13 @@ export const ChallengeSession: React.FC = () => {
 
   // Submission state
   const [flagInput, setFlagInput] = useState('');
+  const [railroadNetworkEvidence, setRailroadNetworkEvidence] = useState({
+    sourcePort: '', segmentId: '1', route: 'ROUTE_C', signal: 'GREEN',
+    httpStatus: '200', responseSuccess: 'true',
+  });
+  const isRailroadNetworkStage = isOTRailroadLab && activeModule.id === 'module4';
+  const updateNetworkEvidence = (field: keyof typeof railroadNetworkEvidence, value: string) =>
+    setRailroadNetworkEvidence(prev => ({ ...prev, [field]: value }));
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [unlockedHints, setUnlockedHints] = useState<Record<string, string[]>>({});
@@ -691,9 +698,16 @@ export const ChallengeSession: React.FC = () => {
   // ── Flag submission ──────────────────────────────────────────────────────
   const handleFlagSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!flagInput.trim()) return;
+    if (!isRailroadNetworkStage && !flagInput.trim()) return;
 
-    const submittedFlag = flagInput.trim();
+    const submittedFlag = isRailroadNetworkStage ? JSON.stringify({
+      transport: 'TCP', application_protocol: 'HTTP', method: 'POST', path: '/api/command',
+      source_ip: '127.0.0.1', source_port: Number(railroadNetworkEvidence.sourcePort),
+      destination_ip: '127.0.0.1', destination_port: 8080,
+      segment_id: Number(railroadNetworkEvidence.segmentId), route: railroadNetworkEvidence.route,
+      http_status: Number(railroadNetworkEvidence.httpStatus),
+      response_success: railroadNetworkEvidence.responseSuccess === 'true', signal: railroadNetworkEvidence.signal,
+    }) : flagInput.trim();
     const currentLabId = labId || 'lab1-recon';
 
     // Recon flags and Railroad stage evidence come from live containers.
@@ -1386,7 +1400,35 @@ export const ChallengeSession: React.FC = () => {
                 {isOTRailroadLab ? 'SUBMIT STAGE EVIDENCE' : 'SUBMIT STAGE FLAG'}
               </label>
               <form onSubmit={handleFlagSubmit} className="space-y-3">
-              <div className="flex gap-2">
+              {isRailroadNetworkStage && !isSolved && (
+                <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Wireshark → PLC → SCADA investigation report</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Capture on lo, inspect the POST /api/command TCP stream, and confirm the route and signal in SCADA. The source port changes per connection.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([{field:'sourcePort',label:'Observed TCP source port',type:'number',placeholder:'e.g. 58738'},
+                       {field:'segmentId',label:'Target segment_id',type:'number',placeholder:'1'},
+                       {field:'httpStatus',label:'HTTP response status',type:'number',placeholder:'200'}] as const).map(({field,label,type,placeholder}) => (
+                      <label key={field} className="text-xs text-slate-700 dark:text-slate-200">{label}
+                        <input required type={type} placeholder={placeholder} value={railroadNetworkEvidence[field]}
+                          onChange={e => updateNetworkEvidence(field, e.target.value)}
+                          className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+                      </label>
+                    ))}
+                    {([{field:'route',label:'Requested route',options:['ROUTE_A','ROUTE_B','ROUTE_C']},
+                       {field:'signal',label:'Observed SCADA signal',options:['RED','GREEN']},
+                       {field:'responseSuccess',label:'Controller success',options:['true','false']}] as const).map(({field,label,options}) => (
+                      <label key={field} className="text-xs text-slate-700 dark:text-slate-200">{label}
+                        <select value={railroadNetworkEvidence[field]} onChange={e => updateNetworkEvidence(field,e.target.value)}
+                          className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-xs text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+                          {options.map(option=><option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500">TCP → HTTP POST /api/command → 127.0.0.1:8080. Backend checks the current controller state and recent command history, not the original packet capture.</p>
+                </div>
+              )}
+              {!isRailroadNetworkStage && <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder={(isOTWaterLab || isOTRailroadLab) ? 'Evidence value' : 'FLAG{...}'}
@@ -1416,7 +1458,8 @@ export const ChallengeSession: React.FC = () => {
                     <span>Submit</span>
                   )}
                 </button>
-              </div>
+              </div>}
+              {isRailroadNetworkStage && <button type="submit" disabled={isSolved || submissionStatus === 'success' || !railroadNetworkEvidence.sourcePort} className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-40">Submit investigation evidence</button>}
 
               {submissionStatus === 'success' && (
                 <p className="text-xs font-bold text-[#10B981] animate-in fade-in flex items-center gap-1.5">
