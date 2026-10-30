@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Search, Download, Filter, ChevronLeft, ChevronRight, CheckCircle2, FileText } from 'lucide-react';
+import { Search, Download, Filter, ChevronLeft, ChevronRight, CheckCircle2, FileText } from 'lucide-react';
 
 interface PaymentRecord {
   id: number | string;
@@ -17,7 +17,6 @@ interface PaymentRecord {
 
 export const PaymentHistoryPage: React.FC = () => {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -39,8 +38,6 @@ export const PaymentHistoryPage: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to fetch payment history:', err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchPayments();
@@ -110,13 +107,12 @@ export const PaymentHistoryPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:items-end">
         <div>
           <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Payment & Invoice History</h1>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">Payment & Invoice History</h1>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
             View past lab seat transactions, billing receipts, and downloadable tax invoices.
           </p>
         </div>
@@ -151,10 +147,10 @@ export const PaymentHistoryPage: React.FC = () => {
       </div>
 
       {/* Payment Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-400 font-bold text-xs">
               <tr>
                 <th className="py-3.5 px-6">Invoice Number</th>
                 <th className="py-3.5 px-4">Order ID</th>
@@ -181,22 +177,22 @@ export const PaymentHistoryPage: React.FC = () => {
                       {item.invoice_number}
                     </td>
 
-                    <td className="py-4 px-4 font-mono text-slate-600 dark:text-slate-400 text-[11px]">
+                    <td className="py-4 px-4 font-mono text-slate-600 dark:text-slate-400 text-xs">
                       {item.razorpay_order_id}
                     </td>
 
-                    <td className="py-4 px-4 font-black text-slate-900 dark:text-white">
+                    <td className="py-4 px-4 font-bold text-slate-900 dark:text-white">
                       ₹{item.amount.toLocaleString('en-IN')}
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                      <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs font-bold text-slate-600 dark:text-slate-300">
                         {item.payment_method}
                       </span>
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         item.status === 'SUCCESS'
                           ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
                           : item.status === 'PENDING'

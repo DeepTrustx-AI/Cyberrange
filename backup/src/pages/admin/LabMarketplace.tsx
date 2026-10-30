@@ -9,12 +9,12 @@ import {
   Store,
   Search,
   Clock,
-  Star,
   ShoppingCart,
   Layers,
   Play,
   Check
 } from 'lucide-react';
+import { LabCardMedia } from '../../components/art/LabCardMedia';
 import { useNavigate } from 'react-router-dom';
 
 import { PurchasedLabsPage } from './PurchasedLabsPage';
@@ -26,7 +26,7 @@ export const LabMarketplace: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<'popularity' | 'price-asc' | 'price-desc' | 'difficulty'>('popularity');
+  const [sortBy] = useState<'popularity' | 'price-asc' | 'price-desc' | 'difficulty'>('popularity');
 
   const [selectedModalLab, setSelectedModalLab] = useState<SecurityLab | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,7 +43,6 @@ export const LabMarketplace: React.FC = () => {
   // Real catalog labs from backend PostgreSQL database
   const [labs, setLabs] = useState<SecurityLab[]>([]);
   const [catalogue, setCatalogue] = useState<'loading' | 'ready' | 'failed'>('loading');
-  const [syncing, setSyncing] = useState(false);
 
   // The catalogue loads on its own, so a cart or purchase-list problem never hides the labs.
   const loadCatalogue = useCallback(async () => {
@@ -74,30 +73,6 @@ export const LabMarketplace: React.FC = () => {
       .catch((err) => console.error('Error fetching purchased labs:', err));
   }, [loadCatalogue]);
 
-  const syncLabRepository = async () => {
-    setSyncing(true);
-    const token = localStorage.getItem('token');
-    try {
-      const res = await routedApiFetch('/api/v1/labs/scan', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (res.ok) {
-        const labsRes = await routedApiFetch('/api/v1/labs');
-        if (labsRes.ok) {
-          const labsData = await labsRes.json();
-          setLabs(labsData || []);
-        }
-      }
-    } catch (err) {
-      console.error('Error syncing lab repository:', err);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const categories = ['All', ...Array.from(new Set((labs ?? []).map((l) => l.category ?? '')))];
-  const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
   const filteredLabs = (labs ?? []).filter((lab) => {
     const matchesSearch =
@@ -238,7 +213,7 @@ export const LabMarketplace: React.FC = () => {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
-      } catch (err) { /* ignore */ }
+      } catch { /* ignore */ }
     }
   };
 
@@ -249,7 +224,7 @@ export const LabMarketplace: React.FC = () => {
     if (token) {
       try {
         await routedApiFetch('/api/v1/cart', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-      } catch (err) { /* ignore */ }
+      } catch { /* ignore */ }
     }
   };
 
@@ -259,7 +234,7 @@ export const LabMarketplace: React.FC = () => {
     setIsCheckoutOpen(true);
   };
 
-  const handlePaymentSuccess = (resultData: any) => {
+  const handlePaymentSuccess = () => {
     if (cartItems.length > 0) {
       const newPurchased = new Set(purchasedLabIds);
       (cartItems ?? []).forEach((item) => newPurchased.add(item.lab_id));
@@ -272,7 +247,7 @@ export const LabMarketplace: React.FC = () => {
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
       {/* 1. TOP TOOLBAR: Search (~42%) | Category | Difficulty | Cart */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 shadow-sm">
         <div className="flex flex-col md:flex-row items-center gap-3">
           {/* Search bar (~42%) */}
           <div className="relative w-full md:w-[42%]">
@@ -282,7 +257,7 @@ export const LabMarketplace: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Lab..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
           </div>
 
@@ -321,12 +296,12 @@ export const LabMarketplace: React.FC = () => {
           <div className="w-full md:w-[14%] flex justify-end">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="w-full relative bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+              className="w-full relative bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-full transition-all inline-flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>Cart</span>
               {cartItems.length > 0 && (
-                <span className="bg-white text-[#0052CC] text-[10px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center">
+                <span className="bg-white text-brand-600 text-xs font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center">
                   {cartItems.length}
                 </span>
               )}
@@ -407,42 +382,26 @@ export const LabMarketplace: React.FC = () => {
 
               const durationText = isPuzzle ? 'Unlimited' : isCommandLine ? '6 Hours' : '1.5 Hours';
 
-              const difficultyBadgeColors: Record<string, string> = {
-                Beginner: 'bg-emerald-50 dark:bg-emerald-950/40 text-[#28A745] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-                Intermediate: 'bg-blue-50 dark:bg-blue-950/40 text-[#0052CC] dark:text-blue-400 border-blue-200 dark:border-blue-800',
-                Advanced: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-              };
 
               return (
                 <div
                   key={lab.id}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
+                  className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
                 >
-                  <div className="p-5 border-b border-slate-100 dark:border-slate-800 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full truncate max-w-[180px]">
-                        {lab.category}
-                      </span>
-                      <span
-                        className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full ${
-                          difficultyBadgeColors[lab.difficulty ?? ''] || 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {lab.difficulty}
-                      </span>
-                    </div>
-
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-[#0052CC] transition-colors line-clamp-1">
+                  <LabCardMedia labId={lab.id} category={lab.category} difficulty={lab.difficulty} />
+                  <div className="space-y-2 p-5 pb-0">
+                    <h3 className="line-clamp-2 font-display text-lg font-bold leading-snug text-slate-900 dark:text-white">
                       {lab.title}
                     </h3>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                       {lab.shortDescription}
                     </p>
                   </div>
 
-                  <div className="p-5 bg-slate-50/50 dark:bg-slate-800/40 space-y-4 flex-1 flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  <div className="flex flex-1 flex-col justify-between space-y-4 p-5">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="capitalize">{lab.category}</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         {durationText}
@@ -457,7 +416,7 @@ export const LabMarketplace: React.FC = () => {
                       {(lab.skillsCovered ?? []).slice(0, 2).map((skill, idx) => (
                         <span
                           key={idx}
-                          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] font-medium"
+                          className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                         >
                           {skill}
                         </span>
@@ -465,17 +424,17 @@ export const LabMarketplace: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
                     <div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase block">
-                        Price / Hour
+                      <span className="block text-xs text-slate-500 dark:text-slate-400">
+                        Price per hour
                       </span>
                       {isPurchased ? (
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">INCLUDED</span>
+                        <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">INCLUDED</span>
                       ) : isFree ? (
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">FREE</span>
+                        <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">FREE</span>
                       ) : (
-                        <span className="text-lg font-black text-slate-900 dark:text-white">₹{getHourlyRate(lab).toLocaleString('en-IN')}</span>
+                        <span className="text-lg font-bold text-slate-900 dark:text-white">₹{getHourlyRate(lab).toLocaleString('en-IN')}</span>
                       )}
                     </div>
 
@@ -490,7 +449,7 @@ export const LabMarketplace: React.FC = () => {
                       {isPurchased ? (
                         <button
                           disabled
-                          className="px-3 py-2 rounded-lg bg-emerald-50 text-[#28A745] border border-emerald-200 font-bold text-xs inline-flex items-center gap-1.5 cursor-not-allowed"
+                          className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-xs inline-flex items-center gap-1.5 cursor-not-allowed"
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>Assigned</span>
@@ -510,10 +469,10 @@ export const LabMarketplace: React.FC = () => {
                         <button
                           disabled={isInCart}
                           onClick={() => handleAddToCart(lab)}
-                          className={`px-3 py-2 rounded-lg font-bold text-xs transition-colors inline-flex items-center gap-1 shadow-xs ${
+                          className={`px-3 py-2 rounded-full font-bold text-xs transition-colors inline-flex items-center gap-1 shadow-xs ${
                             isInCart
                               ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
-                              : 'bg-[#0052CC] hover:bg-blue-700 text-white cursor-pointer'
+                              : 'bg-brand-600 hover:bg-blue-700 text-white cursor-pointer'
                           }`}
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />

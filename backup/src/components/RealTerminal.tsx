@@ -166,19 +166,19 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     const term = new Terminal({
       cursorBlink: true,
       cursorStyle: 'block',
-      fontFamily: 'Fira Code, Menlo, Monaco, Consolas, "Courier New", monospace',
+      fontFamily: '"JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace',
       fontSize: 13,
       lineHeight: 1.2,
       theme: {
-        background: '#0B0F17',
-        foreground: '#F3F4F6',
+        background: '#0C0E14',
+        foreground: '#F2F4F7',
         cursor: '#38BDF8',
         selectionBackground: 'rgba(56, 189, 248, 0.3)',
-        black: '#1F2937',
+        black: '#262832',
         red: '#EF4444',
         green: '#10B981',
         yellow: '#F59E0B',
-        blue: '#3B82F6',
+        blue: '#F2A47A',
         magenta: '#EC4899',
         cyan: '#06B6D4',
         white: '#F9FAFB',
@@ -186,7 +186,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
         brightRed: '#F87171',
         brightGreen: '#34D399',
         brightYellow: '#FBBF24',
-        brightBlue: '#60A5FA',
+        brightBlue: '#83E8C3',
         brightMagenta: '#F472B6',
         brightCyan: '#22D3EE',
         brightWhite: '#FFFFFF',
@@ -316,10 +316,10 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     let note: string | undefined;
     if (fromWorkspace === null) {
       text = draft ?? '';
-      note = 'Could not read the file through the terminal (is a program still running there?). Showing your last draft.';
+      note = "Couldn't read the file through the terminal, so this is your last draft. If a command is still running there, stop it and reopen the editor.";
     } else if (!fromWorkspace && draft) {
       text = draft;
-      note = 'The file is empty or new in your workspace. Showing your last unsaved draft.';
+      note = 'This file is not in your workspace yet, so your unsaved draft is back. Save to put it there.';
     }
     setEditorSession({ file, text, note });
     setEditorBusy(false);
@@ -369,11 +369,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
   return (
     <div
-      className={`relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0B0F17] shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : ''
+      className={`relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : ''
         } ${className}`}
     >
       {/* Terminal Header */}
-      <div className="h-10 bg-[#111827] px-4 flex items-center justify-between border-b border-slate-800 select-none">
+      <div className="h-10 bg-slate-900 px-4 flex items-center justify-between border-b border-slate-800 select-none">
         <div className="flex items-center gap-2.5">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
@@ -381,7 +381,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
             <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-400 pl-2">
-            <TerminalIcon className="w-3.5 h-3.5 text-blue-400" />
+            <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
             <span>
               {terminalTitle || (labId === 'lab1-recon'
                 ? 'SecureGuard Red Team — Kali Linux Shell'
@@ -392,7 +392,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
         <div className="flex items-center gap-3">
           {/* Connection Badge */}
-          <div className="flex items-center gap-1.5 text-[11px] font-mono font-semibold">
+          <div className="flex items-center gap-1.5 text-xs font-mono font-semibold">
             {connectionState === 'connected' && (
               <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-800/40">
                 <CheckCircle2 className="w-3 h-3" /> Connected
@@ -416,7 +416,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
               type="button"
               onClick={() => { if (editorSession) closeEditor(); else void openEditor(editor.file); }}
               disabled={!editorSession && (editorBusy || connectionState !== 'connected')}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-2 py-1 text-[11px] font-bold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-2 py-1 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:opacity-40"
               title={editorSession
                 ? 'Back to the terminal (your draft is kept)'
                 : `Open ~/${editor.file}, the file this challenge grades, in the code editor`}
@@ -502,7 +502,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
         ref={terminalRef}
         onClick={() => termInstanceRef.current?.focus()}
         style={{ height: isFullscreen ? 'calc(100% - 40px)' : height }}
-        className="w-full p-2 bg-[#0B0F17] overflow-hidden cursor-text"
+        className="w-full p-2 bg-slate-950 overflow-hidden cursor-text"
       />
     </div>
   );

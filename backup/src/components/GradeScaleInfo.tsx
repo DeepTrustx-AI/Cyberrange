@@ -31,23 +31,23 @@ export const GradeScaleInfo: React.FC = () => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="align-middle ml-1 text-slate-400 hover:text-[#0052CC] dark:hover:text-blue-400 cursor-pointer"
+        className="align-middle ml-1 text-slate-400 hover:text-brand-600 dark:hover:text-blue-400 cursor-pointer"
         aria-label="Grade scale"
       >
         <Info className="w-3.5 h-3.5" />
       </button>
       {open && (
         <div className="absolute z-20 top-full left-1/2 -translate-x-1/2 mt-2 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg p-2 normal-case">
-          <p className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1 pb-1.5">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-1 pb-1.5">
             Grade Scale
           </p>
           <div className="space-y-1">
             {GRADE_ROWS.map(([grade, range]) => (
               <div key={grade} className="flex items-center justify-between gap-2 px-1">
-                <span className={`text-[10px] font-black w-7 text-center py-0.5 rounded-md border ${getGradeColor(grade)}`}>
+                <span className={`text-xs font-bold w-7 text-center py-0.5 rounded-md border ${getGradeColor(grade)}`}>
                   {grade}
                 </span>
-                <span className="text-[11px] text-slate-600 dark:text-slate-300">{range}</span>
+                <span className="text-xs text-slate-600 dark:text-slate-300">{range}</span>
               </div>
             ))}
           </div>

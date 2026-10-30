@@ -21,7 +21,6 @@ import {
 
 export const LabSchedulerPage: React.FC = () => {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'list' | 'calendar'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ScheduleStatus>('all');
@@ -75,8 +74,6 @@ export const LabSchedulerPage: React.FC = () => {
         }
       } catch (err) {
         console.error('Error fetching lab schedules:', err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchSchedulesAndOptions();
@@ -191,19 +188,18 @@ export const LabSchedulerPage: React.FC = () => {
     <AdminLayout>
       <div className="space-y-6 animate-in fade-in duration-200">
         {/* Header Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:items-end">
           <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-[#0052CC] dark:text-blue-400" />
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
               Lab Execution Scheduler
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
               Schedule automated lab instance deployment windows, email notifications, and auto-teardowns.
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center px-4 py-2.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer self-start sm:self-center"
+            className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs rounded-full shadow-xs transition-colors cursor-pointer self-start sm:self-center"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Schedule Lab Window
           </button>
@@ -211,44 +207,44 @@ export const LabSchedulerPage: React.FC = () => {
 
         {/* Metrics Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Total Schedules</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{schedules.length}</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400">Total Schedules</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{schedules.length}</p>
             </div>
-            <div className="p-3 bg-blue-50 dark:bg-blue-950/60 text-[#0052CC] dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-800">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/60 text-brand-600 dark:text-blue-400 rounded-xl border border-blue-100 dark:border-blue-800">
               <CalendarIcon className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Active Instances</p>
-              <p className="text-2xl font-black text-[#28A745] dark:text-emerald-400 mt-1">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400">Active Instances</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                 {schedules.reduce((acc, curr) => acc + curr.activeInstances, 0)} Nodes
               </p>
             </div>
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-[#28A745] dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-800">
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-800">
               <Server className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Targeted Training Groups</p>
-              <p className="text-2xl font-black text-[#6F42C1] dark:text-purple-400 mt-1">3 Training Groups</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400">Targeted Training Groups</p>
+              <p className="text-2xl font-bold text-brand-600 dark:text-brand-400 mt-1">3 Training Groups</p>
             </div>
-            <div className="p-3 bg-purple-50 dark:bg-purple-950/60 text-[#6F42C1] dark:text-purple-400 rounded-xl border border-purple-100 dark:border-purple-800">
+            <div className="p-3 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 rounded-xl border border-brand-100 dark:border-brand-800">
               <Users className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider">Auto-Teardown Engine</p>
-              <p className="text-2xl font-black text-[#28A745] dark:text-emerald-400 mt-1">Operational</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-400">Auto-Teardown Engine</p>
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">Operational</p>
             </div>
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-[#28A745] dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-800">
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-800">
               <CheckCircle className="w-6 h-6" />
             </div>
           </div>
@@ -303,10 +299,10 @@ export const LabSchedulerPage: React.FC = () => {
 
         {/* Schedule List Content View */}
         {activeTab === 'list' ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider">
+                <thead className="bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="py-3.5 px-4">Lab Title</th>
                     <th className="py-3.5 px-4">Target Training Group</th>
@@ -325,7 +321,7 @@ export const LabSchedulerPage: React.FC = () => {
                       </td>
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300">
                         <span className="inline-flex items-center">
-                          <Users className="w-3.5 h-3.5 mr-1.5 text-[#6F42C1] dark:text-purple-400" />
+                          <Users className="w-3.5 h-3.5 mr-1.5 text-brand-600 dark:text-brand-400" />
                           {schedule.groupName}
                         </span>
                       </td>
@@ -333,7 +329,7 @@ export const LabSchedulerPage: React.FC = () => {
                         <div>Start: {new Date(schedule.startTime).toLocaleString()}</div>
                         <div className="text-slate-500 dark:text-slate-400">End: {new Date(schedule.endTime).toLocaleString()}</div>
                         {schedule.extendedMinutes ? (
-                          <span className="inline-block mt-0.5 text-[#0052CC] dark:text-blue-400 font-bold">
+                          <span className="inline-block mt-0.5 text-brand-600 dark:text-blue-400 font-bold">
                             +{schedule.extendedMinutes}m Extended
                           </span>
                         ) : null}
@@ -346,13 +342,13 @@ export const LabSchedulerPage: React.FC = () => {
                         <div className="flex items-center justify-center space-x-2">
                           <span
                             title={schedule.autoProvision ? 'Auto-Provision Enabled' : 'Manual Provision'}
-                            className={`p-1 rounded ${schedule.autoProvision ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}
+                            className={`p-1 rounded ${schedule.autoProvision ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
                           >
                             <Server className="w-4 h-4" />
                           </span>
                           <span
                             title={schedule.emailReminders ? 'Email Reminders Active' : 'No Email Alerts'}
-                            className={`p-1 rounded ${schedule.emailReminders ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}
+                            className={`p-1 rounded ${schedule.emailReminders ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}
                           >
                             <Mail className="w-4 h-4" />
                           </span>
@@ -364,7 +360,7 @@ export const LabSchedulerPage: React.FC = () => {
                             <button
                               onClick={() => handleForceStart(schedule.id)}
                               title="Force Start Lab Now"
-                              className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-[#28A745] dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
+                              className="p-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
                             >
                               <Play className="w-4 h-4" />
                             </button>
@@ -375,7 +371,7 @@ export const LabSchedulerPage: React.FC = () => {
                               <button
                                 onClick={() => handleExtend(schedule.id, 15)}
                                 title="Extend Window (+15 mins)"
-                                className="px-2 py-1 text-xs font-extrabold bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-[#0052CC] dark:text-blue-400 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
+                                className="px-2 py-1 text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-brand-600 dark:text-blue-400 rounded-md border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
                               >
                                 +15m
                               </button>
@@ -424,7 +420,7 @@ export const LabSchedulerPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">{sch.labTitle}</h4>
-                    <p className="text-xs text-purple-700 font-semibold mt-0.5">{sch.groupName}</p>
+                    <p className="text-xs text-brand-700 font-semibold mt-0.5">{sch.groupName}</p>
                   </div>
                   <div className="text-xs text-gray-600 space-y-1 font-mono bg-white p-2.5 rounded-lg border border-gray-200">
                     <div>Start: {new Date(sch.startTime).toLocaleString()}</div>
@@ -473,7 +469,7 @@ export const LabSchedulerPage: React.FC = () => {
 
               <form onSubmit={handleCreateSchedule} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Select Purchased Lab
                   </label>
                   <select
@@ -489,7 +485,7 @@ export const LabSchedulerPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
                     Assign Target Student Training Group
                   </label>
                   <select
@@ -506,7 +502,7 @@ export const LabSchedulerPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Start Time
                     </label>
                     <input
@@ -518,7 +514,7 @@ export const LabSchedulerPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
                       End Time
                     </label>
                     <input
@@ -562,7 +558,7 @@ export const LabSchedulerPage: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+                    className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-sm transition-colors cursor-pointer"
                   >
                     Schedule Window
                   </button>

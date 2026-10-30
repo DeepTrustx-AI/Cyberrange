@@ -62,6 +62,7 @@ const AdminProfilePage     = lazy(() => import('./pages/admin/AdminProfilePage')
 const PaymentHistoryPage   = lazy(() => import('./pages/admin/PaymentHistoryPage').then(m => ({ default: m.PaymentHistoryPage })));
 const PurchasedLabsPage    = lazy(() => import('./pages/admin/PurchasedLabsPage').then(m => ({ default: m.PurchasedLabsPage })));
 const ReportsPage          = lazy(() => import('./pages/admin/ReportsPage').then(m => ({ default: m.ReportsPage })));
+const GradebookPage        = lazy(() => import('./pages/admin/GradebookPage').then(m => ({ default: m.GradebookPage })));
 const ReportGroupDetailPage = lazy(() => import('./pages/admin/ReportGroupDetailPage').then(m => ({ default: m.ReportGroupDetailPage })));
 
 // ─── User Chunk ───────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ const KubernetesDriftLabPage = lazy(() => import('./pages/user/KubernetesDriftLa
 const LiveKubernetesSecurityLabPage = lazy(() => import('./pages/user/LiveKubernetesSecurityLabPage').then(m => ({ default: m.LiveKubernetesSecurityLabPage })));
 const PuzzleLabPage         = lazy(() => import('./pages/user/PuzzleLabPage').then(m => ({ default: m.PuzzleLabPage })));
 const TechCorpLabSession    = lazy(() => import('./pages/user/TechCorpLabSession').then(m => ({ default: m.TechCorpLabSession })));
-const ProgressTracking     = lazy(() => import('./pages/user/ProgressTracking').then(m => ({ default: m.ProgressTracking })));
+const ProgressPage         = lazy(() => import('./pages/user/ProgressPage').then(m => ({ default: m.ProgressPage })));
 const LeaderboardPortal    = lazy(() => import('./pages/user/LeaderboardPortal').then(m => ({ default: m.LeaderboardPortal })));
 const ProfilePage          = lazy(() => import('./pages/user/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const SettingsPage         = lazy(() => import('./pages/user/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -86,7 +87,6 @@ const StudyMaterial        = lazy(() => import('./pages/user/StudyMaterial').the
 const PdfViewerPage        = lazy(() => import('./pages/user/PdfViewerPage').then(m => ({ default: m.PdfViewerPage })));
 const AssignedLabsPage     = lazy(() => import('./pages/user/AssignedLabsPage').then(m => ({ default: m.AssignedLabsPage })));
 const MyLabsPage           = lazy(() => import('./pages/user/MyLabsPage').then(m => ({ default: m.MyLabsPage })));
-const StatisticsPage       = lazy(() => import('./pages/user/StatisticsPage').then(m => ({ default: m.StatisticsPage })));
 const LinuxSysadminLabPage = lazy(() => import('./pages/user/LinuxSysadminLabPage').then(m => ({ default: m.LinuxSysadminLabPage })));
 
 // ─── CTF Chunk ────────────────────────────────────────────────────────────────
@@ -103,6 +103,7 @@ const MaintenancePage      = lazy(() => import('./pages/shared/MaintenancePage')
 const UnauthorizedPage     = lazy(() => import('./pages/shared/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
 const NotificationCenterPage = lazy(() => import('./pages/shared/NotificationCenterPage').then(m => ({ default: m.NotificationCenterPage })));
 const HelpFAQPage          = lazy(() => import('./pages/shared/HelpFAQPage').then(m => ({ default: m.HelpFAQPage })));
+const MascotGallery        = lazy(() => import('./pages/dev/MascotGallery').then(m => ({ default: m.MascotGallery })));
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export function App() {
@@ -120,6 +121,7 @@ export function App() {
             <Routes>
               {/* Root Gateway */}
               <Route path="/" element={<RootRedirect />} />
+              {import.meta.env.DEV && <Route path="/__mascot" element={<MascotGallery />} />}
 
               {/* ── Public Verification Portal ───────────────────────────── */}
               <Route path="/certificate/verify/:certificateId" element={<VerificationPage />} />
@@ -556,7 +558,7 @@ export function App() {
                 path="/progress"
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
-                    <UserLayout><ProgressTracking /></UserLayout>
+                    <UserLayout><ProgressPage /></UserLayout>
                   </ProtectedRoute>
                 }
               />
@@ -586,7 +588,7 @@ export function App() {
                 path="/statistics"
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
-                    <UserLayout><StatisticsPage /></UserLayout>
+                    <UserLayout><ProgressPage /></UserLayout>
                   </ProtectedRoute>
                 }
               />
@@ -806,6 +808,16 @@ export function App() {
                   <ProtectedRoute allowedRoles={['admin']}>
                     <ErrorBoundary>
                       <AdminLayout><MonitoringAnalytics /></AdminLayout>
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/gradebook"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <ErrorBoundary>
+                      <AdminLayout><GradebookPage /></AdminLayout>
                     </ErrorBoundary>
                   </ProtectedRoute>
                 }

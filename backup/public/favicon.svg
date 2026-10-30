@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 2 28 28">
+  <!-- The CyberRange mark: navy ink on light browser chrome, Ember apricot on dark. -->
+  <style>
+    .top { fill: #808693; }
+    .front { fill: #1F2635; }
+    .side { fill: #0E141F; }
+    @media (prefers-color-scheme: dark) {
+      .top { fill: #EFB062; }
+      .front { fill: #BC4C20; }
+      .side { fill: #812F13; }
+    }
+  </style>
+  <path class="top" d="M16 2.5 28 9.25 16 16 4 9.25Z" />
+  <path class="front" d="M4 9.25 16 16v13.5L4 22.75Z" />
+  <path class="side" d="M28 9.25 16 16v13.5l12-6.75Z" />
+  <path d="M16 16 28 9.25" stroke="#fff" stroke-opacity="0.35" stroke-width="0.75" />
+</svg>

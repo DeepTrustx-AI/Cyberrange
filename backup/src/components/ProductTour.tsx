@@ -25,11 +25,11 @@ export const ProductTour: React.FC<ProductTourProps> = ({ steps, onClose }) => {
             <X className="w-4 h-4" />
           </button>
 
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-[#0052CC] dark:text-blue-400 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-brand-600 dark:text-blue-400 flex items-center justify-center mb-4">
             <Icon className="w-7 h-7" />
           </div>
 
-          <h2 className="text-lg font-black text-slate-900 dark:text-white">{step.title}</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">{step.title}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{step.description}</p>
         </div>
 
@@ -39,7 +39,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({ steps, onClose }) => {
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? 'w-6 bg-[#0052CC]' : 'w-1.5 bg-slate-200 dark:bg-slate-700'
+                  i === index ? 'w-6 bg-brand-600' : 'w-1.5 bg-slate-200 dark:bg-slate-700'
                 }`}
               />
             ))}
@@ -64,7 +64,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({ steps, onClose }) => {
               )}
               <button
                 onClick={() => (isLast ? onClose() : setIndex((i) => i + 1))}
-                className="px-4 py-2 rounded-xl bg-[#0052CC] hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-full bg-brand-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 {isLast ? 'Finish' : 'Next'}
                 {!isLast && <ArrowRight className="w-3.5 h-3.5" />}

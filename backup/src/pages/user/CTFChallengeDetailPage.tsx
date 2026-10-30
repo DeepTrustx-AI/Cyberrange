@@ -1,21 +1,17 @@
 import { apiUrl } from '../../lib/api';
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { UserLayout } from '../../components/user/UserLayout';
 import type { CtfEvent, CtfChallenge, CtfHint } from '../../types/ctf';
 import { useCTFWebSocket } from '../../hooks/useCTFWebSocket';
 import { HintUnlockModal } from './HintUnlockModal';
 import {
   ArrowLeft,
-  Trophy,
   Copy,
   Check,
   Download,
-  AlertCircle,
   HelpCircle,
-  Play,
-  CheckCircle2,
   Lock,
   ExternalLink,
   Terminal,
@@ -25,7 +21,6 @@ export const CTFChallengeDetailPage: React.FC = () => {
   const { id, cid } = useParams<{ id: string; cid: string }>();
   const ctfId = Number(id);
   const challengeId = Number(cid);
-  const navigate = useNavigate();
 
   const [ctf, setCtf] = useState<CtfEvent | null>(null);
   const [challenge, setChallenge] = useState<CtfChallenge | null>(null);
@@ -235,10 +230,10 @@ export const CTFChallengeDetailPage: React.FC = () => {
         </div>
 
         {/* Challenge Briefing Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
             <div className="space-y-1">
-              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">{challenge.title}</h2>
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{challenge.title}</h2>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <span>{challenge.solve_count} solved</span>
                 <span>•</span>
@@ -248,8 +243,8 @@ export const CTFChallengeDetailPage: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Points Payout</span>
-              <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono">
+              <span className="text-xs font-bold text-slate-400">Points Payout</span>
+              <span className="text-2xl font-bold tabular text-brand-700 dark:text-brand-300 font-display">
                 {challenge.scoring_mode === 'static' ? challenge.static_points : challenge.current_points} pts
               </span>
             </div>
@@ -257,7 +252,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
 
           {/* Description brief */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Breifing Brief</h3>
+            <h3 className="text-xs font-bold text-slate-500">Briefing</h3>
             <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
               {challenge.description}
             </div>
@@ -266,7 +261,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
           {/* Connection Monospace string */}
           {challenge.connection_string && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Access Connection</h3>
+              <h3 className="text-xs font-bold text-slate-500">Access Connection</h3>
               <div className="flex items-center justify-between bg-slate-900 text-slate-100 p-3 rounded-xl border border-slate-800 font-mono text-xs overflow-x-auto shadow-inner">
                 <div className="flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -285,7 +280,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
           {/* GCP Web URL target */}
           {challenge.challenge_url && (
             <div className="space-y-2">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Target Endpoint</h3>
+              <h3 className="text-xs font-bold text-slate-500">Target Endpoint</h3>
               <a
                 href={challenge.challenge_url}
                 target="_blank"
@@ -301,7 +296,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
           {/* Downloadable files */}
           {challenge.files && challenge.files.length > 0 && (
             <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-5">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Attachment Archives</h3>
+              <h3 className="text-xs font-bold text-slate-500">Attachment Archives</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {challenge.files.map((file) => (
                   <a
@@ -313,7 +308,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate mr-3">
                       {file.filename}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 font-mono flex-shrink-0 flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-bold text-slate-400 font-mono flex-shrink-0 flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 px-2 py-0.5 rounded-md">
                       <Download className="w-3 h-3" />
                       {formatBytes(file.file_size_bytes)}
                     </span>
@@ -325,8 +320,8 @@ export const CTFChallengeDetailPage: React.FC = () => {
         </div>
 
         {/* Flags Submission Block */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Submit Flag</h3>
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 className="text-xs font-bold text-slate-500">Submit Flag</h3>
 
           <form onSubmit={handleFlagSubmit} className="flex gap-2">
             <input
@@ -341,7 +336,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSolved || submitting || isCompleted}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-500/20 flex-shrink-0"
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-full transition-all shadow-md shadow-indigo-500/20 flex-shrink-0"
             >
               {submitting ? 'Submitting...' : 'Submit'}
             </button>
@@ -364,10 +359,10 @@ export const CTFChallengeDetailPage: React.FC = () => {
 
         {/* Hints and Penalties Board */}
         {challenge.hints && challenge.hints.length > 0 && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-indigo-500" />
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hints Board</h3>
+              <h3 className="text-xs font-bold text-slate-500">Hints Board</h3>
             </div>
 
             <div className="space-y-3">
@@ -382,7 +377,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20 px-4 py-3 text-xs border-b border-slate-200 dark:border-slate-800/80">
                       <span className="font-bold text-slate-700 dark:text-slate-300">Hint #{idx + 1}</span>
-                      <span className="text-[10px] font-semibold text-slate-400">
+                      <span className="text-xs font-semibold text-slate-400">
                         Penalty Deduction: {hint.cost_percent ?? 0}%
                       </span>
                     </div>
@@ -401,7 +396,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
                             type="button"
                             disabled={isCompleted}
                             onClick={() => setActiveHintToUnlock(hint)}
-                            className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold text-[10px] uppercase border border-amber-200 dark:border-amber-900/40 px-3.5 py-1.5 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40"
+                            className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase border border-amber-200 dark:border-amber-900/40 px-3.5 py-1.5 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40"
                           >
                             <Lock className="w-3 h-3" />
                             Unlock Hint

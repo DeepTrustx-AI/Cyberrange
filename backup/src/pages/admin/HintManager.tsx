@@ -142,7 +142,7 @@ export const HintManager: React.FC<HintManagerProps> = ({ hints, onChange }) => 
                       %
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 leading-normal">
                     deducted from participant payout
                   </span>
                 </div>

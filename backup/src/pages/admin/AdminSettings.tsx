@@ -2,12 +2,9 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context';
 import {
-  Settings,
-  User,
   Lock,
   MessageSquare,
   History,
-  Info,
   LogOut,
   Save,
   CheckCircle2,
@@ -30,7 +27,6 @@ export const AdminSettings: React.FC = () => {
 
   // Tables & Info states
   const [loginHistory, setLoginHistory] = useState<any[]>([]);
-  const [serverStatus, setServerStatus] = useState('Online');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
 
@@ -110,12 +106,12 @@ export const AdminSettings: React.FC = () => {
       <div className="lg:col-span-4 space-y-6">
 
         {/* Profile Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-center shadow-xs">
-          <div className="w-20 h-20 bg-[#0052CC]/10 text-[#0052CC] dark:text-blue-400 rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-4 border border-[#0052CC]/25">
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 text-center shadow-sm">
+          <div className="w-20 h-20 bg-brand-600/10 text-brand-600 dark:text-blue-400 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 border border-brand-600/25">
             {user?.name?.charAt(0).toUpperCase() || 'A'}
           </div>
-          <h2 className="text-base font-black text-slate-900 dark:text-slate-100">{user?.name || 'Administrator'}</h2>
-          <p className="text-slate-500 font-bold mt-1 uppercase text-[10px] tracking-wider">{user?.role || 'SYSTEM ADMIN'}</p>
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{user?.name || 'Administrator'}</h2>
+          <p className="text-slate-500 font-bold mt-1 text-xs">{user?.role || 'SYSTEM ADMIN'}</p>
 
           <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 text-left space-y-3 font-semibold text-slate-600 dark:text-slate-400">
             <div className="flex justify-between">
@@ -129,37 +125,11 @@ export const AdminSettings: React.FC = () => {
           </div>
         </div>
 
-        {/* About App Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Info className="w-4 h-4 text-[#0052CC] dark:text-blue-400" />
-            About CyberRange
-          </h3>
-          <div className="space-y-3 font-semibold text-slate-600 dark:text-slate-400">
-            <div className="flex justify-between">
-              <span>Version:</span>
-              <span className="text-slate-900 dark:text-white font-bold">v3.4.1</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Database:</span>
-              <span className="text-slate-900 dark:text-white font-bold">PostgreSQL 16</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Server Status:</span>
-              <span className="text-emerald-600 font-bold">Online</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Build Version:</span>
-              <span className="text-slate-900 dark:text-white font-bold">build_2026_08</span>
-            </div>
-          </div>
-        </div>
-
         {/* Logout Button */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 shadow-sm">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full py-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/45 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-black rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            className="w-full py-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/45 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
             <LogOut className="w-4 h-4" /> End Admin Session
           </button>
@@ -171,9 +141,9 @@ export const AdminSettings: React.FC = () => {
       <div className="lg:col-span-8 space-y-6">
 
         {/* Theme Settings */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Monitor className="w-4 h-4 text-[#0052CC] dark:text-blue-400" />
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <Monitor className="w-4 h-4 text-brand-600 dark:text-blue-400" />
             Display Theme Preference
           </h3>
           <form onSubmit={handleSaveTheme} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -183,9 +153,9 @@ export const AdminSettings: React.FC = () => {
                   key={t}
                   type="button"
                   onClick={() => setTheme(t as any)}
-                  className={`px-4 py-2 border rounded-xl font-bold uppercase text-[10px] cursor-pointer transition-all ${
+                  className={`px-4 py-2 border rounded-full font-bold uppercase text-xs cursor-pointer transition-all ${
                     theme === t
-                      ? 'bg-[#0052CC] border-[#0052CC] text-white'
+                      ? 'bg-brand-600 border-brand-600 text-white'
                       : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
                   }`}
                 >
@@ -195,7 +165,7 @@ export const AdminSettings: React.FC = () => {
             </div>
             <button
               type="submit"
-              className="px-5 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full flex items-center gap-1.5 cursor-pointer"
             >
               <Save className="w-4 h-4" /> Save Theme
             </button>
@@ -203,9 +173,9 @@ export const AdminSettings: React.FC = () => {
         </div>
 
         {/* Change Password Settings */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Lock className="w-4 h-4 text-[#0052CC] dark:text-blue-400" />
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <Lock className="w-4 h-4 text-brand-600 dark:text-blue-400" />
             Security & Credentials Update
           </h3>
           <form onSubmit={handleChangePassword} className="space-y-4">
@@ -244,7 +214,7 @@ export const AdminSettings: React.FC = () => {
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full flex items-center gap-1.5 cursor-pointer"
               >
                 <Save className="w-4 h-4" /> Change Password
               </button>
@@ -253,9 +223,9 @@ export const AdminSettings: React.FC = () => {
         </div>
 
         {/* Feedback Section */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <MessageSquare className="w-4 h-4 text-[#0052CC] dark:text-blue-400" />
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <MessageSquare className="w-4 h-4 text-brand-600 dark:text-blue-400" />
             Platform Feedback & Bug Reports
           </h3>
           <p className="text-slate-500">
@@ -266,25 +236,25 @@ export const AdminSettings: React.FC = () => {
               href={FEEDBACK_GOOGLE_FORM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-2.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl inline-flex items-center gap-2"
+              className="px-5 py-2.5 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full inline-flex items-center gap-2"
             >
               Give Feedback <ExternalLink className="w-4 h-4" />
             </a>
           ) : (
-            <p className="text-[11px] text-slate-400">The feedback form is not configured yet.</p>
+            <p className="text-xs text-slate-400">The feedback form is not configured yet.</p>
           )}
         </div>
 
         {/* Login Audit Trail Log */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs space-y-3 p-6">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <History className="w-4 h-4 text-[#0052CC] dark:text-blue-400" />
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm space-y-3 p-6">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <History className="w-4 h-4 text-brand-600 dark:text-blue-400" />
             Recent Login Audit Log
           </h3>
           <div className="overflow-x-auto border rounded-xl">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800 border-b text-[10px] font-bold text-slate-400 uppercase">
+                <tr className="bg-slate-50 dark:bg-slate-800 border-b text-xs font-bold text-slate-400">
                   <th className="p-3">Date</th>
                   <th className="p-3">Time</th>
                   <th className="p-3">IP Address</th>
@@ -302,7 +272,7 @@ export const AdminSettings: React.FC = () => {
                     <td className="p-3 text-slate-500">{h.browser}</td>
                     <td className="p-3 text-slate-500">{h.device}</td>
                     <td className="p-3 text-center">
-                      <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[9px]">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-xs">
                         {h.status}
                       </span>
                     </td>
@@ -318,12 +288,12 @@ export const AdminSettings: React.FC = () => {
       {/* LOGOUT CONFIRMATION MODAL */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl text-center">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl text-center">
             <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto border border-rose-200">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">End Active Session?</h4>
+              <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">End Active Session?</h4>
               <p className="text-slate-500 font-semibold leading-relaxed">
                 Are you sure you want to log out and terminate your administrator session?
               </p>

@@ -1,20 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { prefetchRoute } from '../../routes/prefetch';
 import { useAuth } from '../../context';
+import { LogoMark } from '../brand/LogoMark';
 import {
-  Activity,
   BookOpen,
   ChevronRight,
   CreditCard,
-  Layers,
   LayoutDashboard,
   LogOut,
   Settings,
-  Shield,
   Store,
   Trophy,
   Users,
-  UsersRound,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -40,6 +39,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, capability: 'DASHBOARD_VIEW' },
     { name: 'Lab Marketplace', path: '/admin/labs', icon: Store, capability: 'LAB_PURCHASE' },
     { name: 'Student Management', path: '/admin/users', icon: Users, capability: 'ROSTER_MANAGE' },
+    { name: 'Gradebook', path: '/admin/gradebook', icon: ClipboardCheck, capability: 'GRADE_VIEW' },
     { name: 'Reports', path: '/admin/reports', icon: CreditCard, capability: 'REPORT_VIEW' },
     { name: 'Study Material', path: '/admin/study-material', icon: BookOpen, capability: 'CONTENT_MANAGE' },
     { name: 'CTF Manager', path: '/admin/ctf', icon: Trophy, capability: 'CTF_MANAGE' },
@@ -51,23 +51,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
   const isProfessor = roles.includes('PROFESSOR') && !roles.includes('ADMIN') && !roles.includes('SYSTEM_ADMIN');
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col justify-between shadow-sm`}>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col justify-between bg-white transition-transform duration-300 ease-out lg:inset-y-3 lg:left-3 lg:w-60 lg:translate-x-0 lg:rounded-3xl lg:shadow-sm lg:ring-1 lg:ring-slate-200/70 dark:bg-slate-900 dark:lg:ring-slate-800 ${isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}`}>
       <div>
-        <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800 justify-between">
+        <div className="flex h-16 items-center justify-between px-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-800 flex items-center justify-center text-[#0052CC] dark:text-blue-400 shadow-sm">
-              <Shield className="w-6 h-6" />
-            </div>
+            <LogoMark size={28} />
             <div>
-              <h1 className="font-bold text-slate-900 dark:text-white text-base leading-none">CyberRange</h1>
-              <span className="text-[11px] font-semibold text-[#0052CC] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded-full mt-1 inline-block border border-blue-100/50 dark:border-blue-900/40">
+              <p className="font-display text-[17px] font-bold leading-none text-slate-900 dark:text-white">CyberRange</p>
+              <span className="mt-1 inline-block text-xs font-medium text-slate-500 dark:text-slate-400">
                 {isProfessor ? 'Professor Console' : 'Admin Console'}
               </span>
             </div>
           </div>
         </div>
 
-        <nav className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-160px)]">
+        <nav className="max-h-[calc(100vh-170px)] space-y-0.5 overflow-y-auto px-3 pt-3">
           {visibleItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -75,16 +73,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                onFocus={() => prefetchRoute(item.path)}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                  `group flex items-center justify-between rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors ${
                     isActive
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-[#0052CC] dark:text-blue-400 font-bold border border-blue-100 dark:border-blue-800/50'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-brand-100 text-brand-900 dark:bg-brand-500/15 dark:text-white'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
                   }`
                 }
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
                   <span>{item.name}</span>
                 </div>
                 <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500" />
@@ -94,10 +94,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
         </nav>
       </div>
 
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+      <div className="m-2 rounded-2xl bg-slate-50 p-2.5 dark:bg-slate-800/50">
         <div className="flex items-center justify-between">
           <NavLink to="/admin/profile" className="flex items-center gap-3 font-medium hover:opacity-80 transition-opacity">
-            <div className="w-9 h-9 rounded-full bg-[#0052CC] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
               {getInitials(user?.name || 'Admin Lead')}
             </div>
             <div className="overflow-hidden">

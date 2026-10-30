@@ -17,3 +17,10 @@ export function labPath(labId: string): string {
   if (id === 'techcorp-sysadmin-labs' || id.includes('puzzle')) return '/puzzle';
   return `/labs/${labId}/session/sess-123`;
 }
+
+// Where an assignment opens its lab. The live Kubernetes lab runs inside one assignment,
+// so its link says which one.
+export function assignmentLabPath(labId: string, assignmentId: number): string {
+  const path = labPath(labId);
+  return labId === 'live-kubernetes-security-lab' ? `${path}?assignment_id=${assignmentId}` : path;
+}

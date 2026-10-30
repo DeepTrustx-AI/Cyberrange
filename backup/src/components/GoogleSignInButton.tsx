@@ -44,7 +44,6 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   className = ''
 }) => {
   const { setSessionToken } = useAuth();
-  const [isInitializing, setIsInitializing] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   // Bumped by a click while Google is not ready, which loads it again.
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -137,7 +136,6 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
               type: 'standard',
             });
           }
-          setIsInitializing(true);
         } catch (e) {
           console.error('[GoogleSignInButton] Error initializing GIS:', e);
         }

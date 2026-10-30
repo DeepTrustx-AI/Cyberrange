@@ -3,8 +3,8 @@ import { downloadCsv } from '../../utils/exportUtils';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import type { CtfEvent, CtfChallenge, CtfScoreboardEntry } from '../../types/ctf';
-import { ArrowLeft, Download, RefreshCw, Trophy, Activity, Check, Minus } from 'lucide-react';
+import type { CtfEvent, CtfChallenge } from '../../types/ctf';
+import { ArrowLeft, Download, RefreshCw, Activity, Check, Minus } from 'lucide-react';
 
 export const CTFProgressPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,11 +16,9 @@ export const CTFProgressPage: React.FC = () => {
   const [solvesMap, setSolvesMap] = useState<Record<string, Set<number>>>({});
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
-    setError(null);
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -67,8 +65,8 @@ export const CTFProgressPage: React.FC = () => {
         }
       });
       setSolvesMap(newSolvesMap);
-    } catch (err: any) {
-      setError(err.message || 'Error occurred while loading progress data.');
+    } catch (err) {
+      console.error('Failed to load CTF progress:', err);
     } finally {
       setLoading(false);
     }
@@ -118,7 +116,7 @@ export const CTFProgressPage: React.FC = () => {
             <button
               onClick={handleExportCSV}
               disabled={leaderboard.length === 0}
-              className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition-colors shadow-md disabled:opacity-50"
+              className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-1.5 rounded-full transition-colors shadow-md disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               Export CSV
@@ -128,7 +126,7 @@ export const CTFProgressPage: React.FC = () => {
 
         {/* CTF Summary Info */}
         {ctf && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center gap-3">
               <Activity className="w-5 h-5 text-indigo-500" />
               <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Live Solves Grid</h2>
@@ -143,15 +141,15 @@ export const CTFProgressPage: React.FC = () => {
             Compiling Solves Matrix...
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-slate-400 text-xs font-semibold">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl shadow-sm text-slate-400 text-xs font-semibold">
             No participants active in this CTF tournament yet.
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                     <th className="px-4 py-4 w-12 text-center">Rank</th>
                     <th className="px-4 py-4 w-44">Participant</th>
                     <th className="px-4 py-4 w-20 text-center">Solves</th>
@@ -159,7 +157,7 @@ export const CTFProgressPage: React.FC = () => {
                     {challenges.map((ch) => (
                       <th
                         key={ch.id}
-                        className="px-2 py-4 text-center text-[9px] font-bold truncate max-w-[120px]"
+                        className="px-2 py-4 text-center text-xs font-bold truncate max-w-[120px]"
                         title={ch.title}
                       >
                         {ch.title}

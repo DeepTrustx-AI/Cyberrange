@@ -215,15 +215,15 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-orange-100 dark:bg-amber-950/60 text-[#FFA500] dark:text-amber-400">
+            <div className="p-2 rounded-xl bg-orange-100 dark:bg-amber-950/60 text-amber-500 dark:text-amber-400">
               <UsersRound className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 {step === 'build'
                   ? isEditMode ? 'Edit Training Group' : 'Create New Training Group'
                   : 'Confirm Group Roster'}
@@ -252,7 +252,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Cybersecurity Training Cohort 2026"
-                  className="w-full pl-3 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                  className="w-full pl-3 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                 />
                 {errors.name && <p className="text-rose-500 mt-1">{errors.name}</p>}
               </div>
@@ -277,7 +277,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Brief summary of training goals, department, or skill tier..."
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
               />
             </div>
 
@@ -294,7 +294,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                       onChange={(e) => setMemberSearch(e.target.value)}
                       onKeyDown={handleMemberSearchKeyDown}
                       placeholder='Search by name, or type "all" + Enter to select everyone...'
-                      className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                      className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                     />
                   </div>
                   <button
@@ -332,7 +332,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                     )}
                   </div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-400 mt-1.5">
                   Click a name to select, or type "all" and press Enter to select everyone — then use the trash icon to remove them from this group.
                 </p>
               </div>
@@ -355,7 +355,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                       }
                     }}
                     placeholder="Search by name, roll number, dept — or S.No e.g. 1-4,7,9-12"
-                    className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                    className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                   />
                 </div>
                 {isRangeQuery && (
@@ -383,7 +383,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
               <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                 <div className="max-h-64 overflow-y-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wide sticky top-0">
+                    <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold sticky top-0">
                       <tr>
                         <th className="p-2 w-10 text-center">#</th>
                         <th className="p-2">Name</th>
@@ -410,7 +410,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                               <td className="p-2 text-center text-slate-400 font-mono">{idx + 1}</td>
                               <td className="p-2 font-semibold text-slate-800 dark:text-slate-100">
                                 <div className="flex items-center gap-2">
-                                  {checked && <CheckCircle2 className="w-3.5 h-3.5 text-[#0052CC] flex-shrink-0" />}
+                                  {checked && <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />}
                                   {s.fullName}
                                 </div>
                               </td>
@@ -425,7 +425,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                   </table>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1.5">
+              <p className="text-xs text-slate-400 mt-1.5">
                 {selectedIds.size} / {maxSize} selected. Click rows to toggle, or type an S.No range (e.g. 1-4,7,9-12) and press Enter.
               </p>
             </div>
@@ -452,7 +452,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                             onClick={() => toggleOne(dbId)}
                             className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0052CC] flex-shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />
                             <span className="font-semibold text-slate-800 dark:text-slate-100">{s.fullName}</span>
                           </div>
                         );
@@ -460,7 +460,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
                     </div>
                   </div>
                 )}
-                <p className="text-[11px] text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-400 mt-1.5">
                   Click a name here to unselect it.
                 </p>
               </div>
@@ -468,13 +468,13 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
           </div>
         ) : (
           <div className="p-6 space-y-3 text-xs overflow-y-auto">
-            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 text-slate-700 dark:text-slate-300">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 text-brand-800 dark:text-brand-200">
               Creating <strong>{name}</strong> with <strong>{selectedStudents.length}</strong> student(s). Please review the roster before confirming.
             </div>
             <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
               <div className="max-h-80 overflow-y-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wide sticky top-0">
+                  <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold sticky top-0">
                     <tr>
                       <th className="p-2 w-10 text-center">#</th>
                       <th className="p-2">Full Name</th>
@@ -514,7 +514,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
               <button
                 type="button"
                 onClick={handleContinueToConfirm}
-                className="px-5 py-2 rounded-xl bg-[#0052CC] hover:bg-blue-600 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-full bg-brand-600 hover:bg-blue-600 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
               >
                 Review & Confirm <ArrowRight className="w-4 h-4" />
               </button>
@@ -531,7 +531,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
               <button
                 type="button"
                 onClick={handleFinalConfirm}
-                className="px-5 py-2 rounded-xl bg-[#28A745] hover:bg-emerald-600 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-600 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" /> Confirm & Create Group
               </button>

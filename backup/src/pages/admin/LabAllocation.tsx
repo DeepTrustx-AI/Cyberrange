@@ -4,9 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Folder,
   User as UserIcon,
-  Calendar,
-  Clock,
-  Eye,
   X,
   BarChart2,
   Plus
@@ -48,8 +45,8 @@ export const LabAllocation: React.FC = () => {
   const [activeTargetGroup, setActiveTargetGroup] = useState<any>(null);
   const [activeTargetStudent, setActiveTargetStudent] = useState<any>(null);
   const [activeAssignment, setActiveAssignment] = useState<any>(null);
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const [analyticsError, setAnalyticsError] = useState<string>('');
+  const [analyticsData] = useState<any>(null);
+  const [analyticsError] = useState<string>('');
 
   // Form states
   const [formLabId, setFormLabId] = useState('');
@@ -256,30 +253,6 @@ export const LabAllocation: React.FC = () => {
     }
   };
 
-  const openAnalytics = async (assign: any) => {
-    setActiveAssignment(assign);
-    setAnalyticsData(null);
-    setAnalyticsError('');
-    setIsAnalyticsOpen(true);
-
-    const token = localStorage.getItem('token');
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-      const res = await routedApiFetch(`/api/v1/admin/assignments/${assign.id}/analytics`, { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setAnalyticsData(data);
-      } else {
-        setAnalyticsError('No analytics available');
-      }
-    } catch (err) {
-      setAnalyticsError('No analytics available');
-    }
-  };
 
   const getDerivedStatus = (assign: any) => {
     const now = new Date();
@@ -293,7 +266,7 @@ export const LabAllocation: React.FC = () => {
       return { label: 'Expired', color: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400' };
     }
     if (now < start) {
-      return { label: 'Scheduled', color: 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40 dark:text-blue-400' };
+      return { label: 'Scheduled', color: 'bg-blue-50 text-brand-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400' };
     }
     if (now >= start && now <= end) {
       return { label: 'Running', color: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400' };
@@ -430,23 +403,23 @@ export const LabAllocation: React.FC = () => {
                 const groupAssigns = assignments.filter(a => String(a.group_id) === currentId);
 
                 return (
-                  <div key={g.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:shadow-sm transition-all">
+                  <div key={g.id} className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:shadow-sm transition-all">
 
                     {/* LEFT COLUMN: Entity Details */}
                     <div className="flex flex-col justify-between min-w-[240px] md:border-r border-slate-100 dark:border-slate-800 pr-6">
                       <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0052CC] flex items-center justify-center font-bold">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-brand-600 flex items-center justify-center font-bold">
                           <Folder className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{g.name}</h4>
+                          <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{g.name}</h4>
                           <p className="text-slate-500 font-semibold mt-0.5">{g.memberCount} Students</p>
                         </div>
                       </div>
 
                       <button
                         onClick={() => openAssignModal(g, null)}
-                        className="mt-6 px-3.5 py-1.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1 text-[10px] w-full"
+                        className="mt-6 px-3.5 py-1.5 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-1 text-xs w-full"
                       >
                         <Plus className="w-3.5 h-3.5" /> Assign Lab
                       </button>
@@ -458,16 +431,16 @@ export const LabAllocation: React.FC = () => {
                         groupAssigns.map((assign) => {
                           const status = getDerivedStatus(assign);
                           return (
-                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-[10px]">
+                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs">
                               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                                <div className="font-extrabold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
+                                <div className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
                                   {assign.lab_title}
                                 </div>
                                 <div className="font-semibold text-slate-500">
                                   {formatDate(assign.start_datetime).dateStr} ➔ {formatDate(assign.end_datetime).dateStr}
                                 </div>
                                 <div>
-                                  <span className={`inline-block px-2 py-0.2 rounded-full text-[9px] font-bold border ${status.color}`}>
+                                  <span className={`inline-block px-2 py-0.2 rounded-full text-xs font-bold border ${status.color}`}>
                                     {status.label}
                                   </span>
                                 </div>
@@ -485,7 +458,7 @@ export const LabAllocation: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => openExtendModal(assign)}
-                                  className="px-2.5 py-1 border border-blue-200 bg-blue-50/20 text-[#0052CC] hover:bg-blue-50 font-bold rounded-lg"
+                                  className="px-2.5 py-1 border border-blue-200 bg-blue-50/20 text-brand-600 hover:bg-blue-50 font-bold rounded-lg"
                                 >
                                   Extend
                                 </button>
@@ -519,23 +492,23 @@ export const LabAllocation: React.FC = () => {
                 const studentAssigns = assignments.filter(a => String(a.student_id) === currentId);
 
                 return (
-                  <div key={s.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:shadow-sm transition-all">
+                  <div key={s.id} className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:shadow-sm transition-all">
 
                     {/* LEFT COLUMN: Student details */}
                     <div className="flex flex-col justify-between min-w-[240px] md:w-1/4 md:border-r border-slate-100 dark:border-slate-800 pr-6">
                       <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#0052CC] flex items-center justify-center font-bold">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-brand-600 flex items-center justify-center font-bold">
                           <UserIcon className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{s.fullName || 'Student'}</h4>
+                          <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{s.fullName || 'Student'}</h4>
                           <p className="text-slate-500 font-semibold mt-0.5">{s.department || 'Cyber Security'} • {s.year || 'III Year'}</p>
                         </div>
                       </div>
 
                       <button
                         onClick={() => openAssignModal(null, s)}
-                        className="mt-6 px-3.5 py-1.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1 text-[10px] w-full"
+                        className="mt-6 px-3.5 py-1.5 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-1 text-xs w-full"
                       >
                         <Plus className="w-3.5 h-3.5" /> Assign Lab
                       </button>
@@ -547,16 +520,16 @@ export const LabAllocation: React.FC = () => {
                         studentAssigns.map((assign) => {
                           const status = getDerivedStatus(assign);
                           return (
-                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-[10px]">
+                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs">
                               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                                <div className="font-extrabold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
+                                <div className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
                                   {assign.lab_title}
                                 </div>
                                 <div className="font-semibold text-slate-500">
                                   {formatDate(assign.start_datetime).dateStr} ➔ {formatDate(assign.end_datetime).dateStr}
                                 </div>
                                 <div>
-                                  <span className={`inline-block px-2 py-0.2 rounded-full text-[9px] font-bold border ${status.color}`}>
+                                  <span className={`inline-block px-2 py-0.2 rounded-full text-xs font-bold border ${status.color}`}>
                                     {status.label}
                                   </span>
                                 </div>
@@ -574,7 +547,7 @@ export const LabAllocation: React.FC = () => {
                                 </button>
                                 <button
                                   onClick={() => openExtendModal(assign)}
-                                  className="px-2.5 py-1 border border-blue-200 bg-blue-50/20 text-[#0052CC] hover:bg-blue-50 font-bold rounded-lg"
+                                  className="px-2.5 py-1 border border-blue-200 bg-blue-50/20 text-brand-600 hover:bg-blue-50 font-bold rounded-lg"
                                 >
                                   Extend
                                 </button>
@@ -613,39 +586,39 @@ export const LabAllocation: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 max-w-md w-full h-full shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between">
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b pb-4 border-slate-100 dark:border-slate-800">
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Assignment Information</h3>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Assignment Information</h3>
                 <button onClick={() => setIsDrawerOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Lab Name</span>
-                  <span className="font-extrabold text-sm text-slate-800 dark:text-slate-200">{activeAssignment.lab_title}</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">Lab Name</span>
+                  <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">{activeAssignment.lab_title}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Assigned Date</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">Assigned Date</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
                     {activeAssignment.created_at ? formatDate(activeAssignment.created_at).dateStr : '01 Aug 2026'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Start Date</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">Start Date</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
                     {formatDate(activeAssignment.start_datetime).dateStr} {formatDate(activeAssignment.start_datetime).timeStr}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">End Date</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">End Date</span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">
                     {formatDate(activeAssignment.end_datetime).dateStr} {formatDate(activeAssignment.end_datetime).timeStr}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Current Status</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">Current Status</span>
                   <span className="font-bold text-slate-900 dark:text-slate-200">{activeAssignment.status}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Assigned By</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block">Assigned By</span>
                   <span className="font-bold text-slate-900 dark:text-slate-200">{activeAssignment.assigned_by || 'Admin'}</span>
                 </div>
               </div>
@@ -676,15 +649,15 @@ export const LabAllocation: React.FC = () => {
       {/* Extend End Date Modal */}
       {isExtendModalOpen && activeAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs text-xs">
-          <form onSubmit={handleExtendSubmit} className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <form onSubmit={handleExtendSubmit} className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Extend Lab End Time</h2>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Extend Lab End Time</h2>
               <button type="button" onClick={() => setIsExtendModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Current End Time</span>
+                <span className="text-xs text-slate-400 font-bold uppercase block mb-1">Current End Time</span>
                 <span className="font-bold text-slate-900 dark:text-slate-200">
                   {formatDate(activeAssignment.end_datetime).dateStr} {formatDate(activeAssignment.end_datetime).timeStr}
                 </span>
@@ -719,7 +692,7 @@ export const LabAllocation: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl cursor-pointer"
+                className="px-5 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full cursor-pointer"
               >
                 Save Extension
               </button>
@@ -731,9 +704,9 @@ export const LabAllocation: React.FC = () => {
       {/* Analytics Summary Modal */}
       {isAnalyticsOpen && activeAssignment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs text-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">Assignment Summary & Analytics</h2>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Assignment Summary & Analytics</h2>
               <button onClick={() => setIsAnalyticsOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold text-sm">X</button>
             </div>
 
@@ -746,39 +719,39 @@ export const LabAllocation: React.FC = () => {
                 <>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Completion %</span>
-                      <span className="text-base font-black text-slate-900 dark:text-white">
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Completion %</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white">
                         {analyticsData.completion_percentage}%
                       </span>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Automatic %</span>
-                      <span className="text-base font-black text-slate-900 dark:text-white">
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Avg Automatic %</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white">
                         {analyticsData.average_score_percent == null ? '—' : `${analyticsData.average_score_percent}%`}
                       </span>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Time</span>
-                      <span className="text-base font-black text-slate-900 dark:text-white">
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Avg Time</span>
+                      <span className="text-base font-bold text-slate-900 dark:text-white">
                         {analyticsData.average_time}
                       </span>
                     </div>
                   </div>
 
                   <div className="space-y-2 border-t pt-4">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Performance Metrics</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Performance Metrics</span>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-[10px] text-slate-500 font-semibold block">Completed Students</span>
+                        <span className="text-xs text-slate-500 font-semibold block">Completed Students</span>
                         <strong className="text-emerald-600 text-sm">{analyticsData.completed_count} Students</strong>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-500 font-semibold block">Failed / Incomplete</span>
+                        <span className="text-xs text-slate-500 font-semibold block">Failed / Incomplete</span>
                         <strong className="text-rose-500 text-sm">{analyticsData.failed_count} Student</strong>
                       </div>
                     </div>
                     <div className="pt-2">
-                      <span className="text-[10px] text-slate-600 font-semibold block">Top Performer</span>
+                      <span className="text-xs text-slate-600 font-semibold block">Top Performer</span>
                       <strong className="text-slate-800 dark:text-slate-200">{analyticsData.top_performer}</strong>
                     </div>
                   </div>
@@ -803,9 +776,9 @@ export const LabAllocation: React.FC = () => {
       {/* Assignment Scheduling Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleModalSubmit} className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <form onSubmit={handleModalSubmit} className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 Schedule Lab Assignment
               </h2>
               <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
@@ -873,7 +846,7 @@ export const LabAllocation: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl cursor-pointer"
+                className="px-5 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full cursor-pointer"
               >
                 Assign Lab
               </button>

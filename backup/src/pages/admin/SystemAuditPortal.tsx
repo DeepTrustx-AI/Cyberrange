@@ -3,22 +3,18 @@ import { downloadCsv } from '../../utils/exportUtils';
 import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
-  Activity,
   Building2,
   Users,
   UserCheck,
   CreditCard,
-  AlertTriangle,
   Server,
   Download,
   Search,
   Filter,
   Lock,
   RefreshCw,
-  Layers,
   TrendingUp,
   XCircle,
-  Clock,
   Database
 } from 'lucide-react';
 
@@ -122,7 +118,7 @@ export const SystemAuditPortal: React.FC = () => {
         <div className="w-16 h-16 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center mb-4 border border-rose-500/30">
           <Lock className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight">403 Forbidden - System Admin Required</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">403 Forbidden - System Admin Required</h1>
         <p className="text-sm text-slate-400 mt-2 max-w-md">
           The System Audit Portal is restricted exclusively to CyberRange platform owners (`SYSTEM_ADMIN` role). Organization Administrators do not have access to this portal.
         </p>
@@ -153,8 +149,8 @@ export const SystemAuditPortal: React.FC = () => {
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black tracking-tight text-white">System Audit & Governance Portal</h1>
-                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full">
+                <h1 className="text-xl font-bold tracking-tight text-white">System Audit & Governance Portal</h1>
+                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs uppercase font-mono font-bold px-2 py-0.5 rounded-full">
                   SYSTEM_ADMIN ONLY
                 </span>
               </div>
@@ -175,7 +171,7 @@ export const SystemAuditPortal: React.FC = () => {
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="px-3.5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors inline-flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
@@ -196,7 +192,7 @@ export const SystemAuditPortal: React.FC = () => {
             <span>Organizations</span>
             <Building2 className="w-4 h-4 text-blue-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">{counters.total_organizations}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{counters.total_organizations}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
@@ -204,15 +200,15 @@ export const SystemAuditPortal: React.FC = () => {
             <span>Platform Admins</span>
             <UserCheck className="w-4 h-4 text-emerald-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">{counters.total_admins}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{counters.total_admins}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium">
             <span>Total Users</span>
-            <Users className="w-4 h-4 text-purple-500" />
+            <Users className="w-4 h-4 text-brand-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">{counters.total_users}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{counters.total_users}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
@@ -220,7 +216,7 @@ export const SystemAuditPortal: React.FC = () => {
             <span>Running Containers</span>
             <Server className="w-4 h-4 text-amber-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">{counters.total_running_containers}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{counters.total_running_containers}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
@@ -228,7 +224,7 @@ export const SystemAuditPortal: React.FC = () => {
             <span>Total Purchases</span>
             <CreditCard className="w-4 h-4 text-indigo-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">{counters.total_purchases}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{counters.total_purchases}</p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
@@ -236,12 +232,12 @@ export const SystemAuditPortal: React.FC = () => {
             <span>Platform Revenue</span>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
-          <p className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">₹{counters.total_revenue.toLocaleString()}</p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">₹{counters.total_revenue.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 min-w-[240px]">
           <div className="relative w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -356,10 +352,10 @@ export const SystemAuditPortal: React.FC = () => {
 
       {/* Tab Content Panels */}
       {activeTab === 'activity' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">System Audit Trail</h3>
-            <span className="text-[11px] text-slate-400 font-medium">Real-time database stream</span>
+            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100">System Audit Trail</h3>
+            <span className="text-xs text-slate-400 font-medium">Real-time database stream</span>
           </div>
 
           {loading ? (
@@ -373,7 +369,7 @@ export const SystemAuditPortal: React.FC = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100 dark:border-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold border-b border-slate-100 dark:border-slate-800">
                   <tr>
                     <th className="py-3 px-4">Timestamp</th>
                     <th className="py-3 px-4">Action</th>
@@ -388,15 +384,15 @@ export const SystemAuditPortal: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
                   {data.recent_activity.map((log) => (
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">{log.timestamp}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-slate-500">{log.timestamp}</td>
                       <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{log.action}</td>
                       <td className="py-3 px-4">{log.entity} #{log.entity_id}</td>
                       <td className="py-3 px-4 text-slate-900 dark:text-slate-100 font-semibold">{log.performed_by}</td>
-                      <td className="py-3 px-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">{log.performed_by_role}</span></td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500">{log.ip_address}</td>
+                      <td className="py-3 px-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-xs font-bold uppercase">{log.performed_by_role}</span></td>
+                      <td className="py-3 px-4 font-mono text-xs text-slate-500">{log.ip_address}</td>
                       <td className="py-3 px-4 text-slate-500">{log.browser} ({log.operating_system})</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
                           log.status === 'SUCCESS' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 border border-rose-200'
                         }`}>
                           {log.status}
@@ -412,8 +408,8 @@ export const SystemAuditPortal: React.FC = () => {
       )}
 
       {activeTab === 'admins' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase mb-4">Platform Administrators</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase mb-4">Platform Administrators</h3>
           {!data?.platform_admins || data.platform_admins.length === 0 ? (
             <p className="text-xs text-slate-500 py-4">No data available</p>
           ) : (
@@ -421,12 +417,12 @@ export const SystemAuditPortal: React.FC = () => {
               {data.platform_admins.map((adm) => (
                 <div key={adm.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{adm.name}</span>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 border border-indigo-200">{adm.role}</span>
+                    <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{adm.name}</span>
+                    <span className="text-xs font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 border border-indigo-200">{adm.role}</span>
                   </div>
                   <p className="text-xs text-slate-500">{adm.email}</p>
                   <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">Org: <span className="font-bold">{adm.organization_name}</span></p>
-                  <p className="text-[11px] text-slate-400">Last login: {adm.last_login}</p>
+                  <p className="text-xs text-slate-400">Last login: {adm.last_login}</p>
                 </div>
               ))}
             </div>
@@ -435,14 +431,14 @@ export const SystemAuditPortal: React.FC = () => {
       )}
 
       {activeTab === 'orgs' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase mb-4">Registered Organizations</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase mb-4">Registered Organizations</h3>
           {!data?.organizations || data.organizations.length === 0 ? (
             <p className="text-xs text-slate-500 py-4">No data available</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-100 dark:border-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold border-b border-slate-100 dark:border-slate-800">
                   <tr>
                     <th className="py-2.5 px-4">Org Name</th>
                     <th className="py-2.5 px-4">Type</th>
@@ -458,8 +454,8 @@ export const SystemAuditPortal: React.FC = () => {
                       <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{org.name}</td>
                       <td className="py-3 px-4">{org.institution_type}</td>
                       <td className="py-3 px-4">{org.city}, {org.state}</td>
-                      <td className="py-3 px-4 font-extrabold text-slate-900 dark:text-slate-100">{org.total_users}</td>
-                      <td className="py-3 px-4 font-extrabold text-slate-900 dark:text-slate-100">{org.total_groups}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">{org.total_users}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">{org.total_groups}</td>
                       <td className="py-3 px-4 font-mono font-bold text-emerald-600">₹{org.total_spent.toLocaleString()}</td>
                     </tr>
                   ))}
@@ -471,14 +467,14 @@ export const SystemAuditPortal: React.FC = () => {
       )}
 
       {activeTab === 'payments' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase mb-4">Platform Payment Transactions</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase mb-4">Platform Payment Transactions</h3>
           {!data?.payments || data.payments.length === 0 ? (
             <p className="text-xs text-slate-500 py-4">No data available</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold border-b">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold border-b">
                   <tr>
                     <th className="py-2.5 px-4">Txn ID</th>
                     <th className="py-2.5 px-4">Order ID</th>
@@ -498,13 +494,13 @@ export const SystemAuditPortal: React.FC = () => {
                       <td className="py-3 px-4 font-mono text-slate-500">#{p.order_id}</td>
                       <td className="py-3 px-4 capitalize">{p.gateway}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${isReal ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-xs ${isReal ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
                           {isReal ? 'Real Payment' : 'Free / Manual'}
                         </span>
                       </td>
                       <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">₹{p.amount}</td>
-                      <td className="py-3 px-4"><span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold text-[10px]">{p.payment_status}</span></td>
-                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{p.created_at}</td>
+                      <td className="py-3 px-4"><span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-bold text-xs">{p.payment_status}</span></td>
+                      <td className="py-3 px-4 text-slate-500 font-mono text-xs">{p.created_at}</td>
                     </tr>
                     );
                   })}
@@ -516,8 +512,8 @@ export const SystemAuditPortal: React.FC = () => {
       )}
 
       {activeTab === 'errors' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <h3 className="text-xs font-black text-rose-600 uppercase mb-4 flex items-center gap-1.5">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 shadow-sm">
+          <h3 className="text-xs font-bold text-rose-600 uppercase mb-4 flex items-center gap-1.5">
             <XCircle className="w-4 h-4" /> Platform Error & Exception Logs
           </h3>
           {!data?.error_logs || data.error_logs.length === 0 ? (
@@ -528,9 +524,9 @@ export const SystemAuditPortal: React.FC = () => {
                 <div key={err.id} className="p-3 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs space-y-1">
                   <div className="flex items-center justify-between font-bold text-rose-800 dark:text-rose-400">
                     <span>{err.action} ({err.endpoint || 'Internal'})</span>
-                    <span className="font-mono text-[10px]">{err.timestamp}</span>
+                    <span className="font-mono text-xs">{err.timestamp}</span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 font-mono text-[11px]">{err.detail || 'Exception recorded'}</p>
+                  <p className="text-slate-600 dark:text-slate-300 font-mono text-xs">{err.detail || 'Exception recorded'}</p>
                 </div>
               ))}
             </div>

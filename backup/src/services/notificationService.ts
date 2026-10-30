@@ -140,7 +140,7 @@ export function setupNotificationWebSocket(onNewNotification: (notification: Not
         if (payload.type === 'NEW_NOTIFICATION' && payload.notification) {
           onNewNotification(payload.notification);
         }
-      } catch (e) {
+      } catch {
         // Ignored string messages like 'pong'
       }
     };

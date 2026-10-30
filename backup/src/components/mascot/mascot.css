@@ -1,0 +1,410 @@
+/* The mascot's colours follow the logo: light top, front, dark side. */
+.mascot {
+  --m-front: var(--color-brand-600);
+  --m-top: color-mix(in oklch, var(--color-brand-400) 62%, var(--color-brand-600));
+  --m-side: var(--color-brand-800);
+  --m-limb: color-mix(in oklch, var(--color-brand-600) 82%, black);
+  --m-mouth: #ffe7d1;
+  --m-mouth-in: #4a1d2a;
+  --m-cheek: #ff8ea6;
+  --m-pupil: #10131a;
+  display: block;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.dark .mascot {
+  --m-top: color-mix(in oklch, var(--color-brand-400) 70%, var(--color-brand-600));
+  --m-mouth: #3b1c0e;
+  --m-mouth-in: #3b1c0e;
+}
+
+.mascot g,
+.mascot path,
+.mascot ellipse,
+.mascot circle,
+.mascot rect {
+  transform-box: view-box;
+}
+
+.mascot .m-front { fill: var(--m-front); }
+.mascot .m-top { fill: var(--m-top); }
+.mascot .m-side { fill: var(--m-side); opacity: 0.9; }
+.mascot .m-shine-in { stop-color: #fff; stop-opacity: 0.2; }
+.mascot .m-shine-out { stop-color: #fff; stop-opacity: 0; }
+.mascot .m-limb-fill { fill: var(--m-limb); }
+/* Arms match the face they grow from; the side face is drawn at 90% over the
+   front, so the right arm mixes the same way. Arms across the face sit a step
+   deeper than the front so they still read against it. */
+.mascot .m-arm-l-lit { stop-color: color-mix(in oklch, var(--m-front) 82%, var(--m-top)); }
+.mascot .m-arm-l-base { stop-color: var(--m-front); }
+.mascot .m-arm-r-base { stop-color: color-mix(in oklch, var(--m-side) 90%, var(--m-front)); }
+.mascot .m-arm-r-rim { stop-color: color-mix(in oklch, var(--m-side) 70%, var(--m-front)); }
+.mascot .m-arm-cover { fill: color-mix(in oklch, var(--m-front) 78%, var(--m-side)); }
+/* Mittens in the lighter top tone, so hands read against the body, shaded toward
+   the arm's colour; the one on the shaded side a touch deeper. */
+.mascot .m-mitt-lit { stop-color: color-mix(in oklch, var(--m-top) 85%, white); }
+.mascot .m-mitt-base { stop-color: color-mix(in oklch, var(--m-top) 72%, var(--m-front)); }
+.mascot .m-mitt-shade-lit { stop-color: var(--m-top); }
+.mascot .m-mitt-shade-base { stop-color: color-mix(in oklch, var(--m-top) 58%, var(--m-front)); }
+.mascot .m-sclera { fill: #fff; }
+.mascot .m-pupil { fill: var(--m-pupil); }
+.mascot .m-glint { fill: #fff; }
+.mascot .m-cheek { fill: var(--m-cheek); opacity: 0.8; }
+
+.mascot .m-mouth {
+  fill: none;
+  stroke: var(--m-mouth);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+
+.mascot .m-mouth-fill { fill: var(--m-mouth-in); }
+.mascot .m-tongue { fill: #ff8ea6; }
+
+.mascot .m-eyes-happy,
+.mascot .m-eyes-closed {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+}
+
+.mascot .m-shadow { fill: #000; opacity: 0.12; transform-origin: 60px 111px; }
+.mascot .m-carry-block { fill: #f6c6a6; }
+.mascot .m-carry-cap { fill: #ffdcc6; }
+
+.mascot .m-seat { fill: #000; opacity: 0; transition: opacity 0.2s ease-out; }
+.mascot .m-heart { fill: #ff6f91; opacity: 0; transform-origin: 60px 12px; }
+.mascot .m-spiral {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.mascot .m-note { transform-box: fill-box; transform-origin: center; }
+.mascot .m-note ellipse { fill: var(--m-top); }
+.mascot .m-note path {
+  fill: none;
+  stroke: var(--m-top);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mascot .m-zzz path {
+  fill: none;
+  stroke: var(--m-top);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Parts that only some poses show. */
+.mascot .m-eyes-happy,
+.mascot .m-eyes-closed,
+.mascot .m-mouth-open,
+.mascot .m-mouth-flat,
+.mascot .m-carry,
+.mascot .m-zzz,
+.mascot .m-notes,
+.mascot .m-eyes-dizzy {
+  opacity: 0;
+}
+
+.mascot .m-eyes-open,
+.mascot .m-mouth-smile,
+.mascot .m-eyes-happy,
+.mascot .m-eyes-closed,
+.mascot .m-mouth-open,
+.mascot .m-mouth-flat,
+.mascot .m-eyes-dizzy,
+.mascot .m-cheek {
+  transition: opacity 0.2s ease-out;
+}
+
+.mascot .m-arm {
+  transition: opacity 0.2s ease-out, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mascot .m-cover {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.18s ease-out, transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mascot .m-cover-r { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Pivots, in view-box units. */
+.mascot .m-rig { transform-origin: 60px 108px; }
+.mascot .m-eyes-open { transform-origin: 60px 57px; }
+.mascot .m-leg-l { transform-origin: 46px 86px; }
+.mascot .m-leg-r { transform-origin: 74px 86px; }
+.mascot .m-arm-l { transform-origin: 23px 62px; transform: rotate(8deg); }
+.mascot .m-arm-r { transform-origin: 97px 62px; transform: rotate(-8deg); }
+.mascot .m-carry { transform-origin: 60px 24px; }
+.mascot .m-poke { transform-origin: 60px 108px; }
+.mascot--seated .m-arm-l { transform: translateY(5px) rotate(16deg); }
+.mascot--seated .m-arm-r { transform: translateY(5px) rotate(-16deg); }
+.mascot .m-spiral-l { transform-origin: 47.6px 57px; }
+.mascot .m-spiral-r { transform-origin: 73.6px 57px; }
+
+.mascot .m-pupils {
+  transform: translate(var(--look-x, 0px), var(--look-y, 0px));
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The face follows the eyes a little, so it seems to turn its head. */
+.mascot .m-face {
+  transform: translate(calc(var(--look-x, 0px) * 0.6), calc(var(--look-y, 0px) * 0.5));
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Idle: breathe and blink. */
+.mascot .m-rig { animation: m-bob 2.8s ease-in-out infinite; }
+.mascot .m-eyes-open { animation: m-blink 5.2s infinite; }
+
+@keyframes m-bob {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-2px) scale(1.012, 0.988); }
+}
+@keyframes m-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+/* Wave hello. */
+.mascot--wave .m-arm-r { animation: m-wave 1s ease-in-out infinite; }
+@keyframes m-wave {
+  0%, 100% { transform: rotate(-152deg); }
+  50% { transform: rotate(-118deg); }
+}
+
+/* Walk, and walk balancing a block on its head. */
+.mascot--walk .m-rig,
+.mascot--carry .m-rig { animation: m-step 0.5s ease-in-out infinite; }
+.mascot--walk .m-leg-l,
+.mascot--carry .m-leg-l { animation: m-leg 0.5s ease-in-out infinite alternate; }
+.mascot--walk .m-leg-r,
+.mascot--carry .m-leg-r { animation: m-leg 0.5s ease-in-out infinite alternate-reverse; }
+.mascot--walk .m-arm-l { animation: m-swing-l 0.5s ease-in-out infinite alternate; }
+.mascot--walk .m-arm-r { animation: m-swing-r 0.5s ease-in-out infinite alternate; }
+
+@keyframes m-step {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes m-leg {
+  from { transform: rotate(14deg); }
+  to { transform: rotate(-14deg); }
+}
+@keyframes m-swing-l {
+  from { transform: rotate(-6deg); }
+  to { transform: rotate(22deg); }
+}
+@keyframes m-swing-r {
+  from { transform: rotate(6deg); }
+  to { transform: rotate(-22deg); }
+}
+
+.mascot--carry .m-carry { opacity: 1; animation: m-balance 1s ease-in-out infinite; }
+.mascot--carry .m-arm-l { animation: m-balance-l 1s ease-in-out infinite; }
+.mascot--carry .m-arm-r { animation: m-balance-r 1s ease-in-out infinite; }
+
+@keyframes m-balance {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+@keyframes m-balance-l {
+  0%, 100% { transform: rotate(70deg); }
+  50% { transform: rotate(50deg); }
+}
+@keyframes m-balance-r {
+  0%, 100% { transform: rotate(-50deg); }
+  50% { transform: rotate(-70deg); }
+}
+
+/* Cheer: hop with arms up, happy eyes, open mouth. */
+.mascot--cheer .m-rig { animation: m-jump 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) infinite; }
+.mascot--cheer .m-shadow { animation: m-shadow 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) infinite; }
+.mascot--cheer .m-arm-l { animation: m-shake-l 0.45s ease-in-out infinite alternate; }
+.mascot--cheer .m-arm-r { animation: m-shake-r 0.45s ease-in-out infinite alternate; }
+.mascot--cheer .m-eyes-open,
+.mascot--cheer .m-mouth-smile { opacity: 0; }
+.mascot--cheer .m-eyes-happy,
+.mascot--cheer .m-mouth-open { opacity: 1; }
+
+@keyframes m-jump {
+  0%, 100% { transform: translateY(0) scale(1.06, 0.93); }
+  18% { transform: translateY(-4px) scale(0.96, 1.05); }
+  45% { transform: translateY(-16px) scale(1, 1); }
+  76% { transform: translateY(0) scale(1.07, 0.92); }
+}
+@keyframes m-shadow {
+  0%, 100%, 76% { transform: scale(1); opacity: 0.12; }
+  45% { transform: scale(0.72); opacity: 0.07; }
+}
+@keyframes m-shake-l {
+  from { transform: rotate(140deg); }
+  to { transform: rotate(160deg); }
+}
+@keyframes m-shake-r {
+  from { transform: rotate(-140deg); }
+  to { transform: rotate(-160deg); }
+}
+
+/* Think: look up, scratch the head, small flat mouth. */
+.mascot--think .m-rig { animation: m-tilt 2.6s ease-in-out infinite; }
+.mascot--think .m-pupils { transform: translate(-2px, -2.6px); }
+.mascot--think .m-arm-r { animation: m-scratch 0.6s ease-in-out infinite alternate; }
+.mascot--think .m-mouth-smile { opacity: 0; }
+.mascot--think .m-mouth-flat { opacity: 1; }
+
+@keyframes m-tilt {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(-1deg); }
+}
+@keyframes m-scratch {
+  from { transform: rotate(-158deg); }
+  to { transform: rotate(-170deg); }
+}
+
+/* Cover the eyes (a password is being typed), or peek through. */
+.mascot--cover .m-arm,
+.mascot--peek .m-arm { opacity: 0; }
+.mascot--cover .m-cover,
+.mascot--peek .m-cover { opacity: 1; transform: none; }
+.mascot--peek .m-cover-r { transform: translateY(11px); }
+.mascot--peek .m-pupils { transform: translate(1.6px, 1px); }
+
+/* Sleep: closed eyes, slow breath, drifting z's. */
+.mascot--sleep .m-rig { animation: m-breathe 3.6s ease-in-out infinite; }
+.mascot--sleep .m-eyes-open,
+.mascot--sleep .m-mouth-smile { opacity: 0; }
+.mascot--sleep .m-eyes-closed,
+.mascot--sleep .m-mouth-flat { opacity: 1; }
+.mascot--sleep .m-zzz { opacity: 1; }
+.mascot--sleep .m-zzz path { animation: m-z 2.6s ease-in-out infinite; }
+.mascot--sleep .m-zzz path:last-child { animation-delay: 1.3s; }
+
+@keyframes m-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.02, 0.975); }
+}
+@keyframes m-z {
+  0% { transform: translate(0, 5px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(5px, -7px); opacity: 0; }
+}
+
+/* Sway and hum: a happy rock from side to side with notes drifting up. */
+.mascot--sway .m-rig { animation: m-sway 1.3s ease-in-out infinite; }
+.mascot--sway .m-eyes-open { opacity: 0; }
+.mascot--sway .m-eyes-happy,
+.mascot--sway .m-notes { opacity: 1; }
+.mascot--sway .m-note { animation: m-note 2.6s ease-out infinite; }
+.mascot--sway .m-note:last-child { animation-delay: 1.3s; }
+
+@keyframes m-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+@keyframes m-note {
+  0% { transform: translate(0, 6px); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(6px, -10px) rotate(12deg); opacity: 0; }
+}
+
+/* Booped: a happy squeak (the squash itself is played from useMascotPlay). */
+.mascot--boop .m-eyes-open,
+.mascot--boop .m-mouth-smile { opacity: 0; }
+.mascot--boop .m-eyes-happy,
+.mascot--boop .m-mouth-open { opacity: 1; }
+.mascot--boop .m-arm-l { transform: rotate(40deg); }
+.mascot--boop .m-arm-r { transform: rotate(-40deg); }
+
+/* Dizzy after too many pokes: spinning eyes, a wobble, a wavy mouth. */
+.mascot--dizzy .m-eyes-open,
+.mascot--dizzy .m-mouth-smile { opacity: 0; }
+.mascot--dizzy .m-eyes-dizzy,
+.mascot--dizzy .m-mouth-flat { opacity: 1; }
+.mascot--dizzy .m-spiral { animation: m-spin 0.8s linear infinite; }
+.mascot--dizzy .m-rig { animation: m-wobble 0.7s ease-in-out infinite; }
+
+@keyframes m-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes m-wobble {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+
+/* Picked up: arms up, legs kicking, delighted. */
+.mascot--held .m-rig { animation: none; }
+.mascot--held .m-eyes-open,
+.mascot--held .m-mouth-smile { opacity: 0; }
+.mascot--held .m-eyes-happy,
+.mascot--held .m-mouth-open { opacity: 1; }
+.mascot--held .m-arm-l { transform: rotate(150deg); }
+.mascot--held .m-arm-r { transform: rotate(-150deg); }
+.mascot--held .m-shadow,
+.mascot--held .m-seat { visibility: hidden; }
+
+/* Seated on an edge: legs hang over it and swing, one a beat behind the other.
+   The squash and the sway pivot on the seat instead of the feet. */
+.mascot--seated .m-shadow { visibility: hidden; }
+.mascot--seated .m-seat { opacity: 0.16; }
+.mascot--seated .m-rig,
+.mascot--seated .m-poke { transform-origin: 60px 93px; }
+.mascot--seated .m-leg { transform: translateY(7px); }
+.mascot--seated .m-leg-l { animation: m-dangle 1.6s ease-in-out infinite; }
+.mascot--seated .m-leg-r { animation: m-dangle 1.6s ease-in-out -0.8s infinite; }
+.mascot--seated.mascot--sway .m-leg { animation-duration: 0.65s; }
+.mascot--seated.mascot--sleep .m-leg { animation-duration: 4s; }
+
+/* Seated legs hang lower, over the front of the edge. A forward kick reads as
+   the leg getting shorter, so the swing squashes it too. */
+@keyframes m-dangle {
+  0%, 100% { transform: translateY(7px) rotate(7deg); }
+  50% { transform: translateY(7px) rotate(-5deg) scaleY(0.84); }
+}
+
+.mascot.mascot--held .m-leg-l { animation: m-kick 0.28s ease-in-out infinite alternate; }
+.mascot.mascot--held .m-leg-r { animation: m-kick 0.28s ease-in-out infinite alternate-reverse; }
+
+@keyframes m-kick {
+  from { transform: rotate(20deg) scaleY(0.9); }
+  to { transform: rotate(-20deg); }
+}
+
+/* Interactive: only the body and arms take the pointer, so dangling legs never
+   block the field underneath. Hovering it makes it smile. */
+.mascot--interactive { pointer-events: none; }
+.mascot--interactive .m-body,
+.mascot--interactive .m-arm,
+.mascot--interactive .m-cover {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+.mascot--interactive.mascot--idle:has(.m-body:hover) .m-eyes-open { opacity: 0; }
+.mascot--interactive.mascot--idle:has(.m-body:hover) .m-eyes-happy { opacity: 1; }
+.mascot--interactive:has(.m-body:hover) .m-cheek { opacity: 1; }
+
+/* A perched mascot hops onto its seat, and rides along when the seat moves. */
+.mascot-perch {
+  transition: top 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+  animation: m-perch 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+@keyframes m-perch {
+  from { transform: translateY(-18px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot,
+  .mascot *,
+  .mascot-perch {
+    animation: none !important;
+    transition: none !important;
+  }
+}

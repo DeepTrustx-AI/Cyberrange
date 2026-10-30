@@ -7,12 +7,12 @@ import {
   UserPlus,
   Store,
   Clock,
-  ShieldCheck,
   BookOpen,
   Award,
   Check,
   AlertCircle
 } from 'lucide-react';
+import { LabArtImage } from '../../components/art/LabArtImage';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context';
 import { accessDeniedReason } from '../../utils/accessDenied';
@@ -118,158 +118,91 @@ export const AdminDashboard: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-200 text-xs">
       {/* Profile Completion Banner for new Google sign-in admins */}
       {showProfileBanner && (
-        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xl px-4 py-3.5 shadow-sm">
-          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
-              Complete your profile to connect with students
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-              Please update your organization details so you can start assigning labs to students.
-            </p>
-            <Link
-              to="/admin/profile"
-              className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 underline underline-offset-2"
-            >
-              Update Profile →
-            </Link>
+        <div className="flex items-start gap-3 rounded-2xl bg-brand-50 px-4 py-3.5 ring-1 ring-brand-200/60 dark:bg-brand-500/10 dark:ring-brand-500/20">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-700 dark:text-brand-300" />
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-medium text-slate-900 dark:text-white">Complete your profile to connect with students</p>
+            <p className="mt-0.5 text-slate-600 dark:text-slate-300">Add your organisation details so you can start assigning labs.</p>
           </div>
+          <Link
+            to="/admin/profile"
+            className="shrink-0 rounded-full bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700"
+          >
+            Update profile
+          </Link>
         </div>
       )}
-      {/* 1. Professor Command Center Hero Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-[#0052CC] to-indigo-800 rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-          <ShieldCheck className="w-80 h-80 text-white" />
-        </div>
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide text-blue-100 border border-white/20 mb-3">
-            <span className="w-2 h-2 rounded-full bg-[#28A745] animate-pulse"></span>
-            Organization Educator Portal
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-            Professor Command Center
+      <section className="range-wash relative overflow-hidden rounded-[2rem] ring-1 ring-slate-900/5 dark:ring-white/5">
+        <div className="relative z-10 max-w-xl p-6 sm:p-10">
+          <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl dark:text-white">
+            Your command centre
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-blue-100/90 leading-relaxed font-normal">
-            Track student cohort progress, manage lab seat assignments, purchase curriculum modules, and monitor learning outcomes.
+          <p className="mt-3 max-w-md text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+            Track cohort progress, manage lab seats, buy curriculum modules and follow learning outcomes.
           </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-7 flex flex-wrap items-center gap-2.5">
             <Link
               to="/admin/labs"
-              className="bg-white text-[#0052CC] hover:bg-blue-50 font-bold px-4 py-2.5 rounded-lg text-sm transition-colors shadow-sm inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-colors hover:bg-brand-700"
             >
-              <Store className="w-4 h-4" />
-              Browse Lab Marketplace
+              <Store className="h-4 w-4" />
+              Browse lab marketplace
             </Link>
             <Link
               to="/admin/users"
-              className="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-5 py-2.5 text-sm font-medium text-slate-800 ring-1 ring-slate-900/10 transition-colors hover:bg-white dark:bg-slate-900/70 dark:text-slate-100 dark:ring-white/10"
             >
-              <UserPlus className="w-4 h-4" />
-              Manage Students & Groups
+              <UserPlus className="h-4 w-4" />
+              Manage students and groups
             </Link>
           </div>
         </div>
-      </div>
+        <div className="pointer-events-none flex justify-center pb-4 lg:absolute lg:inset-y-0 lg:right-8 lg:items-center lg:pb-0">
+          <LabArtImage kind="shield" className="h-48 w-72 lg:h-64 lg:w-96" />
+        </div>
+      </section>
 
       {/* 2. LIVE DATABASE COUNTS OVERVIEW */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-            Educational Overview
+          <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">
+            Overview
           </h2>
-          <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
+          <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
             isDbConnected
-              ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800'
-              : 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800'
+              ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+              : 'bg-brand-50 text-brand-800 dark:bg-brand-500/15 dark:text-brand-200'
           }`}>
-            <span className={`w-2.5 h-2.5 rounded-full ${isDbConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            {isDbConnected ? 'Database Connected' : 'Database Offline'}
+            <span className={`h-1.5 w-1.5 rounded-full ${isDbConnected ? 'bg-emerald-500' : 'bg-brand-500'}`} />
+            {isDbConnected ? 'Database connected' : 'Database offline'}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Purchased Labs */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Purchased Labs</span>
-              <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#0052CC]">
-                <FlaskConical className="w-4 h-4" />
-              </div>
+        <dl className="grid grid-cols-2 divide-slate-200 rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 lg:grid-cols-4 lg:divide-x dark:divide-slate-800 dark:bg-slate-900 dark:ring-slate-800">
+          {[
+            { label: 'Purchased labs', value: summaryData.purchasedLabs.total, note: `${summaryData.purchasedLabs.seatsRemaining} seats available`, icon: FlaskConical },
+            { label: 'Students', value: summaryData.students.total, note: `${summaryData.students.active} active`, icon: Users },
+            { label: 'Groups', value: summaryData.groups.total, note: `${summaryData.groups.withActive} with active work`, icon: UsersRound },
+            { label: 'Assignments', value: summaryData.assignments.total, note: `${summaryData.assignments.running} running · ${summaryData.assignments.completed} completed`, icon: Clock },
+          ].map((stat) => (
+            <div key={stat.label} className="px-5 py-5 sm:px-6">
+              <dt className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                <stat.icon className="h-4 w-4" /> {stat.label}
+              </dt>
+              <dd className="mt-2 font-display text-3xl font-bold tabular text-slate-900 dark:text-white">{stat.value}</dd>
+              <dd className="mt-1 text-xs text-slate-500 dark:text-slate-400">{stat.note}</dd>
             </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {summaryData.purchasedLabs.total}
-              </div>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {summaryData.purchasedLabs.seatsRemaining} Seats Available
-              </p>
-            </div>
-          </div>
-
-          {/* Card 2: Students */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Students</span>
-              <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#28A745]">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {summaryData.students.total}
-              </div>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {summaryData.students.active} Active Students
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Groups */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Groups</span>
-              <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-[#FFA500]">
-                <UsersRound className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {summaryData.groups.total}
-              </div>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {summaryData.groups.withActive} Active Groups
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Assignments */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Assignments</span>
-              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-[#6F42C1]">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {summaryData.assignments.total}
-              </div>
-              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
-                {summaryData.assignments.running} Running • {summaryData.assignments.completed} Completed
-              </p>
-            </div>
-          </div>
-        </div>
+          ))}
+        </dl>
       </div>
 
       {/* 3. ABOUT CYBERRANGE PLATFORM SECTION */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-6">
         <div>
-          <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
             About CyberRange Platform
           </h3>
-          <p className="text-slate-500 font-semibold mt-2 leading-relaxed">
+          <p className="mt-2 max-w-3xl leading-relaxed text-slate-600 dark:text-slate-300">
             CyberRange is an enterprise cybersecurity learning platform designed for universities, engineering colleges, training institutes, and organizations.
             The platform enables educators to purchase cybersecurity labs, manage students and groups, assign labs, monitor learning progress, generate analytics, and export detailed reports from a centralized dashboard.
           </p>
@@ -278,32 +211,31 @@ export const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 dark:border-slate-800 pt-6">
           {/* What Professors Can Do Card */}
           <div className="p-5 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800/60 rounded-xl space-y-3">
-            <h4 className="text-sm font-extrabold text-[#0052CC] dark:text-blue-400 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-brand-600 dark:text-blue-400 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> What Professors Can Do
             </h4>
             <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Purchase cybersecurity labs</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Manage students</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Create groups</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Assign labs</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Track student progress</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> View analytics</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Export reports</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Purchase cybersecurity labs</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Manage students</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Create groups</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Assign labs</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Track student progress</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> View analytics</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-brand-600" /> Export reports</li>
             </ul>
           </div>
 
           {/* What Students Experience Card */}
           <div className="p-5 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/60 rounded-xl space-y-3">
-            <h4 className="text-sm font-extrabold text-[#28A745] dark:text-emerald-400 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
               <Award className="w-4 h-4" /> What Students Experience
             </h4>
             <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Access assigned labs</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Perform practical exercises</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Submit flags</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Track progress</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> View scores</li>
-              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Complete learning paths</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Access assigned labs</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Perform practical exercises</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Submit flags</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> Track progress</li>
+              <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600" /> View scores</li>
             </ul>
           </div>
         </div>

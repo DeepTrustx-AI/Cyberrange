@@ -23,9 +23,9 @@ export const adminSearchIndex: SearchEntry[] = [
 ];
 
 export const studentSearchIndex: SearchEntry[] = [
-  { label: 'Dashboard', description: 'Your score, rank, and recent activity', path: '/dashboard' },
+  { label: 'Home', description: 'What is due next, your cube and recent activity', path: '/dashboard' },
   { label: 'Available Labs', description: 'Browse and start hands-on labs', path: '/labs' },
-  { label: 'Assignments', description: 'Labs assigned to you, with deadlines', path: '/assigned-labs' },
+  { label: 'My work', description: 'Everything your teachers have set, with deadlines', path: '/assigned-labs' },
   { label: 'My Labs', description: 'Labs you have purchased or started', path: '/my-labs' },
   { label: 'CTF Competitions', description: 'Join live Capture-The-Flag events', path: '/ctf' },
   { label: 'My Statistics', description: 'Score, badges, certificates, and completed labs', path: '/statistics' },

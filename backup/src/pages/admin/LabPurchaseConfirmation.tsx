@@ -96,7 +96,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           onClick={() => navigate('/admin/labs')}
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#0052CC] bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-brand-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Lab Marketplace
         </button>
@@ -108,8 +108,8 @@ export const LabPurchaseConfirmation: React.FC = () => {
 
       {/* Main Page Title */}
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-          <CreditCard className="w-7 h-7 text-[#0052CC]" />
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          <CreditCard className="w-7 h-7 text-brand-600" />
           Procure Lab License & Checkout
         </h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -124,7 +124,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
           {/* Selected Lab Overview Card */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold bg-blue-50 text-[#0052CC] border border-blue-100 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-blue-50 text-brand-600 border border-blue-100 px-2.5 py-0.5 rounded-full">
                 {labData.category}
               </span>
               <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -132,7 +132,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
               </span>
             </div>
 
-            <h2 className="text-lg font-black text-slate-900">{labData.title}</h2>
+            <h2 className="text-lg font-bold text-slate-900">{labData.title}</h2>
             <p className="text-xs text-slate-600">{labData.shortDescription}</p>
 
             <div className="pt-2 flex items-center gap-4 text-xs text-slate-500 border-t border-slate-100 font-medium">
@@ -147,9 +147,9 @@ export const LabPurchaseConfirmation: React.FC = () => {
 
           {/* 4.2 Interactive License Tier Selection */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900 flex items-center justify-between">
               <span>Select Enterprise License Model</span>
-              <span className="text-xs text-[#0052CC] font-semibold flex items-center gap-1">
+              <span className="text-xs text-brand-600 font-semibold flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" /> Flexible Allocation
               </span>
             </h3>
@@ -161,7 +161,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
                   onClick={() => setSelectedLicense(opt.type)}
                   className={`block p-4 rounded-xl border transition-all cursor-pointer ${
                     selectedLicense === opt.type
-                      ? 'border-[#0052CC] bg-blue-50/50 ring-2 ring-[#0052CC]/15 shadow-xs'
+                      ? 'border-brand-600 bg-blue-50/50 ring-2 ring-brand-600/15 shadow-xs'
                       : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
@@ -172,7 +172,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
                         name="licenseType"
                         checked={selectedLicense === opt.type}
                         onChange={() => setSelectedLicense(opt.type)}
-                        className="mt-1 text-[#0052CC] focus:ring-[#0052CC]"
+                        className="mt-1 text-brand-600 focus:ring-brand-600"
                       />
                       <div>
                         <p className="text-sm font-bold text-slate-900">{opt.label}</p>
@@ -181,10 +181,10 @@ export const LabPurchaseConfirmation: React.FC = () => {
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <span className="text-base font-black text-slate-900">
+                      <span className="text-base font-bold text-slate-900">
                         ₹{opt.unitPrice.toLocaleString('en-IN')}
                       </span>
-                      <span className="text-[10px] text-slate-400 block font-semibold">
+                      <span className="text-xs text-slate-400 block font-semibold">
                         {opt.type === 'per_user_seats' ? 'per seat' : 'base cost'}
                       </span>
                     </div>
@@ -195,7 +195,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
                     <div className="mt-4 pt-3 border-t border-blue-100 flex items-center justify-between gap-4">
                       <div className="flex-1">
                         <label className="text-xs font-bold text-slate-700 block mb-1">
-                          Number of User Seats: <span className="text-[#0052CC] font-black">{userSeatsCount} Seats</span>
+                          Number of User Seats: <span className="text-brand-600 font-bold">{userSeatsCount} Seats</span>
                         </label>
                         <input
                           type="range"
@@ -204,7 +204,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
                           step="5"
                           value={userSeatsCount}
                           onChange={(e) => setUserSeatsCount(Number(e.target.value))}
-                          className="w-full accent-[#0052CC]"
+                          className="w-full accent-brand-600"
                         />
                       </div>
                     </div>
@@ -216,7 +216,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
 
           {/* 4.3 Payment Method Selector */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900">
+            <h3 className="text-sm font-semibold text-slate-900">
               Payment Method
             </h3>
 
@@ -226,8 +226,8 @@ export const LabPurchaseConfirmation: React.FC = () => {
                 onClick={() => setPaymentMethod('card')}
                 className={`p-3 rounded-xl border text-center transition-all ${
                   paymentMethod === 'card'
-                    ? 'border-[#0052CC] bg-blue-50 text-[#0052CC] font-bold shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    ? 'border-brand-600 bg-blue-50 text-brand-600 font-bold shadow-xs'
+                    : 'border-slate-200 hover:border-slate-300 text-brand-800'
                 }`}
               >
                 <CreditCard className="w-5 h-5 mx-auto mb-1" />
@@ -239,8 +239,8 @@ export const LabPurchaseConfirmation: React.FC = () => {
                 onClick={() => setPaymentMethod('invoice')}
                 className={`p-3 rounded-xl border text-center transition-all ${
                   paymentMethod === 'invoice'
-                    ? 'border-[#0052CC] bg-blue-50 text-[#0052CC] font-bold shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    ? 'border-brand-600 bg-blue-50 text-brand-600 font-bold shadow-xs'
+                    : 'border-slate-200 hover:border-slate-300 text-brand-800'
                 }`}
               >
                 <Building2 className="w-5 h-5 mx-auto mb-1" />
@@ -252,8 +252,8 @@ export const LabPurchaseConfirmation: React.FC = () => {
                 onClick={() => setPaymentMethod('credits')}
                 className={`p-3 rounded-xl border text-center transition-all ${
                   paymentMethod === 'credits'
-                    ? 'border-[#0052CC] bg-blue-50 text-[#0052CC] font-bold shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    ? 'border-brand-600 bg-blue-50 text-brand-600 font-bold shadow-xs'
+                    : 'border-slate-200 hover:border-slate-300 text-brand-800'
                 }`}
               >
                 <FileText className="w-5 h-5 mx-auto mb-1" />
@@ -265,8 +265,8 @@ export const LabPurchaseConfirmation: React.FC = () => {
 
         {/* Right Column: Order Invoice & Checkout Action */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-md sticky top-24 space-y-6">
-            <h3 className="text-base font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-md sticky top-24 space-y-6">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
               <span>Order Invoice Breakdown</span>
               <Lock className="w-4 h-4 text-emerald-600" />
             </h3>
@@ -285,7 +285,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
               {selectedLicense === 'per_user_seats' && (
                 <div className="flex justify-between text-slate-600">
                   <span>Assigned Seats:</span>
-                  <span className="font-bold text-[#0052CC]">{userSeatsCount} Seats</span>
+                  <span className="font-bold text-brand-600">{userSeatsCount} Seats</span>
                 </div>
               )}
 
@@ -300,10 +300,10 @@ export const LabPurchaseConfirmation: React.FC = () => {
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
-                <span className="text-sm font-black text-slate-900">Total Purchase Amount:</span>
+                <span className="text-sm font-bold text-slate-900">Total Purchase Amount:</span>
                 <div className="text-right">
-                  <span className="text-2xl font-black text-[#0052CC]">₹{grandTotal.toLocaleString('en-IN')}</span>
-                  <span className="text-[10px] text-slate-400 block font-semibold">INR Currency</span>
+                  <span className="text-2xl font-bold text-brand-600">₹{grandTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-xs text-slate-400 block font-semibold">INR Currency</span>
                 </div>
               </div>
             </div>
@@ -311,9 +311,9 @@ export const LabPurchaseConfirmation: React.FC = () => {
             {/* Procurement Policy Callout */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-slate-700">
-                <ShieldCheck className="w-4 h-4 text-[#28A745]" /> Instant License Activation
+                <ShieldCheck className="w-4 h-4 text-emerald-600" /> Instant License Activation
               </div>
-              <p className="text-[11px] leading-tight">
+              <p className="text-xs leading-tight">
                 Labs are immediately added to your organizational inventory upon confirmation.
               </p>
             </div>
@@ -322,7 +322,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
             <button
               onClick={handleConfirmPurchase}
               disabled={isProcessing}
-              className="w-full py-3.5 px-4 bg-[#0052CC] hover:bg-blue-700 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full py-3.5 px-4 bg-brand-600 hover:bg-blue-700 text-white font-bold text-sm rounded-full shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {isProcessing ? (
                 <>
@@ -343,13 +343,13 @@ export const LabPurchaseConfirmation: React.FC = () => {
       {/* 4.4 Checkout Success Modal Dialog */}
       {isSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95">
-            <div className="w-16 h-16 bg-emerald-50 text-[#28A745] rounded-2xl flex items-center justify-center mx-auto border border-emerald-100 shadow-sm">
+          <div className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 p-6 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto border border-emerald-100 shadow-sm">
               <ShieldCheck className="w-10 h-10 animate-shield" />
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-slate-900">Procurement Successful!</h2>
+              <h2 className="text-xl font-bold text-slate-900">Procurement Successful!</h2>
               <p className="text-xs text-slate-500 mt-1">
                 <span className="font-bold text-slate-700">{labData.title}</span> has been added to your enterprise lab inventory.
               </p>
@@ -366,7 +366,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Amount Paid:</span>
-                <span className="font-bold text-[#0052CC]">₹{grandTotal.toLocaleString('en-IN')} INR</span>
+                <span className="font-bold text-brand-600">₹{grandTotal.toLocaleString('en-IN')} INR</span>
               </div>
             </div>
 
@@ -379,7 +379,7 @@ export const LabPurchaseConfirmation: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate('/admin/allocations')}
-                className="py-2.5 px-3 rounded-xl bg-[#28A745] hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs"
+                className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors shadow-xs"
               >
                 Allocate to Group Now
               </button>

@@ -1,7 +1,7 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, Download, Share2, Award, Clock, CheckCircle2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Download, Share2, CheckCircle2, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface VerificationData {
   status: string;
@@ -56,8 +56,8 @@ export const VerificationPage: React.FC = () => {
               <ShieldCheck className="w-7 h-7" />
             </div>
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-blue-400">CyberRange Official Portal</span>
-              <h1 className="text-xl sm:text-2xl font-black text-white">Certificate Verification</h1>
+              <span className="text-xs font-bold text-blue-400">CyberRange Official Portal</span>
+              <h1 className="font-display tracking-tight text-3xl sm:text-4xl font-extrabold text-white">Certificate Verification</h1>
             </div>
           </div>
           <Link
@@ -105,7 +105,7 @@ export const VerificationPage: React.FC = () => {
                 <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-800 md:col-span-2">
                   <span className="text-xs text-slate-400 block mb-1">Laboratory Title</span>
                   <span className="font-bold text-white text-base">{data.lab_title}</span>
-                  <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800">
+                  <span className="inline-block mt-1 text-xs font-bold text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800">
                     {data.category}
                   </span>
                 </div>
@@ -124,7 +124,7 @@ export const VerificationPage: React.FC = () => {
                   downloadable certificate again. */}
               {data.png_url && (
                 <div className="mb-8 overflow-hidden">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Official Certificate Document</h3>
+                  <h3 className="text-xs font-bold text-slate-400 mb-3">Official Certificate Document</h3>
                   <img
                     src={data.png_url}
                     alt={`Certificate of completion for ${data.lab_title}`}
@@ -138,7 +138,7 @@ export const VerificationPage: React.FC = () => {
                     <a
                       href={data.png_url}
                       download
-                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-colors inline-flex items-center gap-1.5"
+                      className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-full transition-colors inline-flex items-center gap-1.5"
                     >
                       <Download className="w-4 h-4" /> Download Certificate
                     </a>
@@ -159,7 +159,7 @@ export const VerificationPage: React.FC = () => {
                     href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#0A66C2] hover:bg-[#004182] text-white font-bold text-xs px-3.5 py-2.5 rounded-lg transition-colors inline-flex items-center gap-1.5"
+                    className="bg-[#0A66C2] hover:bg-brand-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-lg transition-colors inline-flex items-center gap-1.5"
                   >
                     Share on LinkedIn
                   </a>

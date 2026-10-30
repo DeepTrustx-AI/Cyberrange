@@ -19,10 +19,10 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
   if (!isOpen || !lab) return null;
 
   const difficultyColors = {
-    Beginner: 'bg-emerald-50 text-[#28A745] border-emerald-200',
-    Intermediate: 'bg-blue-50 text-[#0052CC] border-blue-200',
+    Beginner: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    Intermediate: 'bg-blue-50 text-brand-600 border-blue-200',
     Advanced: 'bg-amber-50 text-amber-700 border-amber-200',
-    Expert: 'bg-purple-50 text-[#6F42C1] border-purple-200',
+    Expert: 'bg-brand-50 text-brand-600 border-brand-200',
   };
 
   const handleShareCertificate = async () => {
@@ -52,7 +52,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+      <div className="bg-white rounded-3xl max-w-2xl w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
         {/* Modal Header */}
         <div className="p-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-start justify-between relative">
           <div className="pr-8">
@@ -75,7 +75,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
               )}
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+            <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
               {lab.title}
             </h2>
 
@@ -100,7 +100,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
         <div className="p-6 space-y-6 max-h-[65vh] overflow-y-auto">
           {/* Detailed Overview */}
           <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <h3 className="text-xs font-bold text-slate-400 mb-2">
               Lab Overview
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed font-normal">
@@ -110,14 +110,14 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
 
           {/* Key Skills Covered */}
           <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <h3 className="text-xs font-bold text-slate-400 mb-2">
               Skills Tested & Trained
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {(lab.skillsCovered ?? []).map((skill, idx) => (
                 <span
                   key={idx}
-                  className="bg-blue-50 text-[#0052CC] border border-blue-100 px-2.5 py-1 rounded-md text-xs font-semibold"
+                  className="bg-blue-50 text-brand-600 border border-blue-100 px-2.5 py-1 rounded-md text-xs font-semibold"
                 >
                   {skill}
                 </span>
@@ -127,7 +127,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
 
           {/* Included Challenge Modules */}
           <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <h3 className="text-xs font-bold text-slate-400 mb-2">
               Challenge Modules ({(lab.modules ?? []).length})
             </h3>
             <div className="space-y-2">
@@ -144,7 +144,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
                   </div>
                   <div className="flex items-center gap-4 text-slate-500 font-medium">
                     <span>{mod.durationMinutes} mins</span>
-                    <span className="text-[#0052CC] font-bold bg-blue-100 px-2 py-0.5 rounded-full">
+                    <span className="text-brand-600 font-bold bg-blue-100 px-2 py-0.5 rounded-full">
                       +{mod.points} pts
                     </span>
                   </div>
@@ -156,13 +156,13 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
           {/* Prerequisites */}
           {(lab.prerequisites ?? []).length > 0 && (
             <div>
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-bold text-slate-400 mb-2">
                 Prerequisites & Target Knowledge
               </h3>
               <ul className="space-y-1 text-xs text-slate-600">
                 {(lab.prerequisites ?? []).map((req, idx) => (
                   <li key={idx} className="flex items-center gap-2">
-                    <CheckCircle className="w-3.5 h-3.5 text-[#28A745]" />
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{req}</span>
                   </li>
                 ))}
@@ -181,7 +181,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
                   download
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition-colors inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition-colors inline-flex items-center justify-center gap-2"
                 >
                   <Download className="w-4 h-4" /> Download Certificate
                 </a>
@@ -205,7 +205,7 @@ export const LabDetailModal: React.FC<LabDetailModalProps> = ({ lab, isOpen, onC
               <>
                 <span className="text-xs text-slate-500 font-semibold block">Price / Hour</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-slate-900">&#8377;{(lab.priceInr ?? 0).toLocaleString('en-IN')}</span>
+                  <span className="text-2xl font-bold text-slate-900">&#8377;{(lab.priceInr ?? 0).toLocaleString('en-IN')}</span>
                   <span className="text-xs text-slate-500">/ hr &mdash; close this and click Add to Cart</span>
                 </div>
               </>

@@ -15,11 +15,7 @@ export const useCTFWebSocket = (ctfId: number, onMessage?: (msg: WSMessage) => v
     if (wsRef.current) return;
 
     const token = localStorage.getItem('token');
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const host = window.location.host;
-
-    // Construct WebSocket URL
-    const url = `${protocol}://${host}/api/v1/ctf/ws?ctf_id=${ctfId}${token ? `&token=${token}` : ''}`;
+    const url = apiWebSocketUrl(`/api/v1/ctf/ws?ctf_id=${ctfId}${token ? `&token=${token}` : ''}`);
 
     const ws = new WebSocket(url);
     wsRef.current = ws;

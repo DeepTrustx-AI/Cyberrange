@@ -2,11 +2,9 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import {
   Trophy,
-  Clock,
   CheckCircle2,
   User,
   Users,
-  LineChart,
   Medal,
   Crown
 } from 'lucide-react';
@@ -123,7 +121,7 @@ export const LeaderboardPortal: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -132,7 +130,7 @@ export const LeaderboardPortal: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header section */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Training Leaderboards</h1>
+        <h1 className="font-display tracking-tight text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">Training Leaderboards</h1>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
           Review your solving accuracy history, group standings, and global rankings.
         </p>
@@ -144,7 +142,7 @@ export const LeaderboardPortal: React.FC = () => {
           onClick={() => setActiveTab('personal')}
           className={`flex-1 md:flex-none px-4 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 ${
             activeTab === 'personal'
-              ? 'bg-white dark:bg-slate-900 text-[#2563EB] dark:text-white shadow-xs'
+              ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
@@ -157,7 +155,7 @@ export const LeaderboardPortal: React.FC = () => {
             onClick={() => setActiveTab('college')}
             className={`flex-1 md:flex-none px-4 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 ${
               activeTab === 'college'
-                ? 'bg-white dark:bg-slate-900 text-[#2563EB] dark:text-white shadow-xs'
+                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -170,7 +168,7 @@ export const LeaderboardPortal: React.FC = () => {
           onClick={() => setActiveTab('global')}
           className={`flex-1 md:flex-none px-4 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 ${
             activeTab === 'global'
-              ? 'bg-white dark:bg-slate-900 text-[#2563EB] dark:text-white shadow-xs'
+              ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
@@ -184,29 +182,29 @@ export const LeaderboardPortal: React.FC = () => {
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs transition-colors">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Solved Flags</span>
-              <span className="text-lg font-black text-slate-800 dark:text-slate-100 mt-1 block">{personalHistory.length} Solves</span>
-              <span className="text-[9px] text-slate-400 dark:text-slate-500 block mt-1">Across all assignable range modules</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 block">Solved Flags</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 block">{personalHistory.length} Solves</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block mt-1">Across all assignable range modules</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs transition-colors">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Global Rank</span>
-              <span className="text-lg font-black text-[#2563EB] dark:text-blue-400 mt-1 block">#{personalRank?.rank || '--'}</span>
-              <span className="text-[9px] text-slate-400 dark:text-slate-500 block mt-1">Based on global score standing</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 block">Global Rank</span>
+              <span className="text-lg font-bold text-brand-600 dark:text-blue-400 mt-1 block">#{personalRank?.rank || '--'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block mt-1">Based on global score standing</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs transition-colors">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Account Classification</span>
-              <span className="text-lg font-black text-slate-800 dark:text-slate-100 mt-1 block">{userProfile?.account_type || 'INDIVIDUAL'}</span>
-              <span className="text-[9px] text-slate-400 dark:text-slate-500 block mt-1">Profile account registration type</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 block">Account Classification</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 block">{userProfile?.account_type || 'INDIVIDUAL'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block mt-1">Profile account registration type</span>
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs transition-colors">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Academic Affiliation</span>
-              <span className="text-lg font-black text-slate-800 dark:text-slate-100 mt-1 block truncate">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 block">Academic Affiliation</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 block truncate">
                 {userProfile?.college_id ? 'College Student' : 'Individual'}
               </span>
-              <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-1 flex items-center gap-0.5">
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold block mt-1 flex items-center gap-0.5">
                 <CheckCircle2 className="w-3 h-3" /> Verifiable profile state
               </span>
             </div>
@@ -219,7 +217,7 @@ export const LeaderboardPortal: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-100 dark:border-slate-800">
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800">
                     <th className="px-5 py-3">Module ID</th>
                     <th className="px-5 py-3">Module Title</th>
                     <th className="px-5 py-3">Points Awarded</th>
@@ -233,7 +231,7 @@ export const LeaderboardPortal: React.FC = () => {
                       <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                         <td className="px-5 py-3.5 font-bold text-slate-500 dark:text-slate-400">{item.module_id}</td>
                         <td className="px-5 py-3.5 font-bold text-slate-800 dark:text-slate-100">{item.module_title}</td>
-                        <td className="px-5 py-3.5 font-bold text-[#2563EB] dark:text-blue-400">{item.points} pts</td>
+                        <td className="px-5 py-3.5 font-bold text-brand-600 dark:text-blue-400">{item.points} pts</td>
                         <td className="px-5 py-3.5 font-medium text-slate-700 dark:text-slate-300">{item.attempts} attempts</td>
                         <td className="px-5 py-3.5 font-medium text-slate-400 dark:text-slate-500">{item.completed_at}</td>
                       </tr>
@@ -258,9 +256,9 @@ export const LeaderboardPortal: React.FC = () => {
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
             <div>
               <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">College Cohort Standings</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Ranking among students inside the same college affiliation</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ranking among students inside the same college affiliation</p>
             </div>
-            <span className="text-xs font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-900">
+            <span className="text-xs font-bold text-brand-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-900">
               Active Standings
             </span>
           </div>
@@ -272,7 +270,7 @@ export const LeaderboardPortal: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-100 dark:border-slate-800">
+                    <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800">
                       <th className="px-6 py-3 w-16 text-center">Rank</th>
                       <th className="px-6 py-3">Operator Name</th>
                       <th className="px-6 py-3">Institution Affiliation</th>
@@ -287,7 +285,7 @@ export const LeaderboardPortal: React.FC = () => {
                         key={row.rank || idx}
                         className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/50 ${row.is_current ? 'bg-blue-50/40 dark:bg-blue-950/30 font-bold' : ''}`}
                       >
-                        <td className="px-6 py-4 text-center font-extrabold text-slate-800 dark:text-slate-100">
+                        <td className="px-6 py-4 text-center font-semibold text-slate-800 dark:text-slate-100">
                           {displayRank === 1 ? (
                             <span className="inline-flex items-center gap-1 text-amber-500"><Crown className="w-3.5 h-3.5 fill-amber-500" /> 1</span>
                           ) : displayRank === 2 ? (
@@ -297,16 +295,16 @@ export const LeaderboardPortal: React.FC = () => {
                           )}
                         </td>
                         <td className="px-6 py-4 flex items-center gap-2.5">
-                          <div className={`w-7 h-7 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-xs ${row.is_current ? 'bg-emerald-500' : 'bg-[#2563EB]'}`}>
+                          <div className={`w-7 h-7 rounded-full text-xs font-bold text-white flex items-center justify-center shadow-xs ${row.is_current ? 'bg-emerald-500' : 'bg-brand-600'}`}>
                             {row.name.split(' ').map((n: string) => n[0]).join('')}
                           </div>
                           <span className="text-slate-800 dark:text-slate-100 font-bold">{row.name}</span>
                           {row.is_current && (
-                            <span className="text-[9px] font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded-md">YOU</span>
+                            <span className="text-xs font-bold text-brand-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded-md">YOU</span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.college}</td>
-                        <td className="px-6 py-4 text-right font-extrabold text-[#2563EB] dark:text-blue-400">{row.score} pts</td>
+                        <td className="px-6 py-4 text-right font-semibold text-brand-600 dark:text-blue-400">{row.score} pts</td>
                       </tr>
                     );
                     })}
@@ -344,9 +342,9 @@ export const LeaderboardPortal: React.FC = () => {
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
             <div>
               <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">Global Range Leaderboard</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Ranks everyone currently active inside the CyberRange platform</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ranks everyone currently active inside the CyberRange platform</p>
             </div>
-            <span className="text-xs font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-900">
+            <span className="text-xs font-bold text-brand-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-900">
               Global Standings
             </span>
           </div>
@@ -354,7 +352,7 @@ export const LeaderboardPortal: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 uppercase font-bold border-b border-slate-100 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800">
                   <th className="px-6 py-3 w-16 text-center">Rank</th>
                   <th className="px-6 py-3">Operator Name</th>
                   <th className="px-6 py-3">College Affiliation</th>
@@ -369,7 +367,7 @@ export const LeaderboardPortal: React.FC = () => {
                     key={row.rank || idx}
                     className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/50 ${row.is_current ? 'bg-blue-50/40 dark:bg-blue-950/30 font-bold' : ''}`}
                   >
-                    <td className="px-6 py-4 text-center font-extrabold text-slate-800 dark:text-slate-100">
+                    <td className="px-6 py-4 text-center font-semibold text-slate-800 dark:text-slate-100">
                       {displayRank === 1 ? (
                         <span className="inline-flex items-center gap-1 text-amber-500"><Crown className="w-3.5 h-3.5 fill-amber-500" /> 1</span>
                       ) : displayRank === 2 ? (
@@ -379,16 +377,16 @@ export const LeaderboardPortal: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-xs ${row.is_current ? 'bg-emerald-500' : 'bg-[#2563EB]'}`}>
+                      <div className={`w-7 h-7 rounded-full text-xs font-bold text-white flex items-center justify-center shadow-xs ${row.is_current ? 'bg-emerald-500' : 'bg-brand-600'}`}>
                         {row.name.split(' ').map((n: string) => n[0]).join('')}
                       </div>
                       <span className="text-slate-800 dark:text-slate-100 font-bold">{row.name}</span>
                       {row.is_current && (
-                        <span className="text-[9px] font-bold text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded-md">YOU</span>
+                        <span className="text-xs font-bold text-brand-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.2 rounded-md">YOU</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.college}</td>
-                    <td className="px-6 py-4 text-right font-extrabold text-[#2563EB] dark:text-blue-400">{row.score} pts</td>
+                    <td className="px-6 py-4 text-right font-semibold text-brand-600 dark:text-blue-400">{row.score} pts</td>
                   </tr>
                 );
                 })}

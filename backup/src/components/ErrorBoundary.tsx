@@ -1,4 +1,4 @@
-import React, { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <div className="space-y-2 max-w-md">
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
               Unable to load this page
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -50,10 +50,10 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
 
           {import.meta.env.DEV && this.state.error && (
-            <div className="w-full max-w-lg bg-slate-950 text-rose-300 p-4 rounded-xl text-left overflow-x-auto text-[11px] font-mono border border-slate-800">
+            <div className="w-full max-w-lg bg-slate-950 text-rose-300 p-4 rounded-xl text-left overflow-x-auto text-xs font-mono border border-slate-800">
               <p className="font-bold text-rose-400 mb-1">{this.state.error.toString()}</p>
               {this.state.errorInfo?.componentStack && (
-                <pre className="text-[10px] text-slate-400 opacity-80 whitespace-pre-wrap">
+                <pre className="text-xs text-slate-400 opacity-80 whitespace-pre-wrap">
                   {this.state.errorInfo.componentStack}
                 </pre>
               )}
@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={this.handleReset}
-              className="px-5 py-2.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs rounded-full shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Retry Page</span>

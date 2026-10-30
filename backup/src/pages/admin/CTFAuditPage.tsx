@@ -2,8 +2,8 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import type { CtfEvent, CtfSubmission } from '../../types/ctf';
-import { ArrowLeft, RefreshCw, FileText, ChevronLeft, ChevronRight, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import type { CtfEvent } from '../../types/ctf';
+import { ArrowLeft, RefreshCw, FileText, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 
 export const CTFAuditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,7 +83,7 @@ export const CTFAuditPage: React.FC = () => {
 
         {/* CTF Summary Info */}
         {ctf && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center gap-3">
               <FileText className="w-5 h-5 text-indigo-500" />
               <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Flag Submissions & Hint Audit Log</h2>
@@ -105,16 +105,16 @@ export const CTFAuditPage: React.FC = () => {
             Loading submission logs...
           </div>
         ) : submissions.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-slate-400 text-xs font-semibold">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl shadow-sm text-slate-400 text-xs font-semibold">
             No submissions registered for this CTF event yet.
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                       <th className="px-6 py-4">Timestamp</th>
                       <th className="px-6 py-4">Participant</th>
                       <th className="px-6 py-4">Challenge Target</th>
@@ -137,11 +137,11 @@ export const CTFAuditPage: React.FC = () => {
                         </td>
                         <td className="px-6 py-4">
                           {sub.is_correct ? (
-                            <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/35 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[9px]">
+                            <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/35 px-2 py-0.5 rounded-md font-bold text-xs">
                               {sub.is_first_blood ? '🩸 First Blood' : '✅ Correct'}
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[9px]">
+                            <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/35 px-2 py-0.5 rounded-md font-bold text-xs">
                               ❌ Incorrect
                             </span>
                           )}

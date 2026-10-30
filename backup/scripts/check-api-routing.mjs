@@ -16,7 +16,8 @@ function walk(dir) {
     if (!/\.(ts|tsx|js|jsx)$/.test(entry.name)) continue;
     if (entry.name.includes('.before_')) continue;
 
-    const rel = path.relative(process.cwd(), full);
+    // Forward slashes on every OS, so the allow-list below matches on Windows too.
+    const rel = path.relative(process.cwd(), full).split(path.sep).join('/');
     const text = fs.readFileSync(full, 'utf8');
 
     if (rel !== 'src/lib/api.ts' && /\bfetch\s*\(/.test(text)) {

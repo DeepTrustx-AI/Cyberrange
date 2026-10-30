@@ -46,9 +46,9 @@ export const CompliancePortalLabPage: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="w-full h-screen bg-[#0B1120] flex flex-col overflow-hidden">
+    <div className="w-full h-screen bg-slate-950 flex flex-col overflow-hidden">
       {/* Session bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#0F172A] border-b border-slate-800 text-slate-200">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-200">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/labs')}
@@ -60,7 +60,7 @@ export const CompliancePortalLabPage: React.FC = () => {
             <span>🛡️</span> DPDP Compliance Portal
           </span>
         </div>
-        <span className="text-[11px] font-mono text-emerald-400">
+        <span className="text-xs font-mono text-emerald-400">
           {labUrl ? (loaded ? 'ENVIRONMENT ONLINE' : 'CONNECTING…') : 'ENVIRONMENT NOT CONFIGURED'}
         </span>
       </div>
@@ -87,7 +87,7 @@ export const CompliancePortalLabPage: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/labs')}
-              className="mt-6 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500 transition"
+              className="mt-6 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-500 transition"
             >
               Back to Labs
             </button>

@@ -3,11 +3,15 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cyberrange</title>
-  <!-- Google's sign-in script loads with the sign-in button (src/components/GoogleSignInButton.tsx). -->
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <meta name="theme-color" content="#F7F4EF" />
+  <title>CyberRange</title>
+  <!-- Google's sign-in script loads with the sign-in button (src/components/GoogleSignInButton.tsx).
+       Fonts are bundled with the app, and Razorpay's checkout script loads when a payment starts
+       (src/utils/razorpay.ts), so it does not run on every page, sign-in included. -->
 </head>
 
 <body>

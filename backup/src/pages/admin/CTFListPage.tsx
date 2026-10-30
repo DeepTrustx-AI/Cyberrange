@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import type { CtfEvent } from '../../types/ctf';
-import { Plus, Play, Square, Settings, Eye, Users, Calendar, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Play, Square, Settings, Eye, Calendar, AlertCircle, Trash2 } from 'lucide-react';
 
 export const CTFListPage: React.FC = () => {
   const [events, setEvents] = useState<CtfEvent[]>([]);
@@ -94,25 +94,25 @@ export const CTFListPage: React.FC = () => {
     switch (status) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold">
             Live
           </span>
         );
       case 'completed':
         return (
-          <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-xs font-bold">
             Concluded
           </span>
         );
       case 'paused':
         return (
-          <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 text-amber-500 dark:text-amber-400 border border-amber-200 dark:border-amber-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 text-amber-500 dark:text-amber-400 border border-amber-200 dark:border-amber-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold">
             Paused
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/35 px-2.5 py-0.5 rounded-full text-xs font-bold">
             Scheduled
           </span>
         );
@@ -124,14 +124,14 @@ export const CTFListPage: React.FC = () => {
       <div className="space-y-6">
 
         {/* Header Block */}
-        <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Capture The Flag Module</h2>
-            <p className="text-xs text-slate-400 mt-1">Admin panel to schedule events and configure challenge environments</p>
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">Capture The Flag Module</h2>
+            <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">Admin panel to schedule events and configure challenge environments</p>
           </div>
           <Link
             to="/admin/ctf/new"
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all shadow-lg shadow-indigo-500/25"
+            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 py-2 rounded-full transition-all shadow-lg shadow-indigo-500/25"
           >
             <Plus className="w-4 h-4" />
             Create Event
@@ -150,7 +150,7 @@ export const CTFListPage: React.FC = () => {
             Loading CTF events...
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl shadow-sm">
             <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
             <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">No CTF Events Scheduled</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
@@ -158,18 +158,18 @@ export const CTFListPage: React.FC = () => {
             </p>
             <Link
               to="/admin/ctf/new"
-              className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-xl mt-4 transition-all shadow-md"
+              className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-full mt-4 transition-all shadow-md"
             >
               <Plus className="w-3.5 h-3.5" />
               Create Event
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                     <th className="px-6 py-4">CTF Event Name</th>
                     <th className="px-6 py-4">Schedule (Start / End)</th>
                     <th className="px-6 py-4">Status</th>

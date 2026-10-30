@@ -23,7 +23,6 @@ export const GroupManagement: React.FC = () => {
   const navigate = useNavigate();
 
   const [groups, setGroups] = useState<UserGroup[]>([]);
-  const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,8 +47,6 @@ export const GroupManagement: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching groups:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -122,13 +119,12 @@ export const GroupManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:items-end">
         <div>
           <div className="flex items-center gap-2">
-            <UsersRound className="w-5 h-5 text-[#0052CC] dark:text-blue-400" />
-            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Training Group Management</h1>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">Training Group Management</h1>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
             Organize users into training groups and manage lab allocations per group.
           </p>
         </div>
@@ -138,7 +134,7 @@ export const GroupManagement: React.FC = () => {
             setGroupToEdit(null);
             setIsCreateModalOpen(true);
           }}
-          className="bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-colors inline-flex items-center gap-2 self-start sm:self-center cursor-pointer"
+          className="bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-xs transition-colors inline-flex items-center gap-2 self-start sm:self-center cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Create New Group
@@ -154,7 +150,7 @@ export const GroupManagement: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search training groups by name or description..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
           />
         </div>
       </div>
@@ -175,11 +171,11 @@ export const GroupManagement: React.FC = () => {
           filteredGroups.map((g) => (
             <div
               key={g.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-[#0052CC] dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-3 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-brand-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-3 py-1 rounded-full flex items-center gap-1.5">
                     <Users className="w-3.5 h-3.5" /> {g.memberCount} Enrolled {g.memberCount === 1 ? 'User' : 'Users'}
                   </span>
                   <div className="flex items-center gap-1">
@@ -188,7 +184,7 @@ export const GroupManagement: React.FC = () => {
                         setGroupToEdit(g);
                         setIsCreateModalOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                       title="Edit Group"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -203,7 +199,7 @@ export const GroupManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">{g.name}</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{g.name}</h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{g.description}</p>
               </div>
 
@@ -225,7 +221,7 @@ export const GroupManagement: React.FC = () => {
 
                   <button
                     onClick={() => navigate('/admin/allocations')}
-                    className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#0052CC] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-bold border border-blue-200 dark:border-blue-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-brand-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-bold border border-blue-200 dark:border-blue-800 transition-colors inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Layers className="w-3.5 h-3.5" />
                     Allocations <ArrowRight className="w-3 h-3" />
@@ -257,12 +253,12 @@ export const GroupManagement: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {groupToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Delete User Group?</h3>
+              <h3 className="text-base font-semibold text-slate-900">Delete User Group?</h3>
               <p className="text-xs text-slate-500 mt-1">
                 Are you sure you want to delete <span className="font-bold text-slate-800">{groupToDelete.name}</span>?
               </p>

@@ -23,7 +23,7 @@ export const CryptographyLabPage: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="w-full h-screen bg-[#F8FAFC] flex flex-col overflow-hidden">
+    <div className="w-full h-screen bg-slate-50 flex flex-col overflow-hidden">
       <iframe
         src={iframeUrl}
         title="Cryptography Lab"

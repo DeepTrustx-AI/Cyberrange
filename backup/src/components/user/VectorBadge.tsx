@@ -11,7 +11,6 @@ export interface VectorBadgeProps {
 
 export const VectorBadge: React.FC<VectorBadgeProps> = ({
   title,
-  category = 'Cyber Security',
   points = 100,
   variant = 'gold',
   size = 'md',
@@ -30,10 +29,10 @@ export const VectorBadge: React.FC<VectorBadgeProps> = ({
         };
       case 'blue':
         return {
-          gradientStart: '#2563eb',
+          gradientStart: '#2A2F3D',
           gradientEnd: '#1e3a8a',
-          border: '#60a5fa',
-          accent: '#3b82f6',
+          border: '#83E8C3',
+          accent: '#F2A47A',
           text: '#eff6ff',
           bannerBg: '#172554',
         };
@@ -130,7 +129,7 @@ export const VectorBadge: React.FC<VectorBadgeProps> = ({
         {/* Center Shield Emblem */}
         <polygon
           points="100,55 130,70 130,110 100,130 70,110 70,70"
-          fill="#0f172a"
+          fill="#171921"
           stroke={theme.border}
           strokeWidth="2.5"
         />
@@ -167,7 +166,7 @@ export const VectorBadge: React.FC<VectorBadgeProps> = ({
         <text
           x="100"
           y="173"
-          fill="#0f172a"
+          fill="#171921"
           fontSize="10"
           fontWeight="900"
           textAnchor="middle"
@@ -186,5 +185,3 @@ export const VectorBadge: React.FC<VectorBadgeProps> = ({
     </div>
   );
 };
-
-export default VectorBadge;
