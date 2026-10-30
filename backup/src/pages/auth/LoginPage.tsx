@@ -5,6 +5,9 @@ import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, Building2 } from 'lucide-r
 import { useAuth } from '../../context';
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
 
+// How long after a session ends the sign-in page still explains why.
+const SESSION_NOTICE_MS = 15_000;
+
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -17,6 +20,14 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  // Set by the auth context just before it sends a signed-out student here.
+  const [sessionEnded] = useState(() => {
+    try {
+      return Date.now() - Number(sessionStorage.getItem('sessionEndedAt') || 0) < SESSION_NOTICE_MS;
+    } catch {
+      return false;
+    }
+  });
 
   const handleStandardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +104,11 @@ export const LoginPage: React.FC = () => {
 
         {/* Glassmorphic Auth Card */}
         <div className="bg-white dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] rounded-3xl p-8 sm:p-10 shadow-xl space-y-6 transition-colors">
+          {sessionEnded && !errorMsg && (
+            <div role="status" className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 rounded-2xl text-xs font-semibold text-center">
+              Your session ended. Sign in again to continue.
+            </div>
+          )}
           {errorMsg && (
             <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-300 rounded-2xl text-xs font-semibold text-center space-y-2">
               <div>{errorMsg}</div>

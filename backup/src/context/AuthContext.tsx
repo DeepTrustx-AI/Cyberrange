@@ -162,6 +162,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.location.pathname.toLowerCase().startsWith(path)
       );
       if (!isPublicPath && window.location.pathname !== '/') {
+        // Let the sign-in page say why the student landed there.
+        try { sessionStorage.setItem('sessionEndedAt', String(Date.now())); } catch { /* storage blocked */ }
         window.location.href = '/login';
       }
     }
