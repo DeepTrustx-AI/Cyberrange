@@ -3,9 +3,9 @@ import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
-import { RefreshCw, Terminal as TerminalIcon, Maximize2, Minimize2, CheckCircle2, AlertCircle, FileCode2, Loader2 } from 'lucide-react';
+import { RefreshCw, Terminal as TerminalIcon, Maximize2, Minimize2, CheckCircle2, AlertCircle, FileCode2, Loader2, SquareTerminal } from 'lucide-react';
 import {
-  editorCommandFile, isSafeFilename, loadCommand, parseLoadOutput, parseSaveOutput, readDraft, saveCommands, writeDraft,
+  isSafeFilename, opensFile, loadCommand, parseLoadOutput, parseSaveOutput, readDraft, saveCommands, writeDraft,
 } from './terminalEditor';
 
 const CodeEditorModal = lazy(() => import('./CodeEditorModal'));
@@ -24,7 +24,7 @@ interface RealTerminalProps {
   wsPath?: string;
   /** Optional terminal title override. */
   terminalTitle?: string;
-  editor?: { defaultFile: string };
+  editor?: { file: string };
 }
 
 export const RealTerminal: React.FC<RealTerminalProps> = ({
@@ -62,11 +62,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
       .catch((error) => { console.warn('[RealTerminal] command tracking failed:', error); });
   }, []);
 
-  const editorEnabledRef = useRef(Boolean(editor));
-  useEffect(() => { editorEnabledRef.current = Boolean(editor); }, [editor]);
+  const editorFileRef = useRef(editor?.file ?? null);
+  useEffect(() => { editorFileRef.current = editor?.file ?? null; }, [editor]);
   const captureRef = useRef<Capture | null>(null);
   const decoderRef = useRef(new TextDecoder());
-  const [editorOffer, setEditorOffer] = useState<string | null>(null);
+  const [editorOffer, setEditorOffer] = useState(false);
   const [editorBusy, setEditorBusy] = useState(false);
   const [editorSession, setEditorSession] = useState<{ file: string; text: string; note?: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -220,12 +220,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
     // Forward xterm input to WebSocket; also track command buffer for objective detection
     term.onData((data) => {
-      if ((data === '\r' || data === '\n') && editorEnabledRef.current && term.buffer.active.type === 'normal') {
-        const file = editorCommandFile(commandBufferRef.current);
-        if (file) {
-          setEditorOffer(file);
-          return;
-        }
+      const editorFile = editorFileRef.current;
+      if ((data === '\r' || data === '\n') && editorFile && term.buffer.active.type === 'normal'
+          && opensFile(commandBufferRef.current, editorFile)) {
+        setEditorOffer(true);
+        return;
       }
       if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
         socketRef.current.send(data);
@@ -334,20 +333,23 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     const result = output === null ? null : parseSaveOutput(output);
     setSaving(false);
     setSaveMessage(result === 'saved'
-      ? `Saved to your workspace at ${new Date().toLocaleTimeString()}`
+      ? `Saved ~/${editorSession.file} at ${new Date().toLocaleTimeString()}. Submit it from any folder with: submit ~/${editorSession.file}`
       : result === 'failed'
         ? 'Could not save: check that the folder exists and the name is right.'
         : 'No reply from the terminal. Is a program still running there? Your draft is kept.');
   };
 
+  const closeEditor = () => {
+    setEditorSession(null);
+    termInstanceRef.current?.focus();
+  };
+
   const answerOffer = (open: boolean) => {
-    const file = editorOffer;
-    setEditorOffer(null);
-    if (!file) return;
-    if (open) {
+    setEditorOffer(false);
+    if (open && editor) {
       sendRaw('\x15');
       commandBufferRef.current = '';
-      void openEditor(file);
+      void openEditor(editor.file);
       return;
     }
     sendRaw('\r');
@@ -367,7 +369,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
   return (
     <div
-      className={`flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0B0F17] shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : ''
+      className={`relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0B0F17] shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : ''
         } ${className}`}
     >
       {/* Terminal Header */}
@@ -408,16 +410,25 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
             )}
           </div>
 
+          {/* One button in one place switches between the terminal and the editor. */}
           {editor && (
             <button
               type="button"
-              onClick={() => { void openEditor(editor.defaultFile); }}
-              disabled={editorBusy || connectionState !== 'connected'}
+              onClick={() => { if (editorSession) closeEditor(); else void openEditor(editor.file); }}
+              disabled={!editorSession && (editorBusy || connectionState !== 'connected')}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-2 py-1 text-[11px] font-bold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:opacity-40"
-              title={`Open ${editor.defaultFile} in the code editor`}
+              title={editorSession
+                ? 'Back to the terminal (your draft is kept)'
+                : `Open ~/${editor.file}, the file this challenge grades, in the code editor`}
             >
-              {editorBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCode2 className="h-3.5 w-3.5" />}
-              Editor
+              {editorSession ? (
+                <><SquareTerminal className="h-3.5 w-3.5" />Back to terminal</>
+              ) : (
+                <>
+                  {editorBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCode2 className="h-3.5 w-3.5" />}
+                  Edit <span className="hidden font-mono sm:inline">{editor.file}</span>
+                </>
+              )}
             </button>
           )}
 
@@ -443,22 +454,31 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
         </div>
       </div>
 
-      {editorOffer && (
-        <div role="dialog" aria-label="Open in the code editor?"
-             className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-900/60 bg-blue-950/60 px-4 py-2 text-xs text-blue-100">
-          <span>
-            Open <code className="font-mono font-bold">{editorOffer}</code> in the code editor? It handles indentation for you.
-          </span>
-          <span className="flex gap-2">
-            <button type="button" autoFocus onClick={() => answerOffer(true)}
-                    className="rounded-lg bg-blue-600 px-3 py-1 font-bold text-white hover:bg-blue-700">
-              Open in editor
-            </button>
-            <button type="button" onClick={() => answerOffer(false)}
-                    className="rounded-lg border border-slate-600 px-3 py-1 font-bold text-slate-200 hover:bg-slate-800">
-              Keep using the terminal
-            </button>
-          </span>
+      {editorOffer && editor && (
+        <div
+          className="fade-in absolute inset-0 z-30 flex items-center justify-center bg-slate-950/75 p-4"
+          onKeyDown={(event) => { if (event.key === 'Escape') answerOffer(false); }}
+        >
+          <div role="dialog" aria-modal="true" aria-labelledby="editor-offer-title"
+               className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-5 text-sm text-slate-300 shadow-2xl">
+            <h3 id="editor-offer-title" className="font-semibold text-white">
+              Open <code className="font-mono">{editor.file}</code> in the code editor?
+            </h3>
+            <p className="mt-2 leading-6">
+              It saves to <code className="font-mono text-slate-100">~/{editor.file}</code>, the file this challenge
+              grades, and keeps Python indentation tidy.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={() => answerOffer(false)}
+                      className="rounded-full px-3.5 py-1.5 font-medium text-slate-300 hover:bg-white/5 hover:text-white">
+                Stay in the terminal
+              </button>
+              <button type="button" autoFocus onClick={() => answerOffer(true)}
+                      className="rounded-full bg-white px-3.5 py-1.5 font-semibold text-slate-900 hover:bg-slate-200">
+                Open in editor
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -472,7 +492,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
             saveMessage={saveMessage}
             onSave={(text) => { void saveEditor(text); }}
             onChange={(text) => writeDraft(labId, editorSession.file, text)}
-            onClose={() => { setEditorSession(null); termInstanceRef.current?.focus(); }}
+            onClose={closeEditor}
           />
         </Suspense>
       )}
