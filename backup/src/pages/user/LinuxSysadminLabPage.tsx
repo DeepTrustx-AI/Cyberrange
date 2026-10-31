@@ -341,7 +341,7 @@ const ResultPanel: React.FC<{
 
       {!submission ? (
         <div className="px-5 py-8 text-center text-sm text-slate-500">
-          No submission yet. Create your solution in the terminal, then run <code className="font-mono">submit {submissionFilename}</code>.
+          No submission yet. Create your solution in the terminal, then run <code className="font-mono">submit ~/{submissionFilename}</code>.
         </div>
       ) : (
         <div className="p-5">
@@ -826,7 +826,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean; race?: boolean
                       <TerminalIcon className="h-4 w-4" /> Terminal submission
                     </div>
                     <p className="mt-1.5 text-xs leading-5 text-blue-700 dark:text-blue-300/90">
-                      When ready, run <code className="font-mono font-bold">submit {detail.submission_filename}</code>. The browser never uploads your script directly.
+                      When ready, run <code className="font-mono font-bold">submit ~/{detail.submission_filename}</code>. The browser never uploads your script directly.
                     </p>
                   </div>
                 </section>
@@ -841,7 +841,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean; race?: boolean
                       terminalTitle={`RHSA — ${detail.title}`}
                       height="clamp(420px, 58vh, 600px)"
                       onCommand={handleTerminalCommand}
-                      editor={race ? { defaultFile: detail.submission_filename } : undefined}
+                      editor={race && detail.submission_filename ? { file: detail.submission_filename } : undefined}
                     />
                   ) : (
                     <div className="flex min-h-[440px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
