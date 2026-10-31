@@ -52,7 +52,7 @@ export const ForgotPasswordPage: React.FC = () => {
           </div>
 
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight bg-gradient-to-r from-slate-900 to-[#0052CC] bg-clip-text text-transparent">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               Password Recovery
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
@@ -117,7 +117,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <div>
                 <h3 className="text-lg font-black text-slate-900">Recovery Email Dispatched</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  We've sent password reset instructions to <span className="font-bold text-slate-800">{email}</span>. Please check your inbox and spam folder.
+                  If an account uses <span className="font-bold text-slate-800">{email}</span>, reset instructions will arrive shortly. Please check your inbox and spam folder.
                 </p>
               </div>
 

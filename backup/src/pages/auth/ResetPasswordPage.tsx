@@ -13,7 +13,6 @@ export const ResetPasswordPage: React.FC = () => {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -32,11 +31,6 @@ export const ResetPasswordPage: React.FC = () => {
       setIsTokenExpired(true);
       return;
     }
-    if (otpCode.trim().length !== 6) {
-      setErrorMsg('Enter the 6-digit verification code sent to your email.');
-      return;
-    }
-
     setIsLoading(true);
     try {
       const response = await routedApiFetch('/api/v1/auth/reset-password', {
@@ -44,7 +38,7 @@ export const ResetPasswordPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token, new_password: newPassword, otp_code: otpCode.trim() }),
+        body: JSON.stringify({ token, new_password: newPassword }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -81,7 +75,7 @@ export const ResetPasswordPage: React.FC = () => {
           </div>
 
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight bg-gradient-to-r from-slate-900 to-[#0052CC] bg-clip-text text-transparent">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               Set New Password
             </h1>
             <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
@@ -186,26 +180,9 @@ export const ResetPasswordPage: React.FC = () => {
                 )}
               </div>
 
-              <div>
-                <label className="font-bold text-xs text-slate-700 block mb-1">Verification Code (OTP)</label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  inputMode="numeric"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 6-digit code from your email"
-                  className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 tracking-widest focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  A verification code was emailed to you alongside this reset link.
-                </p>
-              </div>
-
               <button
                 type="submit"
-                disabled={isLoading || !isPasswordValid || !isMatching || otpCode.length !== 6}
+                disabled={isLoading || !isPasswordValid || !isMatching}
                 className="w-full py-3.5 bg-[#0052CC] hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
               >
                 {isLoading ? (
