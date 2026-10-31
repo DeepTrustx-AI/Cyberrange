@@ -10,11 +10,6 @@ import {
   Check,
   Smartphone,
   Key,
-  Layers,
-  Database,
-  Terminal,
-  Cpu,
-  Globe,
   CreditCard,
   Download,
   AlertCircle,
@@ -34,7 +29,7 @@ export const SettingsPage: React.FC = () => {
   const isSso = user?.auth_type === 'SSO';
   const initialTab = searchParams.get('tab') || 'appearance';
 
-  const [activeTab, setActiveTab] = useState<'paymentHistory' | 'appearance' | 'security' | 'notifications' | 'platform' | 'feedback'>(
+  const [activeTab, setActiveTab] = useState<'paymentHistory' | 'appearance' | 'security' | 'notifications' | 'institution' | 'feedback'>(
     initialTab as any
   );
 
@@ -72,7 +67,6 @@ export const SettingsPage: React.FC = () => {
     confirm_password: ''
   });
 
-  const [platformInfo, setPlatformInfo] = useState<any>({});
   const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
 
   const fetchPaymentHistory = async () => {
@@ -99,9 +93,6 @@ export const SettingsPage: React.FC = () => {
           const sData = await settingsRes.json();
           if (sData.notification_settings) {
             setNotifications(sData.notification_settings);
-          }
-          if (sData.platform_info) {
-            setPlatformInfo(sData.platform_info);
           }
         }
 
@@ -208,7 +199,7 @@ export const SettingsPage: React.FC = () => {
           <SettingsIcon className="w-6 h-6 text-[#2563EB]" /> Settings & System Options
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Manage system preferences, appearance, security, notifications, and review platform info.
+          Manage system preferences, appearance, security and notifications.
         </p>
       </div>
 
@@ -269,14 +260,16 @@ export const SettingsPage: React.FC = () => {
           <Bell className="w-4 h-4" /> Notifications
         </button>
 
-        <button
-          onClick={() => setActiveTab('platform')}
-          className={`px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'platform' ? 'bg-white dark:bg-slate-800 text-[#2563EB] dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          <Info className="w-4 h-4" /> Platform Info
-        </button>
+        {isSso && (
+          <button
+            onClick={() => setActiveTab('institution')}
+            className={`px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'institution' ? 'bg-white dark:bg-slate-800 text-[#2563EB] dark:text-white shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <Info className="w-4 h-4" /> Institution
+          </button>
+        )}
       </div>
 
       {/* TAB CONTENT */}
@@ -345,7 +338,7 @@ export const SettingsPage: React.FC = () => {
       {activeTab === 'appearance' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-xs transition-colors">
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-3">
-            Appearance & Theme Selection (Persisted in PostgreSQL)
+            Appearance & Theme Selection
           </h2>
 
           <div className="space-y-4">
@@ -557,83 +550,24 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 5: PLATFORM INFORMATION */}
-      {activeTab === 'platform' && (
+      {/* TAB 5: INSTITUTION (institution accounts only) */}
+      {isSso && activeTab === 'institution' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-xs transition-colors">
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800 pb-3">
-            Platform Environment Information (Read-Only)
+            Institution
           </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5 text-[#2563EB]" /> CyberRange Release
-              </span>
-              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-1 block">
-                {platformInfo.version || 'CyberRange v1.0.0'}
-              </span>
+          <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900">
+            <span className="text-blue-500 font-extrabold text-[10px] uppercase block">
+              Institution Workspace Info
+            </span>
+            <div className="mt-2 space-y-1 text-xs">
+              <p className="text-slate-800 dark:text-slate-200">
+                <strong className="font-bold text-slate-400">Institution:</strong> {user?.email ? user.email.split('@')[1].toUpperCase() : 'College'}
+              </p>
+              <p className="text-slate-800 dark:text-slate-200">
+                <strong className="font-bold text-slate-400">Account Type:</strong> Academic Account (SSO Managed)
+              </p>
             </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <Cpu className="w-3.5 h-3.5 text-indigo-500" /> Frontend Architecture
-              </span>
-              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-1 block">
-                {platformInfo.frontend || 'React 18 + TS + Vite'}
-              </span>
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <Terminal className="w-3.5 h-3.5 text-emerald-500" /> Backend Engine
-              </span>
-              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-1 block">
-                {platformInfo.backend || 'FastAPI (Python 3.11)'}
-              </span>
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <Database className="w-3.5 h-3.5 text-purple-500" /> Database Cluster
-              </span>
-              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-1 block">
-                {platformInfo.database || 'AWS RDS PostgreSQL'}
-              </span>
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-500" /> Environment Mode
-              </span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-1 block">
-                {platformInfo.environment || 'Production'}
-              </span>
-            </div>
-
-            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase block flex items-center gap-1">
-                <Globe className="w-3.5 h-3.5 text-amber-500" /> Container Orchestration
-              </span>
-              <span className="font-bold text-slate-800 dark:text-slate-100 text-sm mt-1 block">
-                {platformInfo.docker || 'Docker Active'}
-              </span>
-            </div>
-
-            {isSso && (
-              <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900 col-span-1 sm:col-span-2 lg:col-span-3">
-                <span className="text-blue-500 font-extrabold text-[10px] uppercase block">
-                  Institution Workspace Info
-                </span>
-                <div className="mt-2 space-y-1 text-xs">
-                  <p className="text-slate-800 dark:text-slate-200">
-                    <strong className="font-bold text-slate-400">Institution:</strong> {user?.email ? user.email.split('@')[1].toUpperCase() : 'College'}
-                  </p>
-                  <p className="text-slate-800 dark:text-slate-200">
-                    <strong className="font-bold text-slate-400">Account Type:</strong> Academic Account (SSO Managed)
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
