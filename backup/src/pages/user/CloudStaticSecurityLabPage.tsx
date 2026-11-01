@@ -161,6 +161,10 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
           : `${payload.finding_count} finding${payload.finding_count === 1 ? '' : 's'} detected. Read the impact, update the configuration and scan again.`);
       }
     } catch (err) {
+      // Do not leave findings from an earlier scan visible after a syntax error.
+      setFindings([]);
+      setRequirements([]);
+      setHasScanned(false);
       setError(err instanceof Error ? err.message : 'The security check could not be completed.');
     } finally {
       setWorking(false);
@@ -295,6 +299,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                   {resetArmed && <button onClick={() => setResetArmed(false)} className="rounded-lg px-3 py-2 text-sm text-slate-300 underline underline-offset-4">Cancel</button>}
                 </div>
                 <p className="mt-3 text-xs text-slate-400">Scan previews security findings and resource-integrity requirements without awarding points. Submission awards completion points only when both pass. This is not a production security audit.</p>
+                {error && <p role="alert" className="mt-4 rounded-lg border border-rose-800 bg-rose-950/50 p-3 text-sm text-rose-200">{error}</p>}
                 {result && <p role="status" className="mt-4 rounded-lg bg-slate-950 p-3 text-sm text-slate-200">{result}</p>}
                 {isCompleted && <button className="mt-4 text-sm font-semibold text-sky-300 underline underline-offset-4" onClick={() => setStage('review')}>Review what you learned →</button>}
               </section>
@@ -348,7 +353,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
             <p className="mt-5 text-xs text-slate-400">To earn module points, return to Investigate & fix and submit a valid remediation.</p>
             <button onClick={() => setStage('practice')} className="mt-3 text-sm font-medium text-sky-300 underline underline-offset-4">Return to configuration →</button>
           </section>}
-          {error && <p role="alert" className="mt-5 rounded-lg border border-rose-800 bg-rose-950/50 p-4 text-sm text-rose-200">{error}</p>}
+          {error && stage !== 'practice' && <p role="alert" className="mt-5 rounded-lg border border-rose-800 bg-rose-950/50 p-4 text-sm text-rose-200">{error}</p>}
         </>}
       </div>
     </main>
