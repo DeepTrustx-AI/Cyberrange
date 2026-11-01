@@ -25,3 +25,12 @@ export const getRoleDisplayName = (role?: string | null): string => {
   const normalizedKey = cleanRole.toUpperCase().replace(/\s+/g, '_');
   return ROLE_DISPLAY_MAP[normalizedKey] || cleanRole;
 };
+
+// Where each kind of account starts after signing in: the system admin's portal, the institution
+// portal, or the student area.
+export const homePathFor = (role?: string | null): string => {
+  const normalizedKey = (role || '').trim().toUpperCase();
+  if (normalizedKey === 'SYSTEM_ADMIN' || normalizedKey === 'SUPER_ADMIN') return '/system';
+  if (normalizedKey === 'ADMIN') return '/admin/dashboard';
+  return '/dashboard';
+};

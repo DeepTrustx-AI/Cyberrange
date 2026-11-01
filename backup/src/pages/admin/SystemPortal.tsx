@@ -2,6 +2,7 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../context';
 import {
    ShieldCheck,
    Key,
@@ -53,8 +54,12 @@ const SEVERITY_COLORS: Record<string, string> = {
   LOW: '#94a3b8',        // slate-400
 };
 
+const isSystemAdmin = (user: { role?: string } | null) => ['SYSTEM_ADMIN', 'SUPER_ADMIN'].includes((user?.role || '').toUpperCase());
+
 export const SystemPortal: React.FC = () => {
   const navigate = useNavigate();
+  // A system admin already signed in (the sign-in pages send them here) does not sign in again.
+  const signedInAsSystemAdmin = isSystemAdmin(useAuth().user);
 
   // Portal Security State
   const [step, setStep] = useState<'key' | 'login' | 'dashboard'>('key');
@@ -160,22 +165,10 @@ export const SystemPortal: React.FC = () => {
 
   // Check existing session token on mount
   useEffect(() => {
-    const isKeyVerified = sessionStorage.getItem('system_key_verified') === 'true';
-    const token = localStorage.getItem('token');
-    const storedUserStr = localStorage.getItem('user');
-
-    if (isKeyVerified) {
-      setStep('login');
-      if (token && storedUserStr) {
-        try {
-          const u = JSON.parse(storedUserStr);
-          if (['SYSTEM_ADMIN', 'SUPER_ADMIN'].includes((u.role || '').toUpperCase())) {
-            setStep('dashboard');
-          }
-        } catch (e) {}
-      }
+    if (sessionStorage.getItem('system_key_verified') === 'true') {
+      setStep(signedInAsSystemAdmin ? 'dashboard' : 'login');
     }
-  }, []);
+  }, [signedInAsSystemAdmin]);
 
   // Fetch Dashboard Data
   const fetchDashboard = async () => {
@@ -673,7 +666,7 @@ export const SystemPortal: React.FC = () => {
       const data = await res.json();
       if (res.ok && data.verified) {
         sessionStorage.setItem('system_key_verified', 'true');
-        setStep('login');
+        setStep(signedInAsSystemAdmin ? 'dashboard' : 'login');
       } else {
         setKeyError(data.detail || 'Invalid Security Key');
       }
