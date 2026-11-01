@@ -178,7 +178,7 @@ export const PdfViewerPage: React.FC = () => {
     <div
       ref={containerRef}
       onContextMenu={(e) => e.preventDefault()}
-      className="min-h-screen bg-slate-950 text-slate-150 flex flex-col select-none pdf-viewer-container"
+      className="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none pdf-viewer-container"
     >
       {/* Top Header Control bar */}
       <header className="h-14 border-b border-slate-900 bg-slate-900/60 backdrop-blur-xs flex items-center justify-between px-6 sticky top-0 z-50">
@@ -195,15 +195,15 @@ export const PdfViewerPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setScale((s) => Math.max(0.6, s - 0.1))}
-            className="p-1.5 rounded-lg hover:bg-slate-850 text-slate-400 hover:text-slate-200"
+            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200"
             title="Zoom Out"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-[11px] font-bold text-slate-450">{Math.round(scale * 100)}%</span>
+          <span className="text-[11px] font-bold text-slate-500">{Math.round(scale * 100)}%</span>
           <button
             onClick={() => setScale((s) => Math.min(2.5, s + 0.1))}
-            className="p-1.5 rounded-lg hover:bg-slate-850 text-slate-400 hover:text-slate-200"
+            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200"
             title="Zoom In"
           >
             <ZoomIn className="w-4 h-4" />
@@ -223,7 +223,7 @@ export const PdfViewerPage: React.FC = () => {
         <button
           onClick={() => setPageNum((p) => Math.max(1, p - 1))}
           disabled={pageNum <= 1}
-          className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-850 text-xs font-bold flex items-center gap-1"
+          className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 text-xs font-bold flex items-center gap-1"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
@@ -234,7 +234,7 @@ export const PdfViewerPage: React.FC = () => {
         <button
           onClick={() => setPageNum((p) => Math.min(numPages, p + 1))}
           disabled={pageNum >= numPages}
-          className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-850 text-xs font-bold flex items-center gap-1"
+          className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 text-xs font-bold flex items-center gap-1"
         >
           Next
           <ChevronRight className="w-4 h-4" />

@@ -90,7 +90,7 @@ export const HintUnlockModal: React.FC<HintUnlockModalProps> = ({
             <button
               onClick={onClose}
               disabled={loading}
-              className="flex-1 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl transition-colors"
+              className="flex-1 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl transition-colors"
             >
               Cancel
             </button>

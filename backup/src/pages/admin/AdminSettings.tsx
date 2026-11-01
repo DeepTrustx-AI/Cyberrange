@@ -120,11 +120,11 @@ export const AdminSettings: React.FC = () => {
           <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 text-left space-y-3 font-semibold text-slate-600 dark:text-slate-400">
             <div className="flex justify-between">
               <span>Email:</span>
-              <span className="text-slate-900 dark:text-slate-250 font-bold">{user?.email || 'admin@cyberrange.io'}</span>
+              <span className="text-slate-900 dark:text-slate-200 font-bold">{user?.email || 'admin@cyberrange.io'}</span>
             </div>
             <div className="flex justify-between">
               <span>Last Login:</span>
-              <span className="text-slate-900 dark:text-slate-250 font-bold">Today</span>
+              <span className="text-slate-900 dark:text-slate-200 font-bold">Today</span>
             </div>
           </div>
         </div>
@@ -186,7 +186,7 @@ export const AdminSettings: React.FC = () => {
                   className={`px-4 py-2 border rounded-xl font-bold uppercase text-[10px] cursor-pointer transition-all ${
                     theme === t
                       ? 'bg-[#0052CC] border-[#0052CC] text-white'
-                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:bg-slate-100'
+                      : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
                   }`}
                 >
                   {t}
@@ -296,9 +296,9 @@ export const AdminSettings: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {loginHistory.map((h, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
-                    <td className="p-3 text-slate-600 dark:text-slate-350">{h.date}</td>
-                    <td className="p-3 text-slate-600 dark:text-slate-350">{h.time}</td>
-                    <td className="p-3 font-semibold text-slate-850 dark:text-slate-200">{h.ip_address}</td>
+                    <td className="p-3 text-slate-600 dark:text-slate-300">{h.date}</td>
+                    <td className="p-3 text-slate-600 dark:text-slate-300">{h.time}</td>
+                    <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">{h.ip_address}</td>
                     <td className="p-3 text-slate-500">{h.browser}</td>
                     <td className="p-3 text-slate-500">{h.device}</td>
                     <td className="p-3 text-center">

@@ -185,20 +185,20 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-[#28A745]" />
-                  <span className="text-emerald-850 font-bold">Import Batch Upload Completed Successfully!</span>
+                  <span className="text-emerald-900 font-bold">Import Batch Upload Completed Successfully!</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="p-4 bg-slate-50 dark:bg-slate-850 border border-slate-150 rounded-2xl">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Checked</span>
                   <span className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1 block">{importSummary.total_processed || 0}</span>
                 </div>
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-150 rounded-2xl">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 rounded-2xl">
                   <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider block">Created</span>
                   <span className="text-xl font-black text-[#28A745] mt-1 block">{importSummary.success_count || 0}</span>
                 </div>
-                <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-150 rounded-2xl">
+                <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 rounded-2xl">
                   <span className="text-[10px] text-rose-600 font-bold uppercase tracking-wider block">Errors</span>
                   <span className="text-xl font-black text-rose-600 mt-1 block">{importSummary.failure_count || 0}</span>
                 </div>
@@ -206,7 +206,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
               {importSummary.errors && importSummary.errors.length > 0 && (
                 <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
-                  <div className="bg-slate-50 dark:bg-slate-850 px-4 py-2.5 border-b border-slate-200 dark:border-slate-850 text-xs font-bold text-slate-700 dark:text-slate-350">
+                  <div className="bg-slate-50 dark:bg-slate-800 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300">
                     Detailed Import Processing Failures ({importSummary.errors.length})
                   </div>
                   <div className="max-h-40 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-xs">

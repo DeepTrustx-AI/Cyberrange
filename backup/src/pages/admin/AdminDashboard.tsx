@@ -173,7 +173,7 @@ export const AdminDashboard: React.FC = () => {
           <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${
             isDbConnected
               ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800'
-              : 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-850'
+              : 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-800'
           }`}>
             <span className={`w-2.5 h-2.5 rounded-full ${isDbConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
             {isDbConnected ? 'Database Connected' : 'Database Offline'}
@@ -273,7 +273,7 @@ export const AdminDashboard: React.FC = () => {
             <h4 className="text-sm font-extrabold text-[#0052CC] dark:text-blue-400 flex items-center gap-2">
               <BookOpen className="w-4 h-4" /> What Professors Can Do
             </h4>
-            <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-350">
+            <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Purchase cybersecurity labs</li>
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Manage students</li>
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0052CC]" /> Create groups</li>
@@ -289,7 +289,7 @@ export const AdminDashboard: React.FC = () => {
             <h4 className="text-sm font-extrabold text-[#28A745] dark:text-emerald-400 flex items-center gap-2">
               <Award className="w-4 h-4" /> What Students Experience
             </h4>
-            <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-350">
+            <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Access assigned labs</li>
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Perform practical exercises</li>
               <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#28A745]" /> Submit flags</li>

@@ -222,7 +222,7 @@ export const CTFDetailPage: React.FC = () => {
             {ctf.status === 'active' && (
               <button
                 onClick={handleStop}
-                className="flex items-center gap-1 bg-rose-500 hover:bg-rose-650 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/25"
+                className="flex items-center gap-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-all shadow-md shadow-rose-500/25"
               >
                 <Square className="w-4 h-4" />
                 Stop CTF

@@ -521,7 +521,7 @@ export const AdminProfilePage: React.FC = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="px-3 py-1.5 bg-blue-600 border border-blue-650 rounded-xl text-[11px] font-bold text-white hover:bg-blue-750 transition-colors inline-flex items-center gap-1"
+                    className="px-3 py-1.5 bg-blue-600 border border-blue-700 rounded-xl text-[11px] font-bold text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-1"
                   >
                     <Save className="w-3.5 h-3.5" />
                     <span>{saving ? 'Saving...' : 'Save'}</span>

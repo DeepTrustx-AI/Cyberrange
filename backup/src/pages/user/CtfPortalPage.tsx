@@ -208,7 +208,7 @@ export const CtfPortalPage: React.FC = () => {
                         {isConcluded && (
                           <button
                             onClick={() => navigate(`/ctf/${event.id}/scoreboard`)}
-                            className="flex items-center gap-1.5 bg-slate-150 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs px-4 py-2.5 rounded-xl transition-colors border border-slate-200 dark:border-slate-700"
+                            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs px-4 py-2.5 rounded-xl transition-colors border border-slate-200 dark:border-slate-700"
                           >
                             Scoreboard
                           </button>
@@ -267,7 +267,7 @@ export const CtfPortalPage: React.FC = () => {
                       <div key={idx} className="flex justify-between items-center text-xs">
                         <span className="text-slate-600 dark:text-slate-400 font-medium">{member}</span>
                         {member.includes('You') && (
-                          <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-150 dark:border-indigo-900/35 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/35 px-1.5 py-0.5 rounded">
                             Operator
                           </span>
                         )}
@@ -287,7 +287,7 @@ export const CtfPortalPage: React.FC = () => {
                       setTeamTab('join');
                       setIsTeamModalOpen(true);
                     }}
-                    className="flex-1 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 py-2 rounded-xl transition-colors"
+                    className="flex-1 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 py-2 rounded-xl transition-colors"
                   >
                     Join Team
                   </button>

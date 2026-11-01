@@ -1449,7 +1449,7 @@ export const ChallengeSession: React.FC = () => {
                     isSolved
                       ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 text-emerald-700 dark:text-emerald-300 cursor-not-allowed'
                       : submissionStatus === 'error'
-                        ? 'border-rose-500 bg-rose-500/10 text-rose-805'
+                        ? 'border-rose-500 bg-rose-500/10 text-rose-800'
                         : 'border-slate-300 dark:border-slate-700 focus:border-indigo-500'
                   }`}
                 />

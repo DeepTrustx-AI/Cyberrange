@@ -281,18 +281,18 @@ export const LabAllocation: React.FC = () => {
     const end = new Date(assign.end_datetime);
 
     if (assign.status === 'Completed') {
-      return { label: 'Completed', color: 'bg-slate-100 text-slate-700 border-slate-350 dark:bg-slate-800 dark:text-slate-300' };
+      return { label: 'Completed', color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300' };
     }
     if (now > end) {
-      return { label: 'Expired', color: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-450' };
+      return { label: 'Expired', color: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400' };
     }
     if (now < start) {
       return { label: 'Scheduled', color: 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40 dark:text-blue-400' };
     }
     if (now >= start && now <= end) {
-      return { label: 'Running', color: 'bg-emerald-50 text-emerald-600 border-emerald-250 dark:bg-emerald-950/40 dark:text-emerald-450' };
+      return { label: 'Running', color: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400' };
     }
-    return { label: 'Completed', color: 'bg-slate-100 text-slate-700 border-slate-350 dark:bg-slate-800 dark:text-slate-300' };
+    return { label: 'Completed', color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300' };
   };
 
   const formatDate = (isoString: string) => {
@@ -634,11 +634,11 @@ export const LabAllocation: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Current Status</span>
-                  <span className="font-bold text-slate-850 dark:text-slate-200">{activeAssignment.status}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-200">{activeAssignment.status}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase block">Assigned By</span>
-                  <span className="font-bold text-slate-850 dark:text-slate-200">{activeAssignment.assigned_by || 'Admin'}</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-200">{activeAssignment.assigned_by || 'Admin'}</span>
                 </div>
               </div>
             </div>
@@ -649,7 +649,7 @@ export const LabAllocation: React.FC = () => {
                   setIsDrawerOpen(false);
                   navigate(`/admin/monitoring?assignment=${activeAssignment.id}`);
                 }}
-                className="w-full py-2.5 bg-blue-650 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <BarChart2 className="w-4 h-4" />
                 View Analytics
@@ -677,26 +677,26 @@ export const LabAllocation: React.FC = () => {
             <div className="p-6 space-y-4">
               <div>
                 <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Current End Time</span>
-                <span className="font-bold text-slate-855 dark:text-slate-200">
+                <span className="font-bold text-slate-900 dark:text-slate-200">
                   {formatDate(activeAssignment.end_datetime).dateStr} {formatDate(activeAssignment.end_datetime).timeStr}
                 </span>
               </div>
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">New End Date</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">New End Date</label>
                 <input
                   type="date"
                   value={extendEndDate}
                   onChange={(e) => setExtendEndDate(e.target.value)}
-                  className="w-full p-2 bg-slate-50 dark:bg-slate-855 border rounded-lg text-slate-855 dark:text-slate-100 focus:outline-none"
+                  className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">New End Time</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">New End Time</label>
                 <input
                   type="time"
                   value={extendEndTime}
                   onChange={(e) => setExtendEndTime(e.target.value)}
-                  className="w-full p-2 bg-slate-50 dark:bg-slate-855 border rounded-lg text-slate-855 dark:text-slate-100 focus:outline-none"
+                  className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
                 />
               </div>
             </div>
@@ -739,19 +739,19 @@ export const LabAllocation: React.FC = () => {
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Completion %</span>
-                      <span className="text-base font-black text-slate-850 dark:text-white">
+                      <span className="text-base font-black text-slate-900 dark:text-white">
                         {analyticsData.completion_percentage}%
                       </span>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Automatic %</span>
-                      <span className="text-base font-black text-slate-850 dark:text-white">
+                      <span className="text-base font-black text-slate-900 dark:text-white">
                         {analyticsData.average_score_percent == null ? '—' : `${analyticsData.average_score_percent}%`}
                       </span>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Time</span>
-                      <span className="text-base font-black text-slate-850 dark:text-white">
+                      <span className="text-base font-black text-slate-900 dark:text-white">
                         {analyticsData.average_time}
                       </span>
                     </div>
@@ -770,7 +770,7 @@ export const LabAllocation: React.FC = () => {
                       </div>
                     </div>
                     <div className="pt-2">
-                      <span className="text-[10px] text-slate-555 font-semibold block">Top Performer</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block">Top Performer</span>
                       <strong className="text-slate-800 dark:text-slate-200">{analyticsData.top_performer}</strong>
                     </div>
                   </div>
@@ -805,11 +805,11 @@ export const LabAllocation: React.FC = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">Select Lab</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Select Lab</label>
                 <select
                   value={formLabId}
                   onChange={(e) => setFormLabId(e.target.value)}
-                  className="w-full p-2 bg-slate-50 dark:bg-slate-805 border rounded-lg font-semibold text-slate-800 dark:text-slate-105 focus:outline-none"
+                  className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
                 >
                   <option value="">-- Select Purchased Lab --</option>
                   {Array.from(new Map((purchasedLabs || []).map(l => [l.lab_id, l])).values()).map(l => (
@@ -820,31 +820,31 @@ export const LabAllocation: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">Start Date</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Start Date</label>
                   <input
                     type="date"
                     value={formStartDate}
                     onChange={(e) => setFormStartDate(e.target.value)}
-                    className="w-full p-2 bg-slate-50 dark:bg-slate-805 border rounded-lg text-slate-850 dark:text-slate-100 focus:outline-none"
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">Start Time</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Start Time</label>
                   <input
                     type="time"
                     value={formStartTime}
                     onChange={(e) => setFormStartTime(e.target.value)}
-                    className="w-full p-2 bg-slate-50 dark:bg-slate-805 border rounded-lg text-slate-850 dark:text-slate-100 focus:outline-none"
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-355 block mb-1">Duration</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Duration</label>
                 <select
                   value={formDuration}
                   onChange={(e) => setFormDuration(Number(e.target.value))}
-                  className="w-full p-2 bg-slate-50 dark:bg-slate-805 border rounded-lg font-semibold text-slate-800 dark:text-slate-105 focus:outline-none"
+                  className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
                 >
                   <option value={30}>30 mins</option>
                   <option value={45}>45 mins</option>

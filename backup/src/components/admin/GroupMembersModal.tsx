@@ -286,12 +286,12 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
 
             {/* Bulk Actions Panel */}
             <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl mb-3 text-xs mt-2">
-              <label className="flex items-center gap-2.5 font-bold text-slate-650 cursor-pointer">
+              <label className="flex items-center gap-2.5 font-bold text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={members.length > 0 && checkedMemberIds.length === members.length}
                   onChange={(e) => handleSelectAllMembersToggle(e.target.checked)}
-                  className="rounded border-slate-355 cursor-pointer"
+                  className="rounded border-slate-300 cursor-pointer"
                 />
                 <span>Select All</span>
               </label>
@@ -327,7 +327,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                       className={`p-3.5 border rounded-2xl flex items-center justify-between gap-4 text-xs transition-colors cursor-grab active:cursor-grabbing hover:shadow-xs hover:border-slate-300 ${
                         isChecked
                           ? 'bg-blue-50/20 border-blue-200'
-                          : 'bg-white border-slate-150 hover:bg-slate-50/30'
+                          : 'bg-white border-slate-200 hover:bg-slate-50/30'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -338,7 +338,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                             if (e.target.checked) setCheckedMemberIds(prev => [...prev, String(m.id)]);
                             else setCheckedMemberIds(prev => prev.filter(id => id !== String(m.id)));
                           }}
-                          className="rounded border-slate-355 cursor-pointer"
+                          className="rounded border-slate-300 cursor-pointer"
                         />
                         <div>
                           <p className="font-extrabold text-slate-900 text-[13px]">{m.fullName || m.email}</p>
@@ -363,13 +363,13 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
             <span>Showing {members.length} of {members.length} {members.length === 1 ? 'student' : 'students'}</span>
 
             <div className="flex items-center gap-1">
-              <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-405 opacity-50">
+              <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 opacity-50">
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-black">
                 1
               </button>
-              <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-405 opacity-50">
+              <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 opacity-50">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -398,7 +398,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-655 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -429,13 +429,13 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               </div>
 
               {/* Bulk select checkbox bar for Available Students */}
-              <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-150 rounded-xl text-xs">
-                <label className="flex items-center gap-2 font-bold text-slate-650 cursor-pointer pl-1">
+              <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                <label className="flex items-center gap-2 font-bold text-slate-700 cursor-pointer pl-1">
                   <input
                     type="checkbox"
                     checked={filteredAvailable.length > 0 && checkedAvailableIds.length === filteredAvailable.length}
                     onChange={(e) => handleSelectAllAvailableToggle(e.target.checked)}
-                    className="rounded border-slate-355 scale-90"
+                    className="rounded border-slate-300 scale-90"
                   />
                   <span>Select All</span>
                 </label>
@@ -456,7 +456,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                         draggable
                         onDragStart={(e) => handleDragStart(e, 'add', String(s.id))}
                         className={`flex items-start gap-2.5 p-2.5 hover:bg-slate-50 rounded-xl cursor-grab active:cursor-grabbing transition-colors ${
-                          isChecked ? 'bg-blue-50/20 border border-blue-150' : ''
+                          isChecked ? 'bg-blue-50/20 border border-blue-200' : ''
                         }`}
                       >
                         <input
@@ -466,7 +466,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                             if (e.target.checked) setCheckedAvailableIds(prev => [...prev, String(s.id)]);
                             else setCheckedAvailableIds(prev => prev.filter(id => id !== String(s.id)));
                           }}
-                          className="rounded border-slate-355 mt-0.5 scale-90"
+                          className="rounded border-slate-300 mt-0.5 scale-90"
                         />
                         <div className="flex-1 overflow-hidden">
                           <p className="font-extrabold text-slate-800 text-[12px] truncate">{s.fullName || s.email}</p>

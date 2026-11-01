@@ -173,7 +173,7 @@ export const CTFAuditPage: React.FC = () => {
                   <button
                     disabled={page === 1}
                     onClick={() => setPage(page - 1)}
-                    className="flex items-center gap-1 font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-colors"
+                    className="flex items-center gap-1 font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Prev
@@ -181,7 +181,7 @@ export const CTFAuditPage: React.FC = () => {
                   <button
                     disabled={page === totalPages}
                     onClick={() => setPage(page + 1)}
-                    className="flex items-center gap-1 font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-colors"
+                    className="flex items-center gap-1 font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 px-3.5 py-1.5 rounded-lg disabled:opacity-40 transition-colors"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
