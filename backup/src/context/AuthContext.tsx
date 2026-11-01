@@ -146,6 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (response.status === 401 && url.includes('/auth/me')) {
+      const hadSession = tokenRef.current !== null;
       localStorage.removeItem('token');
       document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
       tokenRef.current = null;
@@ -153,17 +154,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setAuthorization(null);
 
+      // Pages anyone may open without signing in; they match the open routes in App.tsx.
       const publicPaths = [
         '/login', '/register', '/forgot-password', '/reset-password',
         '/admin/login', '/admin/register', '/admin/forgot-password', '/admin/reset-password',
         '/adminform', '/admin-login', '/system',
+        '/certificate/verify', '/verify/', '/help', '/error', '/maintenance', '/unauthorized',
       ];
       const isPublicPath = publicPaths.some((path) =>
         window.location.pathname.toLowerCase().startsWith(path)
       );
       if (!isPublicPath && window.location.pathname !== '/') {
-        // Let the sign-in page say why the student landed there.
-        try { sessionStorage.setItem('sessionEndedAt', String(Date.now())); } catch { /* storage blocked */ }
+        // Only a session that really ended gets the sign-in page's explanation.
+        if (hadSession) {
+          try { sessionStorage.setItem('sessionEndedAt', String(Date.now())); } catch { /* storage blocked */ }
+        }
         window.location.href = '/login';
       }
     }
