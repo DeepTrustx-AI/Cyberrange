@@ -42,6 +42,22 @@ function errorMessage(payload: unknown, fallback: string) {
   return fallback;
 }
 
+function shuffleKnowledgeOptions(lesson: Learning): Learning {
+  // Shuffle once per workspace load; preserve stable answer IDs for grading.
+  // Answer position must not be a reusable hint across attempts.
+  return {
+    ...lesson,
+    questions: lesson.questions.map((question) => {
+      const options = [...question.options];
+      for (let index = options.length - 1; index > 0; index--) {
+        const pick = Math.floor(Math.random() * (index + 1));
+        [options[index], options[pick]] = [options[pick], options[index]];
+      }
+      return { ...question, options };
+    }),
+  };
+}
+
 export const CloudStaticSecurityLabPage: React.FC = () => {
   const navigate = useNavigate();
   const { apiFetch } = useAuth();
@@ -92,7 +108,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
       }
       setFiles(payload.files);
       setStarterFiles(payload.files);
-      setLearning(payload.learning);
+      setLearning(shuffleKnowledgeOptions(payload.learning as Learning));
     } catch (err) {
       setFiles([]);
       setStarterFiles([]);
@@ -108,6 +124,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
   const updateFile = (filename: string, content: string) => {
     setFiles((current) => current.map((file) => file.filename === filename ? { ...file, content } : file));
     setHasScanned(false);
+    setFindings([]);
     setRequirements([]);
     setResult('');
     setIsCompleted(false);
@@ -126,16 +143,21 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
       const payload = await response.json();
       if (!response.ok) throw new Error(errorMessage(payload, 'The assessment could not be completed.'));
       setFindings(payload.findings ?? []);
+      // A scan now returns the same structural checks as a submission,
+      // without awarding points. Learners see missing controls early.
+      setRequirements(payload.requirements ?? []);
       setHasScanned(true);
       if (submit) {
-        setRequirements(payload.requirements ?? []);
         setIsCompleted(Boolean(payload.passed));
         setResult(payload.passed
           ? `Module completed. ${payload.completion?.points_awarded ?? 0} points awarded${payload.completion?.already_completed ? ' (already completed)' : ''}.`
           : payload.message || 'Your submission still needs remediation.');
       } else {
+        const missing = (payload.requirements ?? []).filter((item: Requirement) => !item.met).length;
         setResult(payload.finding_count === 0
-          ? 'No taught-pattern findings detected. Submit to verify the required resources are preserved.'
+          ? missing > 0
+            ? `No taught-pattern findings, but ${missing} required control${missing === 1 ? '' : 's'} still need attention. Review Submission integrity before submitting.`
+            : 'No taught-pattern findings or missing structural controls detected. You can submit your remediation.'
           : `${payload.finding_count} finding${payload.finding_count === 1 ? '' : 's'} detected. Read the impact, update the configuration and scan again.`);
       }
     } catch (err) {
@@ -260,8 +282,11 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                 <p className="mt-2 text-sm text-slate-300">Read the starter file before scanning. Change only the text below; nothing is deployed or executed.</p>
                 {files.map((file) => <label key={file.filename} className="mt-5 block">
                   <span className="mb-2 block font-mono text-xs text-sky-300">{file.filename}</span>
-                  <textarea value={file.content} onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => updateFile(file.filename, event.target.value)} spellCheck={false}
-                    className="h-80 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-xs leading-5 text-slate-100 outline-none focus:border-sky-400" />
+                  {file.filename.endsWith('.yaml') && <span className="mb-2 block text-xs leading-5 text-slate-400">
+                    YAML uses spaces, not tabs. CloudFormation resources must be siblings directly under <code>Resources</code>; Kubernetes documents are separated with <code>---</code>.
+                  </span>}
+                  <textarea aria-label={`Edit ${file.filename}`} value={file.content} onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => updateFile(file.filename, event.target.value)} spellCheck={false} tabIndex={0}
+                    className="h-80 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-base leading-6 text-slate-100 outline-none focus:border-sky-400 md:text-sm" />
                 </label>)}
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button disabled={working || !files.length} onClick={() => void runCheck(false)} className="rounded-lg border border-sky-500 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-950 disabled:opacity-50">{working ? 'Checking…' : 'Scan configuration'}</button>
@@ -269,7 +294,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                   <button disabled={working} onClick={() => resetArmed ? resetFiles() : setResetArmed(true)} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50">{resetArmed ? 'Confirm restore (discard edits)' : 'Restore starter files'}</button>
                   {resetArmed && <button onClick={() => setResetArmed(false)} className="rounded-lg px-3 py-2 text-sm text-slate-300 underline underline-offset-4">Cancel</button>}
                 </div>
-                <p className="mt-3 text-xs text-slate-400">Scan identifies taught patterns; submission also checks required resources and awards completion points. Neither is a production security audit.</p>
+                <p className="mt-3 text-xs text-slate-400">Scan previews security findings and resource-integrity requirements without awarding points. Submission awards completion points only when both pass. This is not a production security audit.</p>
                 {result && <p role="status" className="mt-4 rounded-lg bg-slate-950 p-3 text-sm text-slate-200">{result}</p>}
                 {isCompleted && <button className="mt-4 text-sm font-semibold text-sky-300 underline underline-offset-4" onClick={() => setStage('review')}>Review what you learned →</button>}
               </section>
@@ -279,7 +304,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                 <h2 className="font-semibold">Security findings</h2>
                 <p className="mt-1 text-xs leading-5 text-slate-400">Investigate the risk before making changes. Rescan after each edit.</p>
                 {!hasScanned ? <p className="mt-5 text-sm text-slate-400">No scan yet. Inspect the files, then run your first assessment.</p>
-                  : findings.length === 0 ? <p className="mt-5 text-sm text-emerald-300">No taught-pattern findings detected. Submit to check resource integrity.</p>
+                  : findings.length === 0 ? <p className="mt-5 text-sm text-emerald-300">No taught-pattern findings detected. Check submission integrity below before submitting.</p>
                     : <ul className="mt-4 space-y-3">{findings.map((finding, index) => <li key={`${finding.id}-${index}`} className="rounded-lg border border-slate-700 bg-slate-950 p-3">
                       <span className="text-xs font-bold text-amber-300">{finding.severity}</span>
                       <h3 className="mt-1 text-sm font-semibold">{finding.title}</h3>
@@ -288,10 +313,14 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                       {finding.investigative_hint && <details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-medium text-sky-300">Investigation hint</summary><p className="mt-2">{finding.investigative_hint}</p></details>}
                     </li>)}</ul>}
               </section>
-              {requirements.length > 0 && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+              {requirements.length > 0 && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5" aria-live="polite">
                 <h2 className="font-semibold">Submission integrity</h2>
-                <p className="mt-1 text-xs text-slate-400">{unmetRequirements.length ? `${unmetRequirements.length} requirements still need attention.` : 'All required structural checks passed.'}</p>
-                {unmetRequirements.length > 0 && <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-amber-200">{unmetRequirements.map((item) => <li key={item.id}>{item.title}</li>)}</ul>}
+                <p className="mt-1 text-xs text-slate-400">{requirements.length - unmetRequirements.length} of {requirements.length} required controls verified during the last scan.</p>
+                {unmetRequirements.length > 0 ? <ul className="mt-3 list-disc space-y-2 pl-4 text-xs leading-5 text-amber-200">{unmetRequirements.map((item) => <li key={item.id}>{item.title}</li>)}</ul>
+                : <p className="mt-3 text-sm text-emerald-300">All required controls detected.</p>}
+                <details className="mt-3 text-xs text-slate-300"><summary className="cursor-pointer text-sky-300">Review every integrity check</summary>
+                  <ul className="mt-2 space-y-2">{requirements.map((item) => <li key={item.id} className={item.met ? 'text-emerald-300' : 'text-amber-200'}>{item.met ? 'Passed' : 'Needs attention'} — {item.title}</li>)}</ul>
+                </details>
               </section>}
             </aside>
           </div>}
@@ -308,7 +337,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                   <span>{option.text}</span>
                 </label>)}</div>
                 {feedback && <p className={`mt-3 text-sm leading-6 ${feedback.correct ? 'text-emerald-300' : 'text-amber-200'}`}>
-                  {feedback.correct ? 'Correct.' : `Review this: correct answer is option ${feedback.correct_option_id.toUpperCase()}.`} {feedback.explanation}
+                  {feedback.correct ? 'Correct.' : `Review this: ${question.options.find((option) => option.id === feedback.correct_option_id)?.text ?? 'Revisit the question.'}`} {feedback.explanation}
                 </p>}
               </fieldset>;
             })}</div>
