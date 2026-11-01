@@ -73,6 +73,7 @@ const CommandLineLabPage    = lazy(() => import('./pages/user/CommandLineLabPage
 const CryptographyLabPage   = lazy(() => import('./pages/user/CryptographyLabPage').then(m => ({ default: m.CryptographyLabPage })));
 const CompliancePortalLabPage = lazy(() => import('./pages/user/CompliancePortalLabPage').then(m => ({ default: m.CompliancePortalLabPage })));
 const CloudSecurityLabPage  = lazy(() => import('./pages/user/CloudSecurityLabPage').then(m => ({ default: m.CloudSecurityLabPage })));
+const CloudStaticSecurityLabPage = lazy(() => import('./pages/user/CloudStaticSecurityLabPage').then(m => ({ default: m.CloudStaticSecurityLabPage })));
 const PuzzleLabPage         = lazy(() => import('./pages/user/PuzzleLabPage').then(m => ({ default: m.PuzzleLabPage })));
 const TechCorpLabSession    = lazy(() => import('./pages/user/TechCorpLabSession').then(m => ({ default: m.TechCorpLabSession })));
 const ProgressTracking     = lazy(() => import('./pages/user/ProgressTracking').then(m => ({ default: m.ProgressTracking })));
@@ -338,6 +339,24 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
                     <CloudSecurityLabPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Static IaC and Kubernetes configuration remediation lab */}
+              <Route
+                path="/labs/cloud-static-security-lab"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <CloudStaticSecurityLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/labs/cloud-static-security-lab/session/:sessionId"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <CloudStaticSecurityLabPage />
                   </ProtectedRoute>
                 }
               />
