@@ -1,12 +1,12 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { labPath } from '../../utils/labRoutes';
 import { useAuth } from '../../context';
 import {
   Clock,
   ArrowRight,
   Shield,
-  Terminal,
   Layers,
   BookOpen,
   Calendar,
@@ -30,21 +30,6 @@ export const MyLabsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Deploy State
-  const [selectedDetailLab, setSelectedDetailLab] = useState<any>(null);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
-  const [activeStep, setActiveStep] = useState(0);
-
-  const steps = [
-    'Provisioning isolated sandbox cluster...',
-    'Mounting secure range network bridges...',
-    'Attaching scoring engine sensors...',
-    'Spawning victim targets and OT simulations...',
-    'Injecting objective validation keys...',
-    'Finalizing container deployment checks...'
-  ];
-
   const fetchPurchasedRentals = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -66,63 +51,6 @@ export const MyLabsPage: React.FC = () => {
   useEffect(() => {
     fetchPurchasedRentals();
   }, []);
-
-  const handleDeployLab = (lab: any) => {
-    setSelectedDetailLab(lab);
-    setIsDeploying(true);
-    setTerminalLogs([]);
-    setActiveStep(0);
-
-    let stepIndex = 0;
-    const addLog = () => {
-      if (stepIndex < steps.length) {
-        setTerminalLogs((prev) => [
-          ...prev,
-          `[${new Date().toLocaleTimeString()}] ${steps[stepIndex]}`
-        ]);
-        setActiveStep(stepIndex + 1);
-        stepIndex++;
-        setTimeout(addLog, 1200);
-      } else {
-        setTerminalLogs((prev) => [
-          ...prev,
-          `[${new Date().toLocaleTimeString()}] SUCCESS: Range environment is healthy.`,
-          `[${new Date().toLocaleTimeString()}] Redirecting user to virtual terminal console...`
-        ]);
-        setTimeout(() => {
-          setIsDeploying(false);
-          setSelectedDetailLab(null);
-
-          const targetLabId = lab.lab_id;
-          const normalizedLabId = targetLabId.toLowerCase().replace(/[\s_-]+/g, '');
-          const isSysadmin = targetLabId === 'linux-sysadmin-lab' || normalizedLabId === 'linuxsysadminlab';
-          const isCll = targetLabId === 'command-line-lab' || normalizedLabId === 'commandlinelab';
-          const isCrypto = targetLabId === 'cryptography-lab' || normalizedLabId === 'cryptographylab';
-          const isCloud = targetLabId === 'cloud-security-lab' || targetLabId === 'cloudcorp-aws-lab' || normalizedLabId.includes('cloud');
-          if (targetLabId === 'linux-security-workshop') {
-            navigate('/labs/linux-security-workshop');
-          } else if (targetLabId === 'race-conditions-lab') {
-            navigate('/labs/race-conditions-lab');
-          } else if (isSysadmin) {
-            navigate('/labs/linux-sysadmin');
-          } else if (isCll) {
-            navigate('/labs/command-line-lab/session/sess-cll-01');
-          } else if (isCrypto) {
-            navigate('/labs/cryptography-lab/session/sess-crypto-01');
-          } else if (targetLabId === 'compliance-portal' || normalizedLabId === 'complianceportal') {
-            navigate('/labs/compliance-portal/session/sess-compliance-01');
-          } else if (isCloud) {
-            navigate('/labs/cloud-security-lab/session/sess-cloud-01');
-          } else if (targetLabId === 'lab1-recon' || targetLabId === 'recon-lab') {
-            navigate('/labs/lab1-recon/session/sess-recon-01');
-          } else {
-            navigate(`/labs/${targetLabId}/session/sess-123`);
-          }
-        }, 1500);
-      }
-    };
-    setTimeout(addLog, 200);
-  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -209,7 +137,7 @@ export const MyLabsPage: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Workspace</span>
                   <button
-                    onClick={() => handleDeployLab(lab)}
+                    onClick={() => navigate(labPath(lab.lab_id))}
                     disabled={!hasHours}
                     className={`px-4 py-2 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5 shadow-xs ${
                       hasHours
@@ -227,28 +155,6 @@ export const MyLabsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Terminal Log Modal popup */}
-      {selectedDetailLab && isDeploying && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-slate-950 font-mono text-xs text-emerald-400 p-6 h-[380px] flex flex-col justify-between max-w-lg w-full rounded-2xl shadow-2xl border border-slate-800">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-slate-400 border-b border-slate-800 pb-2 mb-3">
-                <Terminal className="w-4 h-4 text-emerald-500" />
-                <span>Provisioning range environment</span>
-              </div>
-              <div className="space-y-1 overflow-y-auto max-h-[260px] scrollbar-thin">
-                {terminalLogs.map((log, idx) => (
-                  <div key={idx}>{log}</div>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-slate-500 pt-2 border-t border-slate-900">
-              <span>Deploying task: {selectedDetailLab.lab_name}</span>
-              <span>{Math.round((activeStep / steps.length) * 100)}%</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -311,9 +311,9 @@ export const ProgressTracking: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  {badge.unlocked ? (
+                  {badge.unlocked && (badge.display_certificate_id || badge.certificate_id) ? (
                     <a
-                      href={`/certificate/verify/${badge.display_certificate_id || badge.certificate_id || (achievements && achievements[0]?.display_certificate_id) || "CYR-2026-000002"}`}
+                      href={`/certificate/verify/${badge.display_certificate_id || badge.certificate_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="shrink-0 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800"
@@ -321,6 +321,8 @@ export const ProgressTracking: React.FC = () => {
                       <ShieldCheck className="w-3.5 h-3.5" />
                       <span>Verify</span>
                     </a>
+                  ) : badge.unlocked ? (
+                    <span className="shrink-0 text-xs font-bold text-emerald-700 dark:text-emerald-400 px-3 py-1.5">Earned</span>
                   ) : (
                     <span className="shrink-0 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-1 rounded-lg border border-rose-200 dark:border-rose-800">
                       you need points to unlock the badge

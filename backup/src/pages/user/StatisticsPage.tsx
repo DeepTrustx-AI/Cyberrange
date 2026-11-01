@@ -494,8 +494,10 @@ export const StatisticsPage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    {badge.unlocked
-                      ? <a href={`/certificate/verify/${badge.display_certificate_id || badge.certificate_id || userCerts[0]?.display_certificate_id || "CYR-2026-000002"}`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-emerald-600 hover:underline inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex-shrink-0"><ShieldCheck className="w-3.5 h-3.5" />Verify</a>
+                    {badge.unlocked && (badge.display_certificate_id || badge.certificate_id)
+                      ? <a href={`/certificate/verify/${badge.display_certificate_id || badge.certificate_id}`} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-emerald-600 hover:underline inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex-shrink-0"><ShieldCheck className="w-3.5 h-3.5" />Verify</a>
+                      : badge.unlocked
+                      ? <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 px-2 py-1 flex-shrink-0">Earned</span>
                       : <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0">🔒 Locked</span>}
                   </div>
                 )) : <div className="py-8 text-center text-xs text-slate-400 col-span-2">Complete labs to earn badges.</div>}

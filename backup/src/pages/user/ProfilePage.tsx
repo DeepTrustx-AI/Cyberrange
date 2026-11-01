@@ -450,7 +450,7 @@ export const ProfilePage: React.FC = () => {
       });
 
       if (res.ok) {
-        setMessage({ type: 'success', text: 'Profile updated successfully in AWS RDS PostgreSQL!' });
+        setMessage({ type: 'success', text: 'Profile updated.' });
         await fetchProfileData();
         await refreshUser();
         setEditing(false);

@@ -6,7 +6,7 @@ import { indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { python } from '@codemirror/lang-python';
-import { Loader2, Save, Wand2, X } from 'lucide-react';
+import { Loader2, Save, Wand2 } from 'lucide-react';
 import { tidyIndentation } from './terminalEditor';
 
 interface CodeEditorModalProps {
@@ -111,14 +111,15 @@ const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true"
+    // Sits under the terminal's header bar, whose button switches back, so the switch never moves.
+    <div className="absolute inset-x-0 bottom-0 top-10 z-20 flex flex-col" role="dialog"
          aria-label={`Code editor: ${filename}`}>
-      <div className="flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#0B0F17] shadow-2xl">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#0B0F17]">
         <div className="flex items-center justify-between gap-3 border-b border-slate-800 bg-[#111827] px-4 py-2.5">
           <div className="min-w-0">
-            <div className="truncate font-mono text-sm font-bold text-slate-200">{filename}</div>
+            <div className="truncate font-mono text-sm font-bold text-slate-200">~/{filename}</div>
             <div className="text-[11px] text-slate-500">
-              Python · 4 spaces<span className="hidden sm:inline"> · Tab indents, Shift+Tab outdents · Ctrl+S saves · Esc closes</span>
+              Save writes this file, the one the brief asks for · Python · 4 spaces<span className="hidden sm:inline"> · Tab indents, Shift+Tab outdents · Ctrl+S saves · Esc closes</span>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -132,11 +133,6 @@ const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               <span className="hidden sm:inline">{saving ? 'Saving…' : 'Save to workspace'}</span>
             </button>
-            <button type="button" onClick={onClose}
-                    className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white" title="Close (your draft is kept)"
-                    aria-label="Close editor (your draft is kept)">
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
         {note && <div className="border-b border-amber-900/50 bg-amber-950/30 px-4 py-1.5 text-xs text-amber-300">{note}</div>}
@@ -144,7 +140,7 @@ const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
         <div className="flex items-center justify-between border-t border-slate-800 bg-[#111827] px-4 py-1.5 text-[11px] text-slate-500">
           <span>Ln {cursor.line}, Col {cursor.col}</span>
           <span role="status" className={saveMessage?.startsWith('Saved') ? 'text-emerald-400' : 'text-amber-300'}>{saveMessage ?? ''}</span>
-          <span className="hidden md:inline">When you are done, run <code className="font-mono text-slate-300">submit {filename.split('/').pop()}</code> in the terminal.</span>
+          <span className="hidden md:inline">When you are done, run <code className="font-mono text-slate-300">submit ~/{filename}</code> in the terminal.</span>
         </div>
       </div>
     </div>

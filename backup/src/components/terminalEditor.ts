@@ -1,9 +1,11 @@
-const EDITOR_COMMAND = /^(?:sudo\s+)?(?:nano|vim|vi|nvim)\s+(?:-\S+\s+)*([\w./-]+\.py)\s*$/;
+const EDITOR_COMMAND = /^(?:sudo\s+)?(?:nano|vim|vi|nvim)\s+(?:-\S+\s+)*(\S+)\s*$/;
+const HOME_PREFIX = /^(?:~\/|\$HOME\/|\/home\/student\/|\.\/)/;
 const SAFE_NAME = /^[\w./-]{1,200}$/;
 
-export function editorCommandFile(command: string): string | null {
+// The editor handles one file, the one the challenge grades, kept in the home folder.
+export function opensFile(command: string, file: string): boolean {
   const match = command.trim().match(EDITOR_COMMAND);
-  return match && isSafeFilename(match[1]) ? match[1] : null;
+  return match !== null && match[1].replace(HOME_PREFIX, '') === file;
 }
 
 export function isSafeFilename(name: string): boolean {
@@ -27,7 +29,7 @@ function base64ToUtf8(data: string): string {
 }
 
 export function loadCommand(file: string): string {
-  return ` printf '__CR_B64__%s__CR_END__\\n' "$(base64 -w0 -- '${file}' 2>/dev/null)"\r`;
+  return ` printf '__CR_B64__%s__CR_END__\\n' "$(base64 -w0 -- "$HOME/${file}" 2>/dev/null)"\r`;
 }
 
 export function parseLoadOutput(output: string): string | null {
@@ -42,7 +44,7 @@ export function saveCommands(file: string, text: string, tag: string): string[] 
   for (let i = 0; i < data.length; i += 2000) {
     lines.push(` printf '%s' '${data.slice(i, i + 2000)}' >> ${tmp}\r`);
   }
-  lines.push(` base64 -d ${tmp} > '${file}' && rm -f ${tmp} && printf '__CR_%s__\\n' SAVED || printf '__CR_%s__\\n' FAILED\r`);
+  lines.push(` base64 -d ${tmp} > "$HOME/${file}" && rm -f ${tmp} && printf '__CR_%s__\\n' SAVED || printf '__CR_%s__\\n' FAILED\r`);
   return lines;
 }
 
