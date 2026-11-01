@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, AlertTriangle, Key } from 'lucide-react';
 import { useAuth } from '../../context';
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { homePathFor } from '../../utils/roleMapping';
 
 export const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  // Sent here from the student page with an institution account: keep the email typed there.
+  const arrival = useLocation().state as { email?: string; fromStudentPage?: boolean } | null;
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(arrival?.email ?? '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +42,7 @@ export const AdminLoginPage: React.FC = () => {
         setOtpRequired(true);
       } else {
         if (res?.is_first_login) sessionStorage.setItem('cr_show_tour', '1');
-        navigate('/admin/dashboard');
+        navigate(homePathFor(res?.role));
       }
     } catch (err: any) {
       setIsLoading(false);
@@ -73,7 +76,9 @@ export const AdminLoginPage: React.FC = () => {
               CyberRange Academic Admin Portal
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Manage students, labs, assignments, reports and institutional cybersecurity training.
+              {arrival?.fromStudentPage
+                ? 'This is an institution account, so it signs in here.'
+                : 'Manage students, labs, assignments, reports and institutional cybersecurity training.'}
             </p>
           </div>
         </div>
@@ -200,9 +205,7 @@ export const AdminLoginPage: React.FC = () => {
               <GoogleSignInButton
                 portal="admin"
                 buttonText="Continue with Institutional Google"
-                onSuccess={(data) => {
-                  navigate('/admin/dashboard');
-                }}
+                onSuccess={(data) => navigate(homePathFor(data.role))}
                 onError={(err) => setErrorMsg(err)}
               />
             </form>

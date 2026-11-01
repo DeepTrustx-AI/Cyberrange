@@ -290,7 +290,7 @@ export const StudyMaterial: React.FC = () => {
                   {item.pdfUrl ? (
                     <Link
                       to={`/study-material/view/${item.id}`}
-                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 transition-all inline-flex items-center"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all inline-flex items-center"
                       title={`View ${item.title} PDF`}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -298,7 +298,7 @@ export const StudyMaterial: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => alert(`PDF version is currently unavailable for ${item.title}.`)}
-                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-350 dark:text-slate-700 cursor-not-allowed"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-300 dark:text-slate-700 cursor-not-allowed"
                       title="PDF version unavailable"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -359,7 +359,7 @@ export const StudyMaterial: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveNote(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-all"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-all"
                 >
                   Close Reader
                 </button>
@@ -487,7 +487,7 @@ export const StudyMaterial: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-300 text-xs font-semibold"
                 >
                   Cancel
                 </button>

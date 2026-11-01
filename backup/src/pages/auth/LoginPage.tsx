@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Lock, Mail, ArrowRight, Eye, EyeOff, Building2 } from 'lucide-react';
 import { useAuth } from '../../context';
 import { GoogleSignInButton } from '../../components/GoogleSignInButton';
+import { homePathFor } from '../../utils/roleMapping';
 
 // How long after a session ends the sign-in page still explains why.
 const SESSION_NOTICE_MS = 15_000;
@@ -39,14 +40,15 @@ export const LoginPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const { role, is_first_login } = await login(email, password, rememberMe, 'student');
+      const { role, status, is_first_login } = await login(email, password, rememberMe, 'student');
       setIsLoading(false);
-      if (is_first_login) sessionStorage.setItem('cr_show_tour', '1');
-      if (role && (role.toLowerCase() === 'admin' || role.toLowerCase() === 'super_admin')) {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
+      // Institution accounts confirm an emailed code, which only their own sign-in page asks for.
+      if (status === 'otp_required') {
+        navigate('/admin/login', { state: { email: email.trim(), fromStudentPage: true } });
+        return;
       }
+      if (is_first_login) sessionStorage.setItem('cr_show_tour', '1');
+      navigate(homePathFor(role));
     } catch (err: any) {
       console.error('[LoginPage] Login error:', err);
       setIsLoading(false);
@@ -221,13 +223,7 @@ export const LoginPage: React.FC = () => {
             <GoogleSignInButton
               portal="student"
               buttonText="Continue with Google"
-              onSuccess={(data) => {
-                if (data.role && (data.role.toLowerCase() === 'admin' || data.role.toLowerCase() === 'super_admin')) {
-                  navigate('/admin/dashboard');
-                } else {
-                  navigate('/dashboard');
-                }
-              }}
+              onSuccess={(data) => navigate(homePathFor(data.role))}
               onError={(err) => setErrorMsg(err)}
             />
           </form>

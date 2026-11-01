@@ -2,6 +2,7 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../context';
 import {
    ShieldCheck,
    Key,
@@ -53,8 +54,12 @@ const SEVERITY_COLORS: Record<string, string> = {
   LOW: '#94a3b8',        // slate-400
 };
 
+const isSystemAdmin = (user: { role?: string } | null) => ['SYSTEM_ADMIN', 'SUPER_ADMIN'].includes((user?.role || '').toUpperCase());
+
 export const SystemPortal: React.FC = () => {
   const navigate = useNavigate();
+  // A system admin already signed in (the sign-in pages send them here) does not sign in again.
+  const signedInAsSystemAdmin = isSystemAdmin(useAuth().user);
 
   // Portal Security State
   const [step, setStep] = useState<'key' | 'login' | 'dashboard'>('key');
@@ -160,22 +165,10 @@ export const SystemPortal: React.FC = () => {
 
   // Check existing session token on mount
   useEffect(() => {
-    const isKeyVerified = sessionStorage.getItem('system_key_verified') === 'true';
-    const token = localStorage.getItem('token');
-    const storedUserStr = localStorage.getItem('user');
-
-    if (isKeyVerified) {
-      setStep('login');
-      if (token && storedUserStr) {
-        try {
-          const u = JSON.parse(storedUserStr);
-          if (['SYSTEM_ADMIN', 'SUPER_ADMIN'].includes((u.role || '').toUpperCase())) {
-            setStep('dashboard');
-          }
-        } catch (e) {}
-      }
+    if (sessionStorage.getItem('system_key_verified') === 'true') {
+      setStep(signedInAsSystemAdmin ? 'dashboard' : 'login');
     }
-  }, []);
+  }, [signedInAsSystemAdmin]);
 
   // Fetch Dashboard Data
   const fetchDashboard = async () => {
@@ -673,7 +666,7 @@ export const SystemPortal: React.FC = () => {
       const data = await res.json();
       if (res.ok && data.verified) {
         sessionStorage.setItem('system_key_verified', 'true');
-        setStep('login');
+        setStep(signedInAsSystemAdmin ? 'dashboard' : 'login');
       } else {
         setKeyError(data.detail || 'Invalid Security Key');
       }
@@ -1559,7 +1552,7 @@ export const SystemPortal: React.FC = () => {
                         <td className="p-4 text-center">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             alert.severity === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
-                            alert.severity === 'HIGH' ? 'bg-orange-100 text-orange-850' : 'bg-yellow-100 text-yellow-800'
+                            alert.severity === 'HIGH' ? 'bg-orange-100 text-orange-900' : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {alert.severity}
                           </span>
@@ -1606,7 +1599,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('catalog')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                      labsTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Labs ({allLabs.filter((l: any) => {
@@ -1620,7 +1613,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('arrivals')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                      labsTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     New Arrivals ({allLabs.filter((l: any) => l.status === 'PENDING_REVIEW' || l.status === 'PENDING').length})
@@ -1629,7 +1622,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('assigned')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                      labsTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Assigned Labs ({allocatedLabs.length})
@@ -1648,7 +1641,7 @@ export const SystemPortal: React.FC = () => {
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="font-extrabold text-slate-900 text-sm">{l.name}</h4>
-                          <span className="text-[10px] font-mono text-purple-650">ID: {l.id}</span>
+                          <span className="text-[10px] font-mono text-purple-700">ID: {l.id}</span>
                         </div>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           {l.status}
@@ -1698,7 +1691,7 @@ export const SystemPortal: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div>
                             <h4 className="font-extrabold text-slate-900 text-sm">{l.name}</h4>
-                            <span className="text-[10px] font-mono text-purple-650">ID: {l.id}</span>
+                            <span className="text-[10px] font-mono text-purple-700">ID: {l.id}</span>
                           </div>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {l.status}
@@ -1799,7 +1792,7 @@ export const SystemPortal: React.FC = () => {
                                   setNewFixedRate(al.fixed_rate ?? al.price_per_hour ?? 0);
                                   setIsEditPriceModalOpen(true);
                                 }}
-                                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg border border-purple-250 cursor-pointer transition-colors"
+                                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg border border-purple-200 cursor-pointer transition-colors"
                               >
                                 Edit
                               </button>
@@ -1809,7 +1802,7 @@ export const SystemPortal: React.FC = () => {
                                   setRemoveTargetType(al.assigned_to || (al.organization_id ? 'admin' : 'student'));
                                   setIsRemoveModalOpen(true);
                                 }}
-                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] rounded-lg border border-rose-250 cursor-pointer transition-colors"
+                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] rounded-lg border border-rose-200 cursor-pointer transition-colors"
                               >
                                 Revoke
                               </button>
@@ -1844,7 +1837,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('catalog')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                    ctfTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   CTF ({ctfEvents.length})
@@ -1853,7 +1846,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('arrivals')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                    ctfTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   New Arrivals ({ctfEvents.filter((c: any) => c.status === 'scheduled').length})
@@ -1862,7 +1855,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('assigned')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-550 hover:text-slate-800'
+                    ctfTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   Assigned ({allocatedCtfs.length})
@@ -1942,7 +1935,7 @@ export const SystemPortal: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div>
                             <h4 className="font-extrabold text-slate-900 text-sm">{c.title}</h4>
-                            <span className="text-[10px] font-mono text-purple-650">ID: {c.id}</span>
+                            <span className="text-[10px] font-mono text-purple-700">ID: {c.id}</span>
                           </div>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                             c.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
@@ -2162,7 +2155,7 @@ export const SystemPortal: React.FC = () => {
                   ) : !dbData?.rows || dbData.rows.length === 0 ? (
                     <tr>
                       <td colSpan={dbData?.columns?.length || 1} className="py-12 text-center text-slate-500 font-sans">
-                        No database records found in table <span className="font-mono text-purple-650">{selectedTable}</span>.
+                        No database records found in table <span className="font-mono text-purple-700">{selectedTable}</span>.
                       </td>
                     </tr>
                   ) : (
@@ -2353,7 +2346,7 @@ export const SystemPortal: React.FC = () => {
                   disabled
                   value={formLabTitle}
                   placeholder="Selected Lab Title"
-                  className="w-full p-2.5 bg-slate-105 border border-slate-200 rounded-xl focus:outline-none text-slate-700 font-bold"
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none text-slate-700 font-bold"
                 />
               </div>
 
@@ -2419,7 +2412,7 @@ export const SystemPortal: React.FC = () => {
                   disabled
                   value={formCtfTitle}
                   placeholder="Selected CTF Title"
-                  className="w-full p-2.5 bg-slate-105 border border-slate-200 rounded-xl focus:outline-none text-slate-700 font-bold"
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none text-slate-700 font-bold"
                 />
               </div>
 

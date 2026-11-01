@@ -157,11 +157,11 @@ export const CTFLeaderboardPage: React.FC = () => {
                       >
                         <td className="px-6 py-4 text-center font-mono text-slate-400 font-bold">
                           {entry.rank === 1 ? (
-                            <span className="inline-flex items-center justify-center bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 w-6 h-6 rounded-full border border-amber-250 font-sans font-bold">
+                            <span className="inline-flex items-center justify-center bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 w-6 h-6 rounded-full border border-amber-200 font-sans font-bold">
                               1
                             </span>
                           ) : entry.rank === 2 ? (
-                            <span className="inline-flex items-center justify-center bg-slate-150 dark:bg-slate-800 text-slate-600 dark:text-slate-400 w-6 h-6 rounded-full border border-slate-250 font-sans font-bold">
+                            <span className="inline-flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 w-6 h-6 rounded-full border border-slate-200 font-sans font-bold">
                               2
                             </span>
                           ) : entry.rank === 3 ? (

@@ -229,7 +229,7 @@ export const CTFListPage: React.FC = () => {
                           {event.status === 'active' && (
                             <button
                               onClick={() => handleStop(event.id)}
-                              className="flex items-center gap-1 font-semibold text-xs bg-rose-500 hover:bg-rose-650 text-white px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                              className="flex items-center gap-1 font-semibold text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg transition-colors shadow-sm"
                             >
                               <Square className="w-3.5 h-3.5" />
                               Stop
@@ -245,7 +245,7 @@ export const CTFListPage: React.FC = () => {
 
                           <button
                             onClick={() => handleDelete(event.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-450 transition-colors"
+                            className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                             title="Delete Event"
                           >
                             <Trash2 className="w-4 h-4" />

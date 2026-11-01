@@ -273,7 +273,7 @@ export const MonitoringAnalytics: React.FC = () => {
               setGroupDetails(null);
             }
           }}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 font-extrabold cursor-pointer border px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-850 w-fit"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 font-extrabold cursor-pointer border px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-fit"
         >
           <ArrowLeft className="w-4 h-4" /> Go Back
         </button>
@@ -358,7 +358,7 @@ export const MonitoringAnalytics: React.FC = () => {
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Automatic %</span>
-                    <strong className="text-sm text-blue-650 dark:text-blue-400">
+                    <strong className="text-sm text-blue-700 dark:text-blue-400">
                       {groupDetails.overall_average_score_percent == null ? '—' : `${groupDetails.overall_average_score_percent}%`}
                     </strong>
                   </div>
@@ -476,7 +476,7 @@ export const MonitoringAnalytics: React.FC = () => {
                               m.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40' :
                               m.status === 'Running' ? 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40' :
                               m.status === 'Failed' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40' :
-                              'bg-slate-50 text-slate-550 border-slate-200 dark:bg-slate-800'
+                              'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800'
                             }`}>
                               {m.status}
                             </span>
@@ -601,7 +601,7 @@ export const MonitoringAnalytics: React.FC = () => {
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Automatic %</span>
-                      <strong className="text-sm text-blue-650 dark:text-blue-400">
+                      <strong className="text-sm text-blue-700 dark:text-blue-400">
                         {studentBreakdown.score_percent == null ? '—' : `${studentBreakdown.score_percent}%`}
                       </strong>
                     </div>
@@ -632,7 +632,7 @@ export const MonitoringAnalytics: React.FC = () => {
                           <span className={`inline-block px-2 py-0.5 rounded-full font-bold border text-[9px] ${
                             m.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40' :
                             m.status === 'RUNNING' ? 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40' :
-                            'bg-slate-50 text-slate-550 border-slate-200 dark:bg-slate-800'
+                            'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800'
                           }`}>
                             {m.status}
                           </span>
@@ -668,7 +668,7 @@ export const MonitoringAnalytics: React.FC = () => {
 
                 <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mt-4">
                   <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Instructor Review</span>
-                  <p className="text-slate-650 leading-relaxed font-semibold">
+                  <p className="text-slate-700 leading-relaxed font-semibold">
                     The radar display outlines student proficiency based on cumulative validation checkouts computed dynamically across active modules.
                   </p>
                 </div>

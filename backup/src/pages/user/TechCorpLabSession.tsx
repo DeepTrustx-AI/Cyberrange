@@ -449,18 +449,18 @@ export const TechCorpLabSession: React.FC = () => {
           </div>
           <h2 className="text-2xl font-bold text-slate-100">Preparing Lab Sandbox</h2>
           <p className="text-slate-400 font-medium">{loadingMessage}</p>
-          <div className="w-full bg-slate-850 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-600 h-full rounded-full animate-pulse w-3/4"></div>
           </div>
 
           {/* Real-time diagnostics panel */}
-          <div className="text-left text-xs bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1 max-h-48 overflow-y-auto font-mono text-slate-450">
-            <div className="font-bold text-sky-400 border-b border-slate-850 pb-1 mb-1 flex items-center justify-between">
+          <div className="text-left text-xs bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1 max-h-48 overflow-y-auto font-mono text-slate-500">
+            <div className="font-bold text-sky-400 border-b border-slate-800 pb-1 mb-1 flex items-center justify-between">
               <span>Diagnostic Console Log:</span>
               <span className="text-[10px] text-slate-500 font-normal">Auto-scrolling</span>
             </div>
             {debugLogs.length === 0 ? (
-              <div className="text-slate-650 italic">No events generated yet...</div>
+              <div className="text-slate-700 italic">No events generated yet...</div>
             ) : (
               debugLogs.map((log, idx) => (
                 <div key={idx} className="whitespace-pre-wrap leading-relaxed border-b border-slate-900 pb-0.5 last:border-0">
@@ -629,7 +629,7 @@ export const TechCorpLabSession: React.FC = () => {
               <span>Overall Progress</span>
               <span>{completedLevels.length} / 34 levels</span>
             </div>
-            <div className="w-full bg-slate-850 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-gradient-to-r from-sky-500 to-indigo-600 h-full rounded-full transition-all duration-500"
                 style={{ width: `${(completedLevels.length / 34) * 100}%` }}

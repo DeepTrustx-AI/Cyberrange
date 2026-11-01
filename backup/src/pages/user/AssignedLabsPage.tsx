@@ -399,7 +399,7 @@ export const AssignedLabsPage: React.FC = () => {
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'active'
                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-650'
+                : 'text-slate-400 hover:text-slate-700'
             }`}
           >
             Active Tasks ({activeLabs.length})
@@ -409,7 +409,7 @@ export const AssignedLabsPage: React.FC = () => {
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               activeTab === 'history'
                 ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-400 hover:text-slate-650'
+                : 'text-slate-400 hover:text-slate-700'
             }`}
           >
             History ({historyLabs.length})
@@ -525,7 +525,7 @@ export const AssignedLabsPage: React.FC = () => {
                     <button
                       onClick={() => fetchAssignmentStats(lab.id)}
                       disabled={statsLoading}
-                      className="px-4 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-250 dark:border-slate-700 hover:border-slate-350 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                      className="px-4 py-2 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-colors cursor-pointer"
                     >
                       View Details
                     </button>

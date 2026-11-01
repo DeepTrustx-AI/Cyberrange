@@ -8,6 +8,26 @@ declare global {
   }
 }
 
+let googleScript: Promise<void> | null = null;
+
+// Google's script is only needed where this button is, so it loads here, once, rather than on
+// every page. A failed load can be tried again by the next button that mounts.
+function loadGoogleScript() {
+  googleScript ??= new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      script.remove();
+      googleScript = null;
+      reject(new Error('Google sign-in did not load'));
+    };
+    document.head.appendChild(script);
+  });
+  return googleScript;
+}
+
 interface GoogleSignInButtonProps {
   portal: 'student' | 'admin';
   onSuccess: (data: any) => void;
@@ -26,9 +46,13 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const { setSessionToken } = useAuth();
   const [isInitializing, setIsInitializing] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  // Bumped by a click while Google is not ready, which loads it again.
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const hiddenBtnRef = useRef<HTMLDivElement>(null);
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '109283749283-exampleclientid.apps.googleusercontent.com';
+  // Unset, or still a "your-..." placeholder, means Google sign-in is off.
+  const clientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const configured = clientId !== '' && !clientId.startsWith('your-');
 
   const handleCredentialResponse = async (response: any) => {
     if (!response || !response.credential) {
@@ -90,7 +114,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    let intervalId: any = null;
+    if (!configured) return;
+    let cancelled = false;
 
     const initializeGis = () => {
       if (isInitializedRef.current) return;
@@ -119,25 +144,13 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
       }
     };
 
-    if (window.google?.accounts?.id) {
-      initializeGis();
-    } else {
-      intervalId = setInterval(() => {
-        if (window.google?.accounts?.id) {
-          initializeGis();
-          if (intervalId) clearInterval(intervalId);
-        }
-      }, 500);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [clientId, portal]);
+    loadGoogleScript().then(() => { if (!cancelled) initializeGis(); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [clientId, configured, portal, loadAttempt]);
 
 
   const handleCustomClick = () => {
-    if (!clientId || clientId.includes('exampleclientid') || clientId.startsWith('your-')) {
+    if (!configured) {
       onError('Google Sign-In is not configured.');
       return;
     }
@@ -156,7 +169,8 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         console.error('[GoogleSignInButton] Prompt error:', e);
       }
     } else {
-      onError('Google Identity Services SDK is loading. Please try again in a moment.');
+      onError('Google sign-in is not ready yet. Please try again in a moment.');
+      setLoadAttempt((attempt) => attempt + 1);
     }
   };
 
@@ -182,9 +196,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z" />
             </svg>
             <span>
-              {!clientId || clientId.includes('exampleclientid') || clientId.startsWith('your-')
-                ? 'Google Sign-In is not configured.'
-                : buttonText}
+              {configured ? buttonText : 'Google Sign-In is not configured.'}
             </span>
           </>
         )}

@@ -380,7 +380,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
                     key={hint.id}
                     className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm"
                   >
-                    <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20 px-4 py-3 text-xs border-b border-slate-250 dark:border-slate-800/80">
+                    <div className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20 px-4 py-3 text-xs border-b border-slate-200 dark:border-slate-800/80">
                       <span className="font-bold text-slate-700 dark:text-slate-300">Hint #{idx + 1}</span>
                       <span className="text-[10px] font-semibold text-slate-400">
                         Penalty Deduction: {hint.cost_percent ?? 0}%
@@ -401,7 +401,7 @@ export const CTFChallengeDetailPage: React.FC = () => {
                             type="button"
                             disabled={isCompleted}
                             onClick={() => setActiveHintToUnlock(hint)}
-                            className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold text-[10px] uppercase border border-amber-250 dark:border-amber-900/40 px-3.5 py-1.5 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40"
+                            className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold text-[10px] uppercase border border-amber-200 dark:border-amber-900/40 px-3.5 py-1.5 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40"
                           >
                             <Lock className="w-3 h-3" />
                             Unlock Hint
