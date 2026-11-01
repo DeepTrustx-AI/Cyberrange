@@ -1,5 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { SecurityLab } from '../../types/admin';
 import type { CartItem } from '../../types/cart';
 import { LabDetailModal } from '../../components/admin/LabDetailModal';
@@ -33,6 +33,8 @@ export const LabMarketplace: React.FC = () => {
 
   // Cart & Checkout State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // Set by any cart change, so the first cart load cannot arrive late and overwrite it.
+  const cartTouched = useRef(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutSummary, setCheckoutSummary] = useState<any>(null);
@@ -40,51 +42,37 @@ export const LabMarketplace: React.FC = () => {
 
   // Real catalog labs from backend PostgreSQL database
   const [labs, setLabs] = useState<SecurityLab[]>([]);
-  const [loadingLabs, setLoadingLabs] = useState(true);
+  const [catalogue, setCatalogue] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [syncing, setSyncing] = useState(false);
 
-  // Fetch Cart & Labs from Backend API
-  useEffect(() => {
-    const fetchCartAndLabs = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        // Fetch cart
-        if (token) {
-          const cartRes = await routedApiFetch('/api/v1/cart', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (cartRes.ok) {
-            const data = await cartRes.json();
-            setCartItems(Array.isArray(data?.items) ? data.items : []);
-          }
-
-          // Fetch purchased labs
-          const purchasedRes = await routedApiFetch('/api/v1/admin/purchased-labs', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (purchasedRes.ok) {
-            const purchasedData = await purchasedRes.json();
-            if (Array.isArray(purchasedData)) {
-              setPurchasedLabIds(new Set(purchasedData.map((item: any) => item.lab_id)));
-            }
-          }
-        }
-
-        // Fetch lab catalog
-        const labsRes = await routedApiFetch('/api/v1/labs');
-        if (labsRes.ok) {
-          const labsData = await labsRes.json();
-          setLabs(labsData || []);
-        }
-      } catch (err) {
-        console.error('Error fetching cart/labs:', err);
-      } finally {
-        setLoadingLabs(false);
-      }
-    };
-
-    fetchCartAndLabs();
+  // The catalogue loads on its own, so a cart or purchase-list problem never hides the labs.
+  const loadCatalogue = useCallback(async () => {
+    setCatalogue('loading');
+    try {
+      const res = await routedApiFetch('/api/v1/labs');
+      if (!res.ok) throw new Error(`labs ${res.status}`);
+      setLabs((await res.json()) || []);
+      setCatalogue('ready');
+    } catch (err) {
+      console.error('Error fetching labs:', err);
+      setCatalogue('failed');
+    }
   }, []);
+
+  useEffect(() => {
+    loadCatalogue();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    routedApiFetch('/api/v1/cart', { headers })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data && !cartTouched.current) setCartItems(Array.isArray(data?.items) ? data.items : []); })
+      .catch((err) => console.error('Error fetching cart:', err));
+    routedApiFetch('/api/v1/admin/purchased-labs', { headers })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (Array.isArray(data)) setPurchasedLabIds(new Set(data.map((item: any) => item.lab_id))); })
+      .catch((err) => console.error('Error fetching purchased labs:', err));
+  }, [loadCatalogue]);
 
   const syncLabRepository = async () => {
     setSyncing(true);
@@ -178,6 +166,7 @@ export const LabMarketplace: React.FC = () => {
       hours_purchased: DEFAULT_HOURS,
       item_total: hourlyRate * DEFAULT_HOURS,
     };
+    cartTouched.current = true;
     setCartItems(prev => [...prev, newItem]);
     setIsCartOpen(true);
 
@@ -211,6 +200,7 @@ export const LabMarketplace: React.FC = () => {
   };
 
   const handleUpdateHours = async (id: number | string, hours: number) => {
+    cartTouched.current = true;
     setCartItems((prev) => prev.map((item) => {
       if (item.id === id) {
         const rate = item.price_inr ?? 0;
@@ -239,6 +229,7 @@ export const LabMarketplace: React.FC = () => {
   };
 
   const handleRemoveCartItem = async (id: number | string) => {
+    cartTouched.current = true;
     setCartItems((prev) => prev.filter((item) => item.id !== id));
     const token = localStorage.getItem('token');
     if (token) {
@@ -252,6 +243,7 @@ export const LabMarketplace: React.FC = () => {
   };
 
   const handleClearCart = async () => {
+    cartTouched.current = true;
     setCartItems([]);
     const token = localStorage.getItem('token');
     if (token) {
@@ -273,6 +265,7 @@ export const LabMarketplace: React.FC = () => {
       (cartItems ?? []).forEach((item) => newPurchased.add(item.lab_id));
       setPurchasedLabIds(newPurchased);
     }
+    cartTouched.current = true;
     setCartItems([]);
   };
 
@@ -379,7 +372,20 @@ export const LabMarketplace: React.FC = () => {
       {/* Tab 1: Browse Catalog */}
       {activeMarketTab === 'browse' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedLabs.length === 0 ? (
+          {catalogue === 'loading' ? (
+            [0, 1, 2].map((i) => (
+              <div key={i} className="h-[29rem] animate-pulse rounded-2xl bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800" aria-hidden="true" />
+            ))
+          ) : catalogue === 'failed' ? (
+            <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800" role="alert">
+              <Store className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">The lab catalogue could not load</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Check the connection and try again.</p>
+              <button type="button" onClick={() => void loadCatalogue()} className="mt-4 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white dark:bg-white dark:text-slate-900 cursor-pointer">
+                Try again
+              </button>
+            </div>
+          ) : sortedLabs.length === 0 ? (
             <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
               <Store className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
               <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">No Security Labs Found</h3>
