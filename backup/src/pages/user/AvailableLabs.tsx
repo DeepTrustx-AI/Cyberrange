@@ -254,6 +254,7 @@ export const AvailableLabs: React.FC = () => {
     else if (id === 'command-line-lab') navigate('/labs/command-line-lab/session/sess-cll-01');
     else if (id === 'cryptography-lab') navigate('/labs/cryptography-lab/session/sess-crypto-01');
     else if (id === 'compliance-portal') navigate('/labs/compliance-portal/session/sess-compliance-01');
+    else if (id === 'cloud-static-security-lab') navigate('/labs/cloud-static-security-lab');
     else if (id === 'cloud-security-lab' || id === 'cloudcorp-aws-lab' || id.includes('cloud')) navigate('/labs/cloud-security-lab/session/sess-cloud-01');
     else if (id.includes('puzzle')) navigate('/puzzle');
     else navigate(`/labs/${lab.id}/session/sess-123`);
