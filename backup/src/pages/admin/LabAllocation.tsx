@@ -19,6 +19,8 @@ import {
   localDateTimeToUtcIso,
   utcIsoToLocalInput,
 } from '../../utils/assignmentTime';
+import { accessDeniedReason } from '../../utils/accessDenied';
+import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
 export const LabAllocation: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +31,7 @@ export const LabAllocation: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,32 +70,35 @@ export const LabAllocation: React.FC = () => {
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`
     };
+    // 401 means the session ended, so sign in again. 403 means this account may not see the data:
+    // stay signed in and say so.
+    const stopsPage = async (res: Response) => {
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/admin/login';
+        return true;
+      }
+      const reason = await accessDeniedReason(res);
+      if (reason) {
+        setAccessDenied(reason);
+        return true;
+      }
+      return false;
+    };
     try {
       const gRes = await routedApiFetch('/api/v1/admin/groups', { headers });
-      if (gRes.status === 401 || gRes.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
+      if (await stopsPage(gRes)) return;
       if (gRes.ok) setGroups(await gRes.json());
 
       const sRes = await routedApiFetch('/api/v1/admin/users', { headers });
-      if (sRes.status === 401 || sRes.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
+      if (await stopsPage(sRes)) return;
       if (sRes.ok) {
         const sData = await sRes.json();
         setStudents(Array.isArray(sData) ? sData : (sData.users || []));
       }
 
       const aRes = await routedApiFetch('/api/v1/admin/assignments', { headers });
-      if (aRes.status === 401 || aRes.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
+      if (await stopsPage(aRes)) return;
       if (aRes.ok) {
         const aData = await aRes.json();
         // FILTER OUT Completed or Expired assignments. Active Assignments list contains ONLY Scheduled/Running states
@@ -411,7 +417,9 @@ export const LabAllocation: React.FC = () => {
         </div>
       )}
 
-      {loading ? (
+      {accessDenied ? (
+        <AccessDeniedNotice reason={accessDenied} />
+      ) : loading ? (
         <div className="py-12 text-center text-slate-400 font-medium">Loading scheduled assignments...</div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
