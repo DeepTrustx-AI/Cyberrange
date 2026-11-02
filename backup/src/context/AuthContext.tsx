@@ -73,6 +73,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     tokenRef.current = token;
   }, [token]);
 
+  // Back after signing out can bring the old page back from the browser's memory, still showing
+  // the last screen. If the sign-in changed since the page was kept, load it again from scratch.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted && tokenRef.current !== localStorage.getItem('token')) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   const loadAuthorization = useCallback(async (explicitToken?: string | null) => {
     const currentToken = explicitToken ?? tokenRef.current;
     if (!currentToken) {
