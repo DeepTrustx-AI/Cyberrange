@@ -74,6 +74,7 @@ const CryptographyLabPage   = lazy(() => import('./pages/user/CryptographyLabPag
 const CompliancePortalLabPage = lazy(() => import('./pages/user/CompliancePortalLabPage').then(m => ({ default: m.CompliancePortalLabPage })));
 const CloudSecurityLabPage  = lazy(() => import('./pages/user/CloudSecurityLabPage').then(m => ({ default: m.CloudSecurityLabPage })));
 const CloudStaticSecurityLabPage = lazy(() => import('./pages/user/CloudStaticSecurityLabPage').then(m => ({ default: m.CloudStaticSecurityLabPage })));
+const KubernetesDriftLabPage = lazy(() => import('./pages/user/KubernetesDriftLabPage').then(m => ({ default: m.KubernetesDriftLabPage })));
 const PuzzleLabPage         = lazy(() => import('./pages/user/PuzzleLabPage').then(m => ({ default: m.PuzzleLabPage })));
 const TechCorpLabSession    = lazy(() => import('./pages/user/TechCorpLabSession').then(m => ({ default: m.TechCorpLabSession })));
 const ProgressTracking     = lazy(() => import('./pages/user/ProgressTracking').then(m => ({ default: m.ProgressTracking })));
@@ -357,6 +358,22 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
                     <CloudStaticSecurityLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/labs/kubernetes-drift-lab"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <KubernetesDriftLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/labs/kubernetes-drift-lab/session/:sessionId"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <KubernetesDriftLabPage />
                   </ProtectedRoute>
                 }
               />

@@ -254,6 +254,7 @@ export const AvailableLabs: React.FC = () => {
     else if (id === 'command-line-lab') navigate('/labs/command-line-lab/session/sess-cll-01');
     else if (id === 'cryptography-lab') navigate('/labs/cryptography-lab/session/sess-crypto-01');
     else if (id === 'compliance-portal') navigate('/labs/compliance-portal/session/sess-compliance-01');
+    else if (id === 'kubernetes-drift-lab') navigate('/labs/kubernetes-drift-lab');
     else if (id === 'cloud-static-security-lab') navigate('/labs/cloud-static-security-lab');
     else if (id === 'cloud-security-lab' || id === 'cloudcorp-aws-lab' || id.includes('cloud')) navigate('/labs/cloud-security-lab/session/sess-cloud-01');
     else if (id.includes('puzzle')) navigate('/puzzle');
@@ -603,6 +604,7 @@ export const AvailableLabs: React.FC = () => {
                           else if (id === 'race-conditions-lab') navigate('/labs/race-conditions-lab');
                           else if (id === 'linux-sysadmin-lab') navigate('/labs/linux-sysadmin');
                           else if (id === 'compliance-portal') navigate('/labs/compliance-portal/session/sess-compliance-01');
+                          else if (id === 'kubernetes-drift-lab') navigate('/labs/kubernetes-drift-lab');
                           else navigate(`/labs/${lab.lab_id}/session/sess-123`);
                         }}
                         className="w-full bg-[#2563EB] hover:bg-blue-600 text-white font-bold text-xs py-2 rounded-xl transition-colors inline-flex items-center justify-center gap-1.5"
