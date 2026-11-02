@@ -42,14 +42,20 @@ export const CTFProgressPage: React.FC = () => {
       const lbData = await lbRes.json();
       setLeaderboard(lbData.entries || []);
 
-      // 4. Fetch Submissions (to build solves matrix)
-      const subRes = await routedApiFetch(`/api/v1/ctf/${ctfId}/submissions?limit=1000`, { headers });
-      if (!subRes.ok) throw new Error('Failed to load submissions.');
-      const subData = await subRes.json();
+      // 4. Fetch Submissions (to build solves matrix). The server sends at most 200 per page,
+      // so read every page.
+      const entries: any[] = [];
+      for (let page = 1; ; page++) {
+        const subRes = await routedApiFetch(`/api/v1/ctf/${ctfId}/submissions?page=${page}&limit=200`, { headers });
+        if (!subRes.ok) throw new Error('Failed to load submissions.');
+        const subData = await subRes.json();
+        const pageEntries = subData.entries || [];
+        entries.push(...pageEntries);
+        if (pageEntries.length === 0 || entries.length >= (subData.total ?? 0)) break;
+      }
 
       // Build solves map: { participant_id: Set of challenge_ids }
       const newSolvesMap: Record<string, Set<number>> = {};
-      const entries = subData.entries || [];
       entries.forEach((sub: any) => {
         if (sub.is_correct) {
           const key = String(sub.participant_id);
