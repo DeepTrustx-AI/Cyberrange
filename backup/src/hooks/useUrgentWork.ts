@@ -3,7 +3,7 @@ import { assignmentState } from '../utils/assignmentState';
 
 type ApiFetch = (url: string, init?: RequestInit) => Promise<Response>;
 
-// How many assignments are overdue or due soon, for the badge on "My work".
+// How many assignments are due soon, for the badge on "My work".
 export function useUrgentWork(apiFetch: ApiFetch, enabled: boolean) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -16,7 +16,7 @@ export function useUrgentWork(apiFetch: ApiFetch, enabled: boolean) {
         const now = new Date();
         setCount(items.filter((item) => {
           const state = assignmentState({ start: item.start_datetime, end: item.end_datetime, progress: item.progress_percent ?? 0 }, now);
-          return state === 'overdue' || state === 'due-soon';
+          return state === 'due-soon';
         }).length);
       })
       .catch(() => {});

@@ -256,7 +256,7 @@ export const UserDashboard: React.FC = () => {
   const { dueNext, dueOthers, dueNow } = useMemo(() => {
     const at = new Date();
     const open = sortByUrgency(assignments.map((item) => ({ ...item, ...timingOf(item) })), at)
-      .filter((item) => !['done', 'opens'].includes(assignmentState(item, at)));
+      .filter((item) => !['done', 'opens', 'closed'].includes(assignmentState(item, at)));
     return { dueNext: open[0] ?? null, dueOthers: Math.max(0, open.length - 1), dueNow: at };
   }, [assignments]);
   const completedCount = labs.filter((lab) => progressOf(lab) >= 1).length;

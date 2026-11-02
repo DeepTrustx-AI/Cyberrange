@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, Clock, Hourglass, PlayCircle } from 'lucide-react';
+import { ArrowRight, CalendarClock, CheckCircle2, Clock, Hourglass, Lock, PlayCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { LabArtImage } from '../art/LabArtImage';
 import { labArtKind } from '../../utils/labArtKind';
@@ -6,11 +6,11 @@ import { STATE_LABEL, assignmentState, dueText, type AssignmentState } from '../
 import { formatWhen, timingOf, type Assignment } from './assignment';
 
 const STATE_STYLE: Record<AssignmentState, { chip: string; icon: ReactNode }> = {
-  overdue: { chip: 'bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30', icon: <AlertTriangle className="h-3.5 w-3.5" /> },
   'due-soon': { chip: 'bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30', icon: <Hourglass className="h-3.5 w-3.5" /> },
   'in-progress': { chip: 'bg-brand-50 text-brand-700 ring-brand-200 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-500/30', icon: <PlayCircle className="h-3.5 w-3.5" /> },
   'not-started': { chip: 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700', icon: <Clock className="h-3.5 w-3.5" /> },
   opens: { chip: 'bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30', icon: <CalendarClock className="h-3.5 w-3.5" /> },
+  closed: { chip: 'bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700', icon: <Lock className="h-3.5 w-3.5" /> },
   done: { chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30', icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
 };
 
@@ -37,8 +37,8 @@ export function AssignmentRow({ item, now, onOpen, onResults }: AssignmentRowPro
   const timing = timingOf(item);
   const state = assignmentState(timing, now);
   const progress = Math.round(Math.min(100, Math.max(0, timing.progress)));
-  const action =
-    state === 'opens' ? null : state === 'done' ? 'Review' : progress > 0 ? 'Continue' : 'Start';
+  const finished = state === 'done' || state === 'closed';
+  const action = state === 'opens' ? null : finished ? 'Review' : progress > 0 ? 'Continue' : 'Start';
 
   return (
     <li className="flex flex-col gap-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 sm:flex-row sm:items-center dark:bg-slate-900 dark:ring-slate-800">
@@ -72,7 +72,7 @@ export function AssignmentRow({ item, now, onOpen, onResults }: AssignmentRowPro
 
       <div className="flex items-center justify-between gap-4 sm:w-64 sm:shrink-0 sm:justify-end">
         <div className="text-left sm:text-right">
-          <p className={`text-sm font-semibold ${state === 'overdue' ? 'text-rose-700 dark:text-rose-300' : state === 'due-soon' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-100'}`}>
+          <p className={`text-sm font-semibold ${state === 'closed' ? 'text-slate-500 dark:text-slate-400' : state === 'due-soon' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-800 dark:text-slate-100'}`}>
             {dueText(timing, now)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -92,12 +92,12 @@ export function AssignmentRow({ item, now, onOpen, onResults }: AssignmentRowPro
           <span className="shrink-0 rounded-full px-4 py-2 text-sm font-medium text-slate-400" aria-disabled="true">Not open yet</span>
         )}
       </div>
-      {state === 'overdue' && (
+      {state === 'closed' && (
         <p className="w-full text-xs text-slate-500 sm:hidden dark:text-slate-400">
-          Past the deadline. You can still open the lab; ask your teacher if it needs reopening.
+          The deadline has passed, so this lab is closed. Ask your teacher if it needs reopening.
         </p>
       )}
-      {state !== 'opens' && (state !== 'done' || item.published_grade) && (
+      {state !== 'opens' && (!finished || item.published_grade) && (
         <button type="button" onClick={() => onResults(item)} className="hidden text-xs font-medium text-slate-500 underline-offset-4 hover:text-slate-800 hover:underline sm:block dark:hover:text-white">
           Results
         </button>

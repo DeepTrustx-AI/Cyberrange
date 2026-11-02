@@ -1,8 +1,8 @@
 // Where an assignment stands for the student, worked out from its dates and real
-// progress. The API's own status is not used: it reports an unstarted assignment
-// whose deadline has passed as "Completed".
+// progress. Past the deadline, unfinished work is closed: the backend no longer
+// lets the student start it, and calls it "Ended".
 
-export type AssignmentState = 'overdue' | 'due-soon' | 'in-progress' | 'not-started' | 'opens' | 'done';
+export type AssignmentState = 'due-soon' | 'in-progress' | 'not-started' | 'opens' | 'closed' | 'done';
 
 export interface AssignmentTiming {
   start: string | null;
@@ -16,15 +16,15 @@ const DAY = 24 * HOUR;
 const DUE_SOON = 2 * DAY;
 
 export const STATE_LABEL: Record<AssignmentState, string> = {
-  overdue: 'Overdue',
   'due-soon': 'Due soon',
   'in-progress': 'In progress',
   'not-started': 'Not started',
   opens: 'Opens soon',
+  closed: 'Closed',
   done: 'Done',
 };
 
-const ORDER: AssignmentState[] = ['overdue', 'due-soon', 'in-progress', 'not-started', 'opens', 'done'];
+const ORDER: AssignmentState[] = ['due-soon', 'in-progress', 'not-started', 'opens', 'closed', 'done'];
 
 // The server stores UTC and some endpoints send it without a zone, which a
 // browser would otherwise read as local time (5.5 hours off in India).
@@ -44,7 +44,7 @@ export function assignmentState(item: AssignmentTiming, now = new Date()): Assig
   const end = time(item.end);
   const at = now.getTime();
   if (start !== null && at < start) return 'opens';
-  if (end !== null && at > end) return 'overdue';
+  if (end !== null && at > end) return 'closed';
   if (end !== null && end - at <= DUE_SOON) return 'due-soon';
   return item.progress > 0 ? 'in-progress' : 'not-started';
 }
@@ -78,7 +78,7 @@ export function dueText(item: AssignmentTiming, now = new Date()): string {
   }
   const end = time(item.end);
   if (end === null) return 'No deadline';
-  if (state === 'overdue') return `${inWords(end, at, false)} overdue`;
+  if (state === 'closed') return `Closed ${inWords(end, at, false)} ago`;
   const words = inWords(at, end, true);
   return words === 'tomorrow' ? 'Due tomorrow' : `Due in ${words}`;
 }

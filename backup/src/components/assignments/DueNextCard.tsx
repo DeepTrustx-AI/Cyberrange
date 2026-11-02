@@ -30,7 +30,7 @@ export function DueNextCard({ item, others, now, onOpen, onAll }: DueNextCardPro
           <h2 className="truncate font-display text-xl font-semibold text-slate-900 dark:text-white">{item.lab_name}</h2>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <StateChip state={state} />
-            <span className={`text-sm font-medium ${state === 'overdue' ? 'text-rose-700 dark:text-rose-300' : 'text-slate-700 dark:text-slate-200'}`}>
+            <span className={`text-sm font-medium ${state === 'due-soon' ? 'text-amber-800 dark:text-amber-300' : 'text-slate-700 dark:text-slate-200'}`}>
               {dueText(timing, now)}
             </span>
           </div>

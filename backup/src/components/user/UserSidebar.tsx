@@ -81,7 +81,7 @@ function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
           />
           <span className="flex-1">{item.name}</span>
           {item.badge ? (
-            <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold tabular leading-5 text-white" aria-label={`${item.badge} due soon or overdue`}>
+            <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold tabular leading-5 text-white" aria-label={`${item.badge} due soon`}>
               {item.badge}
             </span>
           ) : null}

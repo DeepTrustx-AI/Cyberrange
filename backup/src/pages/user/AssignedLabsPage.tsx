@@ -10,7 +10,7 @@ import { STATE_LABEL, assignmentState, sortByUrgency, type AssignmentState } fro
 import { assignmentLabPath } from '../../utils/labRoutes';
 
 type Filter = 'all' | AssignmentState;
-const FILTERS: Filter[] = ['all', 'overdue', 'due-soon', 'in-progress', 'not-started', 'opens', 'done'];
+const FILTERS: Filter[] = ['all', 'due-soon', 'in-progress', 'not-started', 'opens', 'closed', 'done'];
 
 // Everything a teacher has set, most urgent first, each with its deadline and
 // the next thing to do.
