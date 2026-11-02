@@ -106,9 +106,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadAuthorization]);
 
   const logout = useCallback(async () => {
+    const currentToken = tokenRef.current || localStorage.getItem('token');
     try {
+      // The server can only end the session it is told about.
       await baseApiFetch('/api/v1/auth/logout', {
         method: 'POST',
+        headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
         credentials: 'include',
       });
     } catch {
