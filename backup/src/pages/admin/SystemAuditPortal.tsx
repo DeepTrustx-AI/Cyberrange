@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { downloadCsv } from '../../utils/exportUtils';
 import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
@@ -99,23 +100,16 @@ export const SystemAuditPortal: React.FC = () => {
     const headers = ['ID', 'Timestamp', 'Action', 'Entity', 'Performed By', 'Role', 'IP Address', 'Browser', 'Status'];
     const rows = data.recent_activity.map((l: any) => [
       l.id,
-      `"${l.timestamp}"`,
-      `"${l.action}"`,
-      `"${l.entity || ''}"`,
-      `"${l.performed_by || ''}"`,
-      `"${l.performed_by_role || ''}"`,
-      `"${l.ip_address || ''}"`,
-      `"${l.browser || ''}"`,
-      `"${l.status}"`
+      l.timestamp,
+      l.action,
+      l.entity,
+      l.performed_by,
+      l.performed_by_role,
+      l.ip_address,
+      l.browser,
+      l.status,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `system_audit_log_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(`system_audit_log_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
   };
 
   const handleExportPDF = () => {
