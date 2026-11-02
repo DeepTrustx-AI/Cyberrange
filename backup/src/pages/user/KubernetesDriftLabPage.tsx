@@ -1,96 +1,107 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context';
 
-type Stage = 'briefing' | 'investigate' | 'review';
-type Finding = {
-  id: string; severity: string; title: string; path: string;
-  explanation: string; recommendation: string; investigative_hint?: string;
-};
-type Requirement = { id: string; title: string; met: boolean };
-type Question = { id: string; question: string; options: { id: string; text: string }[] };
-type Lesson = {
-  course: { safety: string; duration_minutes: number; subtitle: string };
-  scenario: string;
-  objectives: string[];
-  concepts: { title: string; body: string }[];
-  tasks: { id: string; title: string; instruction: string; hint: string }[];
-  questions: Question[];
-  assessment: InvestigationAssessment;
-};
+type Phase = 'investigate' | 'decide' | 'reconcile' | 'verify';
+type View = 'briefing' | Phase | 'review';
 type Choice = { id: string; text: string };
-type InvestigationItem = {
-  id: string; title: string; path: string;
-  observed_options: Choice[]; desired_options: Choice[];
-};
-type InvestigationAssessment = {
-  instructions: string;
-  observations: InvestigationItem[];
-  impact_options: Choice[];
-  plans: { id: string; title: string; options: Choice[] }[];
-  verification: { title: string; options: Choice[] };
-};
+type Finding = { id: string; severity: string; title: string; path: string; explanation: string };
+type Question = { id: string; question: string; options: Choice[] };
 type Evidence = {
   observations: Record<string, { observed: string; desired: string }>;
   impacts: Record<string, string>;
   plans: Record<string, string>;
   verification: string;
 };
-type PhaseScore = { id: string; title: string; score: number; max_points: number };
-
-const EMPTY_EVIDENCE: Evidence = { observations: {}, impacts: {}, plans: {}, verification: '' };
-
-type Quiz = {
-  correct_count: number; total_questions: number; message: string;
-  results: { question_id: string; correct: boolean; correct_option_id: string; explanation: string }[];
+type Lesson = {
+  course: { safety: string; duration_minutes: number };
+  scenario: string;
+  objectives: string[];
+  concepts: { title: string; body: string }[];
+  questions: Question[];
+  assessment: {
+    observations: { id: string; title: string; path: string; observed_options: Choice[]; desired_options: Choice[] }[];
+    impact_options: Choice[];
+    plans: { id: string; title: string; options: Choice[] }[];
+    repairs: { id: string; title: string; options: Choice[] }[];
+    verification: { title: string; options: Choice[] };
+  };
 };
-type Assessment = {
-  findings: Finding[]; finding_count: number; requirements: Requirement[];
-  passed: boolean; message: string;
-  review: { phases: PhaseScore[]; score_preview: number; max_points: number; passed: boolean };
+type Feedback = { id: string; observed_ok?: boolean; desired_ok?: boolean; impact_ok?: boolean; correct?: boolean; selected?: boolean; hint?: string };
+type StageResult = {
+  phase: Phase;
+  prerequisites_met: boolean;
+  stage_passed: boolean;
+  feedback: Feedback[];
+  message: string;
+  review: { phases: { id: string; score: number; max_points: number }[]; score_preview: number; max_points: number };
+  snapshot_preview?: string;
+  findings?: Finding[];
+  finding_count?: number;
+  passed?: boolean;
   completion?: { already_completed: boolean; points_awarded: number } | null;
 };
+type Quiz = { correct_count: number; total_questions: number; message: string; results: { question_id: string; correct: boolean; correct_option_id: string; explanation: string }[] };
+
 const API = '/api/v1/kubernetes-drift-lab';
-const LIVE_FILE = 'live-snapshot.yaml';
+const PHASES: { id: Phase; title: string; pts: number; description: string }[] = [
+  { id: 'investigate', title: 'Investigate', pts: 210, description: 'Find and explain six original differences' },
+  { id: 'decide', title: 'Decide', pts: 90, description: 'Choose safe response actions' },
+  { id: 'reconcile', title: 'Reconcile', pts: 150, description: 'Apply six targeted corrections' },
+  { id: 'verify', title: 'Verify', pts: 50, description: 'Check scope and complete the assessment' },
+];
+const BLANK: Evidence = { observations: {}, impacts: {}, plans: {}, verification: '' };
+const selectStyle = 'mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus-visible:border-sky-400';
+const primaryStyle = 'rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50';
+const mutedStyle = 'rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50';
 
 function errorMessage(payload: unknown, fallback: string): string {
-  if (payload && typeof payload === 'object' && 'detail' in payload) {
-    const detail = (payload as { detail: unknown }).detail;
-    if (typeof detail === 'string') return detail;
-  }
+  if (payload && typeof payload === 'object' && 'detail' in payload && typeof payload.detail === 'string') return payload.detail;
   return fallback;
 }
-
-function shuffleQuestions(questions: Question[]): Question[] {
-  return questions.map((question) => {
-    const options = [...question.options];
-    for (let index = options.length - 1; index > 0; index--) {
-      const pick = Math.floor(Math.random() * (index + 1));
-      [options[index], options[pick]] = [options[pick], options[index]];
+function shuffled(questions: Question[]): Question[] {
+  return questions.map((q) => {
+    const options = [...q.options];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
     }
-    return { ...question, options };
+    return { ...q, options };
   });
+}
+function FeedbackMark({ ok, hint }: { ok?: boolean; hint?: string }) {
+  if (ok === undefined) return null;
+  return <p className={`mt-1 text-xs ${ok ? 'text-emerald-300' : 'text-amber-200'}`}>
+    {ok ? 'Verified' : hint || 'Recheck the original snapshot and the approved baseline.'}
+  </p>;
+}
+function SnapshotPanel({ title, subtitle, content }: { title: string; subtitle: string; content: string }) {
+  return <section className="min-w-0 rounded-xl border border-slate-700 bg-slate-900 p-4">
+    <h3 className="text-sm font-semibold text-slate-100">{title} <span className="ml-2 font-normal text-slate-400">READ ONLY</span></h3>
+    <p className="my-2 text-xs text-slate-400">{subtitle}</p>
+    <pre className="max-h-72 min-h-32 overflow-auto whitespace-pre rounded-lg bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-200" tabIndex={0}>{content}</pre>
+  </section>;
 }
 
 export const KubernetesDriftLabPage: React.FC = () => {
   const navigate = useNavigate();
   const { apiFetch } = useAuth();
-  const [stage, setStage] = useState<Stage>('briefing');
+  const [view, setView] = useState<View>('briefing');
+  const [unlocked, setUnlocked] = useState(0);
   const [desired, setDesired] = useState('');
-  const [live, setLive] = useState('');
   const [starter, setStarter] = useState('');
   const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [evidence, setEvidence] = useState<Evidence>(EMPTY_EVIDENCE);
-  const [expandedHints, setExpandedHints] = useState<string[]>([]);
+  const [evidence, setEvidence] = useState<Evidence>(BLANK);
+  const [actions, setActions] = useState<Record<string, string>>({});
+  const [focusItem, setFocusItem] = useState(0);
+  const [results, setResults] = useState<Partial<Record<Phase, StageResult>>>({});
+  const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [completed, setCompleted] = useState(false);
-  const [resetArmed, setResetArmed] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,301 +109,231 @@ export const KubernetesDriftLabPage: React.FC = () => {
     try {
       const response = await apiFetch(`${API}/workspace`);
       const payload = await response.json();
-      if (!response.ok) throw new Error(errorMessage(payload, 'Unable to load this lab. An active assignment is required.'));
+      if (!response.ok) throw new Error(errorMessage(payload, 'An active Kubernetes Drift assignment is required.'));
       if (payload.desired?.filename !== 'desired-deployment.yaml' ||
-          payload.files?.length !== 1 || payload.files[0]?.filename !== LIVE_FILE || !payload.learning) {
-        throw new Error('The workspace is missing a valid desired or observed snapshot.');
+          payload.files?.[0]?.filename !== 'live-snapshot.yaml' ||
+          !Array.isArray(payload.learning?.assessment?.repairs)) {
+        throw new Error('The updated guided-workflow backend is required. Please contact your facilitator.');
       }
       setDesired(payload.desired.content);
-      setLive(payload.files[0].content);
       setStarter(payload.files[0].content);
-      setLesson({ ...payload.learning, questions: shuffleQuestions(payload.learning.questions) });
-      setAssessment(null);
+      setLesson({ ...payload.learning, questions: shuffled(payload.learning.questions) });
+      setView('briefing'); setUnlocked(0); setFocusItem(0);
       setEvidence({ observations: {}, impacts: {}, plans: {}, verification: '' });
-      setQuiz(null);
-      setCompleted(false);
-      setNotice('');
+      setActions({}); setResults({}); setCompleted(false); setNotice(''); setAnswers({}); setQuiz(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load the lab.');
+      setError(err instanceof Error ? err.message : 'Could not load the lab.');
     } finally {
       setLoading(false);
     }
   }, [apiFetch]);
-
   useEffect(() => { void load(); }, [load]);
 
-  const scan = async (submit: boolean) => {
-    if (working || loading || !live.trim()) return;
-    setWorking(true);
-    setError('');
-    setNotice('');
-    setAssessment(null);
+  const phaseIndex = (phase: Phase) => PHASES.findIndex((s) => s.id === phase);
+  const updateEvidence = (phase: Phase, updated: Evidence) => {
+    setEvidence(updated); setUnlocked((value) => Math.min(value, phaseIndex(phase)));
+    setResults((old) => Object.fromEntries(Object.entries(old).filter(([key]) => phaseIndex(key as Phase) < phaseIndex(phase))) as Partial<Record<Phase, StageResult>>);
+    setNotice(''); setCompleted(false);
+  };
+  const updateAction = (id: string, value: string) => {
+    setActions((old) => ({ ...old, [id]: value }));
+    setUnlocked((value) => Math.min(value, 2));
+    setResults((old) => ({ investigate: old.investigate, decide: old.decide }));
+    setNotice(''); setCompleted(false);
+  };
+  const evaluate = async (phase: Phase, submit = false) => {
+    if (busy) return;
+    setBusy(true); setError(''); setNotice('');
     try {
-      const response = await apiFetch(`${API}/${submit ? 'submit' : 'scan'}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: [{ filename: LIVE_FILE, content: live }], evidence }),
+      const response = await apiFetch(`${API}/${submit ? 'submit' : 'stage'}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submit ? { evidence, actions } : { phase, evidence, actions }),
       });
       const payload = await response.json();
-      if (!response.ok) throw new Error(errorMessage(payload, 'Snapshot assessment failed.'));
-      const result = payload as Assessment;
-      setAssessment(result);
+      if (!response.ok) throw new Error(errorMessage(payload, 'Assessment could not be checked.'));
+      const result = payload as StageResult;
+      setResults((old) => ({ ...old, [phase]: result }));
+      if (result.stage_passed && !submit) setUnlocked((value) => Math.max(value, phaseIndex(phase) + 1));
       if (submit && result.passed) {
-        setCompleted(true);
-        setNotice(`Reconciliation completed. ${result.completion?.points_awarded ?? 0} points awarded${result.completion?.already_completed ? ' (previously completed)' : ''}.`);
+        setCompleted(true); setView('review');
+        setNotice(`Lab completed. ${result.completion?.points_awarded ?? 0} points awarded${result.completion?.already_completed ? ' (already completed)' : ''}.`);
       } else {
-        setNotice(submit ? result.message : result.finding_count === 0
-          ? 'No YAML differences. Complete every investigation and verification stage before submission.'
-          : `${result.finding_count} difference${result.finding_count === 1 ? '' : 's'} detected. Examine the evidence paths and compare against approved state.`);
+        setNotice(result.message);
       }
     } catch (err) {
-      setAssessment(null);
-      setError(err instanceof Error ? err.message : 'Snapshot assessment failed.');
+      setError(err instanceof Error ? err.message : 'Assessment failed.');
     } finally {
-      setWorking(false);
+      setBusy(false);
     }
   };
-
   const checkKnowledge = async () => {
-    if (working || !lesson) return;
-    setWorking(true);
-    setError('');
+    if (busy) return;
+    setBusy(true); setError('');
     try {
       const response = await apiFetch(`${API}/knowledge-check`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(errorMessage(payload, 'Unable to check your answers.'));
       setQuiz(payload as Quiz);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to check your answers.');
-    } finally {
-      setWorking(false);
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Knowledge check failed.'); }
+    finally { setBusy(false); }
   };
+  const phase = PHASES.find((item) => item.id === view);
+  const selected = lesson?.assessment.observations[focusItem];
+  const relevant = view === 'briefing' || view === 'review' ? undefined : results[view];
+  const activeFeedback = relevant?.feedback ?? [];
 
-  const total = assessment?.requirements.length ?? 0;
-  const met = useMemo(() => assessment?.requirements.filter((r) => r.met).length ?? 0, [assessment]);
-
-  return (
-    <main className="min-h-screen bg-slate-950 px-4 py-7 text-slate-100 md:px-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <button onClick={() => navigate('/assigned-labs')} className="mb-3 text-sm text-sky-300 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400">← Back to assigned labs</button>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kubernetes Configuration Drift Detection</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Compare approved state against an observed snapshot, find discrepancies and restore the intended Deployment.</p>
-          </div>
-          <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">OFFLINE SNAPSHOTS · 500 POINTS</span>
-        </header>
-
-        {loading ? <p role="status" className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-slate-300">Loading the approved and observed snapshots…</p> : !lesson ? (
-          <section className="rounded-xl border border-slate-700 bg-slate-900 p-6">
-            <h2 className="text-lg font-semibold">Workspace unavailable</h2>
-            <p role="alert" className="mt-3 text-sm text-rose-300">{error || 'Unable to load the lab.'}</p>
-            <button onClick={() => void load()} className="mt-4 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold hover:bg-sky-500">Retry loading</button>
+  return <main className="min-h-screen bg-slate-950 px-4 py-7 text-slate-100 md:px-8">
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <button onClick={() => navigate('/assigned-labs')} className="mb-3 text-sm text-sky-300 hover:underline">← Back to assigned labs</button>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kubernetes Configuration Drift Detection</h1>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">Investigate the original change, decide what is safe, then restore the simulated workload.</p>
+        </div>
+        <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">OFFLINE SIMULATION · 500 POINTS</span>
+      </header>
+      {loading ? <p className="rounded-xl bg-slate-900 p-6" role="status">Loading guided lab…</p> : !lesson ? (
+        <section className="rounded-xl bg-slate-900 p-6"><h2 className="font-semibold">Workspace unavailable</h2>
+          <p className="mt-2 text-sm text-rose-300" role="alert">{error}</p><button className={`${primaryStyle} mt-4`} onClick={() => void load()}>Retry</button></section>
+      ) : <>
+        <nav aria-label="Assessment steps" className="mb-6 grid gap-2 sm:grid-cols-4">
+          {PHASES.map((step, index) => <button key={step.id} disabled={index > unlocked}
+            aria-current={view === step.id ? 'step' : undefined}
+            onClick={() => { setView(step.id); setError(''); setNotice(''); }}
+            className={`rounded-xl border px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:opacity-50 ${view === step.id ? 'border-sky-400 bg-sky-950' : index < unlocked ? 'border-emerald-700 bg-slate-900' : 'border-slate-700 bg-slate-900'}`}>
+            <span className="block text-xs text-sky-300">{index < unlocked ? 'Verified' : `Step ${index + 1}`} · {step.pts} pts</span>
+            <span className="mt-1 block font-semibold">{step.title}</span>
+            <span className="mt-1 block text-xs leading-5 text-slate-400">{step.description}</span>
+          </button>)}
+        </nav>
+        {view === 'briefing' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <h2 className="text-xl font-semibold">Your mission</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{lesson.scenario}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">{lesson.concepts.map((concept) => <div key={concept.title} className="rounded-lg bg-slate-950 p-4"><h3 className="font-semibold">{concept.title}</h3><p className="mt-2 text-sm leading-6 text-slate-300">{concept.body}</p></div>)}</div>
+          <p className="mt-4 text-xs text-slate-400">{lesson.course.safety} · About {lesson.course.duration_minutes} minutes.</p>
+          <button className={`${primaryStyle} mt-6`} onClick={() => setView('investigate')}>Begin investigation</button>
+        </section>}
+        {phase && <div className="space-y-5">
+          <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">{phase.title} <span className="text-sm font-normal text-slate-400">· {phase.pts} points</span></h2><span className="text-xs text-slate-400">Step {phaseIndex(phase.id) + 1} of 4</span></div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{
+              view === 'investigate' ? 'Compare the untouched snapshots below. The observed values must come from the ORIGINAL snapshot, not your later corrections.' :
+              view === 'decide' ? 'Now that the original differences are verified, choose how you would respond to each change.' :
+              view === 'reconcile' ? 'Make small, named changes to the simulated live snapshot. Full-document paste is not accepted. Check the resulting preview.' :
+              'The configuration may match without proving the application runs. Explain what this offline comparison verifies, then submit.'
+            }</p>
           </section>
-        ) : <>
-          <div className="mb-6 rounded-xl border border-slate-700 bg-slate-900 px-5 py-4">
-            <p className="text-sm text-slate-200"><strong>Safety boundary:</strong> {lesson.course.safety}</p>
-            <p className="mt-2 text-xs text-slate-400">Estimated time: {lesson.course.duration_minutes} min · Your edits stay in this page until assessment. No YAML is executed.</p>
-          </div>
-          <nav aria-label="Lab stages" className="mb-6 grid gap-2 sm:grid-cols-3">
-            {([['briefing', '1. Mission briefing'], ['investigate', '2. Compare and reconcile'], ['review', '3. Reflect and review']] as const).map(([id, title]) => (
-              <button key={id} onClick={() => setStage(id)} aria-current={stage === id ? 'step' : undefined}
-                className={`rounded-xl border px-4 py-3 text-left text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${stage === id ? 'border-sky-400 bg-sky-950 text-white' : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500'}`}>{title}</button>
-            ))}
-          </nav>
-
-          {stage === 'briefing' && <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,1fr)]">
-            <section className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-              <h2 className="text-xl font-semibold">Your mission</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300">{lesson.scenario}</p>
-              <h3 className="mt-7 font-semibold">What you'll practice</h3>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-300">{lesson.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul>
-              <button onClick={() => setStage('investigate')} className="mt-7 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold hover:bg-sky-500">Begin investigation →</button>
-            </section>
-            <aside className="space-y-3">
-              <h2 className="font-semibold">Concepts to know</h2>
-              {lesson.concepts.map((concept) => <section key={concept.title} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-                <h3 className="text-sm font-semibold">{concept.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{concept.body}</p>
-              </section>)}
-            </aside>
-          </div>}
-
-          {stage === 'investigate' && <div className="space-y-6">
-            <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-              <h2 className="text-lg font-semibold">Investigation checklist</h2>
-              <p className="mt-1 text-sm text-slate-400">Use evidence from both snapshots. Reveal a hint only when needed.</p>
-              <ol className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{lesson.tasks.map((task, i) => (
-                <li key={task.id} className="rounded-lg border border-slate-700 bg-slate-950 p-4">
-                  <div className="flex items-start gap-3"><span className="shrink-0 rounded-md bg-slate-800 px-2 py-1 text-xs text-sky-300">{i + 1}</span>
-                    <div><h3 className="text-sm font-semibold">{task.title}</h3><p className="mt-2 text-xs leading-5 text-slate-300">{task.instruction}</p>
-                      <button onClick={() => setExpandedHints((current) => current.includes(task.id) ? current.filter((id) => id !== task.id) : [...current, task.id])}
-                        aria-expanded={expandedHints.includes(task.id)} className="mt-3 text-xs font-medium text-sky-300 underline underline-offset-4">{expandedHints.includes(task.id) ? 'Hide hint' : 'Reveal hint'}</button>
-                      {expandedHints.includes(task.id) && <p className="mt-2 text-xs leading-5 text-amber-200">{task.hint}</p>}
-                    </div>
-                  </div>
-                </li>
-              ))}</ol>
-            </section>
-
-            <div className="grid items-start gap-5 lg:grid-cols-2">
-              <section className="min-w-0 rounded-xl border border-sky-900 bg-slate-900 p-5">
-                <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-semibold">Desired state</h2><span className="text-xs font-semibold text-sky-300">READ ONLY</span></div>
-                <p className="mb-3 text-xs leading-5 text-slate-400">`desired-deployment.yaml` — approved baseline, supplied by the server.</p>
-                <pre aria-label="Approved desired Kubernetes YAML" className="max-h-[550px] min-h-72 overflow-auto whitespace-pre rounded-lg border border-slate-700 bg-slate-950 p-4 text-xs leading-5 text-slate-200">{desired}</pre>
-              </section>
-              <section className="min-w-0 rounded-xl border border-slate-700 bg-slate-900 p-5">
-                <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-semibold">Observed snapshot</h2><span className="text-xs font-semibold text-amber-300">EDITABLE</span></div>
-                <label htmlFor="live-drift-yaml" className="mb-3 block text-xs leading-5 text-slate-400">`live-snapshot.yaml` — modify only this simulated live YAML. No real cluster is changed.</label>
-                <textarea id="live-drift-yaml" value={live} spellCheck={false} onChange={(event) => {
-                  setLive(event.target.value);
-                  setAssessment(null); setCompleted(false); setError(''); setNotice(''); setResetArmed(false);
-                }} className="h-[550px] w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-base leading-6 text-slate-100 outline-none focus:border-sky-400 md:text-sm" />
-              </section>
+          {view === 'investigate' && <>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <SnapshotPanel title="Original observed" subtitle="Snapshot before any corrections" content={starter}/>
+              <SnapshotPanel title="Approved desired" subtitle="Authoritative comparison baseline" content={desired}/>
             </div>
-            <section className="rounded-xl border border-slate-700 bg-slate-900 p-5" aria-labelledby="evidence-heading">
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 id="evidence-heading" className="text-lg font-semibold">Evidence and decision record</h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{lesson.assessment.instructions}</p>
-                </div>
-                <span className="rounded-lg border border-slate-600 px-3 py-1 text-sm font-semibold">350 pts for investigation & verification</span>
+            {selected && <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div><p className="text-xs text-slate-400">Difference {focusItem + 1} of {lesson.assessment.observations.length}</p>
+                  <h3 className="mt-1 text-lg font-semibold">{selected.title}</h3><p className="mt-1 break-all font-mono text-xs text-sky-300">{selected.path}</p></div>
+                <div className="flex gap-2"><button className={mutedStyle} disabled={focusItem === 0} onClick={() => setFocusItem((i) => i - 1)}>Previous</button>
+                  <button className={mutedStyle} disabled={focusItem === lesson.assessment.observations.length - 1} onClick={() => setFocusItem((i) => i + 1)}>Next</button></div>
               </div>
-              <details className="mb-5 rounded-lg border border-slate-700 p-3">
-                <summary className="cursor-pointer text-sm font-medium text-sky-300">View original observed snapshot (read-only)</summary>
-                <pre className="mt-3 max-h-72 overflow-auto whitespace-pre rounded-lg bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-200">{starter}</pre>
-              </details>
-              <h3 className="font-semibold">1. Detect and document — 120 pts</h3>
-              <p className="mt-1 text-sm text-slate-400">Choose values from the *original* observed snapshot and approved desired state.</p>
-              <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                {lesson.assessment.observations.map((item) => (
-                  <fieldset key={item.id} className="min-w-0 rounded-lg border border-slate-700 bg-slate-950 p-4">
-                    <legend className="px-1 text-sm font-semibold">{item.title}</legend>
-                    <p className="mb-3 break-all font-mono text-xs text-slate-400">{item.path}</p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {(['observed', 'desired'] as const).map((field) => (
-                        <label key={field} className="block text-xs text-slate-300">
-                          <span className="mb-1 block font-semibold">{field === 'observed' ? 'Original observed' : 'Approved desired'}</span>
-                          <select aria-label={`${item.title} ${field}`} value={evidence.observations[item.id]?.[field] ?? ''}
-                            onChange={(event) => { setEvidence((current) => ({ ...current, observations: { ...current.observations, [item.id]: { observed: current.observations[item.id]?.observed ?? '', desired: current.observations[item.id]?.desired ?? '', [field]: event.target.value } } })); setAssessment(null); }}
-                            className="w-full min-w-0 rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
-                            <option value="">Choose value</option>
-                            {(field === 'observed' ? item.observed_options : item.desired_options).map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
-                          </select>
-                        </label>
-                      ))}
-                    </div>
-                    <label className="mt-3 block text-xs text-slate-300">
-                      <span className="mb-1 block font-semibold">2. Classify the impact — 90 pts across all six findings</span>
-                      <select aria-label={`${item.title} impact`} value={evidence.impacts[item.id] ?? ''}
-                        onChange={(event) => { setEvidence((current) => ({ ...current, impacts: { ...current.impacts, [item.id]: event.target.value } })); setAssessment(null); }}
-                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
-                        <option value="">Choose category</option>
-                        {lesson.assessment.impact_options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
-                      </select>
-                    </label>
-                  </fieldset>
-                ))}
-              </div>
-              <h3 className="mt-7 font-semibold">3. Choose a response plan — 90 pts</h3>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                {lesson.assessment.plans.map((item) => <label key={item.id} className="block rounded-lg border border-slate-700 bg-slate-950 p-4 text-sm">
-                  <span className="mb-2 block font-medium">{item.title}</span>
-                  <select aria-label={`${item.title} remediation decision`} value={evidence.plans[item.id] ?? ''}
-                    onChange={(event) => { setEvidence((current) => ({ ...current, plans: { ...current.plans, [item.id]: event.target.value } })); setAssessment(null); }}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
-                    <option value="">Choose an action</option>
-                    {item.options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                {(['observed', 'desired'] as const).map((field) => <label key={field} className="block text-sm">
+                  <span className="font-semibold">{field === 'observed' ? 'Before: original observed' : 'Target: approved desired'}</span>
+                  <select className={selectStyle} value={evidence.observations[selected.id]?.[field] ?? ''}
+                    onChange={(event) => updateEvidence('investigate', { ...evidence, observations: { ...evidence.observations, [selected.id]: { observed: evidence.observations[selected.id]?.observed ?? '', desired: evidence.observations[selected.id]?.desired ?? '', [field]: event.target.value } } })}>
+                    <option value="">Choose a value</option>
+                    {(field === 'observed' ? selected.observed_options : selected.desired_options).map((o) => <option key={o.id} value={o.id}>{o.text}</option>)}
                   </select>
+                  <FeedbackMark ok={activeFeedback.find((f) => f.id === selected.id)?.[field === 'observed' ? 'observed_ok' : 'desired_ok']} hint={`Compare ${selected.path} in the ${field === 'observed' ? 'original observed' : 'approved desired'} YAML.`}/>
                 </label>)}
+                <label className="block text-sm"><span className="font-semibold">What could this difference affect?</span>
+                  <select className={selectStyle} value={evidence.impacts[selected.id] ?? ''}
+                    onChange={(event) => updateEvidence('investigate', { ...evidence, impacts: { ...evidence.impacts, [selected.id]: event.target.value } })}>
+                    <option value="">Choose an impact</option>
+                    {lesson.assessment.impact_options.map((o) => <option key={o.id} value={o.id}>{o.text}</option>)}
+                  </select><FeedbackMark ok={activeFeedback.find((f) => f.id === selected.id)?.impact_ok} hint="Consider the operational or security consequence of this field."/></label>
               </div>
-              <p className="mt-6 rounded-lg bg-slate-950 p-3 text-sm leading-6 text-slate-300">4. Reconcile — 150 pts. Make targeted corrections in the editable YAML above. A valid matching snapshot is necessary, but it is not sufficient for completion.</p>
-              <h3 className="mt-7 font-semibold">5. Verify the outcome — 50 pts</h3>
-              <label className="mt-2 block max-w-2xl text-sm text-slate-300">
-                <span className="mb-2 block">{lesson.assessment.verification.title}</span>
-                <select aria-label="Verification conclusion" value={evidence.verification}
-                  onChange={(event) => { setEvidence((current) => ({ ...current, verification: event.target.value })); setAssessment(null); }}
-                  className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100">
-                  <option value="">Choose a conclusion</option>
-                  {lesson.assessment.verification.options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
-                </select>
-              </label>
-              <p className="mt-4 text-xs leading-5 text-slate-400">Scan evaluates all five stages and previews the assessment. Only a fully completed submission awards points to your account.</p>
-            </section>
-            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-              <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                <h2 className="font-semibold">Validate your reconciliation</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">Scan for drift first. A scan gives feedback but never awards points. A complete investigation, impact assessment, response plan, reconciliation and verification award 500 points once per assignment. Copying the desired YAML alone cannot complete the lab.</p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <button disabled={working || !live.trim()} onClick={() => void scan(false)} className="rounded-lg border border-sky-500 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-950 disabled:cursor-not-allowed disabled:opacity-50">{working ? 'Assessing…' : 'Scan for drift'}</button>
-                  <button disabled={working || !live.trim()} onClick={() => void scan(true)} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50">Submit reconciliation</button>
-                  <button disabled={working} onClick={() => {
-                    if (!resetArmed) { setResetArmed(true); return; }
-                    setLive(starter); setAssessment(null); setCompleted(false); setError(''); setNotice('Starter snapshot restored. Your edits have been replaced.'); setResetArmed(false);
-                  }} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50">{resetArmed ? 'Confirm restore (discard edits)' : 'Restore starter snapshot'}</button>
-                  {resetArmed && <button onClick={() => setResetArmed(false)} className="text-sm text-slate-300 underline underline-offset-4">Cancel</button>}
-                </div>
-                {error && <p role="alert" className="mt-4 rounded-lg border border-rose-800 bg-rose-950/40 p-3 text-sm text-rose-200">{error}</p>}
-                {notice && <p role="status" className="mt-4 rounded-lg bg-slate-950 p-3 text-sm text-slate-200">{notice}</p>}
-                {completed && <button onClick={() => setStage('review')} className="mt-4 text-sm font-semibold text-sky-300 underline underline-offset-4">Review what you learned →</button>}
-              </section>
-              <aside className="space-y-4" aria-live="polite">
-                <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                  <h2 className="font-semibold">Drift findings</h2>
-                  {!assessment ? <p className="mt-3 text-sm text-slate-400">Run a scan to see the differences, keyed by configuration path.</p> : assessment.findings.length === 0 ? <p className="mt-3 text-sm text-emerald-300">No drift found in the supplied snapshot.</p> : (
-                    <ul className="mt-3 max-h-96 space-y-3 overflow-auto">{assessment.findings.map((finding, index) => <li key={`${finding.id}-${index}`} className="rounded-lg border border-slate-700 bg-slate-950 p-3">
-                      <span className="text-xs font-bold text-amber-300">{finding.severity}</span>
-                      <h3 className="mt-1 break-words text-sm font-semibold">{finding.title}</h3>
-                      <p className="mt-1 break-all font-mono text-xs text-sky-300">{finding.path}</p>
-                      <p className="mt-2 text-xs leading-5 text-slate-300">{finding.explanation}</p>
-                      <p className="mt-2 text-xs leading-5 text-slate-300"><strong>Remediation:</strong> {finding.recommendation}</p>
-                    </li>)}</ul>
-                  )}
-                </section>
-                {assessment && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                  <h2 className="font-semibold">Assessment progress · {assessment.review.score_preview}/{assessment.review.max_points}</h2>
-                  <p className="mt-2 text-xs text-slate-400">Preview only. No points awarded until every stage passes.</p>
-                  <ul className="mt-3 space-y-2">{assessment.review.phases.map((phase) => <li key={phase.id} className="flex justify-between gap-2 text-xs text-slate-200"><span>{phase.title}</span><strong className="shrink-0">{phase.score}/{phase.max_points}</strong></li>)}</ul>
-                </section>}
-                {assessment && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-                  <h2 className="font-semibold">Reconciliation requirements</h2>
-                  <p className="mt-2 text-xs text-slate-400">{met} of {total} checks passed in the last scan.</p>
-                  <ul className="mt-3 space-y-2">{assessment.requirements.map((req) => <li key={req.id} className={`text-xs leading-5 ${req.met ? 'text-emerald-300' : 'text-amber-200'}`}>{req.met ? '✓' : '○'} {req.title}</li>)}</ul>
-                </section>}
-              </aside>
-            </div>
-          </div>}
-
-          {stage === 'review' && <section className="max-w-4xl rounded-xl border border-slate-800 bg-slate-900 p-6">
-            <h2 className="text-xl font-semibold">Knowledge check</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Review the difference between drift and proven compromise. This quiz is formative and does not change your score.</p>
-            <div className="mt-6 space-y-7">{lesson.questions.map((question, index) => {
-              const feedback = quiz?.results.find((item) => item.question_id === question.id);
-              return <fieldset key={question.id} className="border-t border-slate-700 pt-5">
-                <legend className="text-sm font-semibold leading-6">{index + 1}. {question.question}</legend>
-                <div className="mt-3 space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-200 hover:border-sky-600">
-                  <input type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => { setAnswers((a) => ({ ...a, [question.id]: option.id })); setQuiz(null); }} className="mt-1 accent-sky-500" />
-                  <span>{option.text}</span>
-                </label>)}</div>
-                {feedback && <p className={`mt-3 text-sm leading-6 ${feedback.correct ? 'text-emerald-300' : 'text-amber-200'}`}>
-                  {feedback.correct ? 'Correct.' : `Consider: ${question.options.find((option) => option.id === feedback.correct_option_id)?.text ?? 'Review the lesson.'}`} {feedback.explanation}
-                </p>}
-              </fieldset>;
-            })}</div>
-            <button disabled={working || lesson.questions.some((q) => !answers[q.id])} onClick={() => void checkKnowledge()} className="mt-6 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50">{working ? 'Checking…' : 'Check answers'}</button>
-            {quiz && <p role="status" className="mt-4 text-sm text-slate-200">{quiz.correct_count} of {quiz.total_questions} correct. {quiz.message}</p>}
-            {error && <p role="alert" className="mt-3 text-sm text-rose-300">{error}</p>}
-            <button onClick={() => setStage('investigate')} className="mt-5 block text-sm font-medium text-sky-300 underline underline-offset-4">Return to snapshots →</button>
+              <div className="mt-5 flex flex-wrap gap-2" aria-label="Choose difference">
+                {lesson.assessment.observations.map((item, index) => {
+                  const status = activeFeedback.find((f) => f.id === item.id);
+                  const verified = status?.observed_ok && status?.desired_ok && status?.impact_ok;
+                  return <button key={item.id} onClick={() => setFocusItem(index)}
+                    aria-label={`Difference ${index + 1}: ${item.title}${status ? verified ? ', verified' : ', needs attention' : ''}`}
+                    aria-current={index === focusItem ? 'step' : undefined}
+                    className={`rounded-md px-3 py-2 text-xs font-semibold ${index === focusItem ? 'bg-sky-600 text-white' : status ? verified ? 'bg-emerald-900 text-emerald-100' : 'bg-amber-900 text-amber-100' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{index + 1}{status ? verified ? ' ✓' : ' !' : ''}</button>;
+                })}
+              </div>
+            </section>}
+          </>}
+          {view === 'decide' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+            <h3 className="text-lg font-semibold">How should the team respond?</h3>
+            <p className="mt-2 text-sm text-slate-400">An unexpected object needs ownership review; drift does not automatically prove an attack.</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">{lesson.assessment.plans.map((item) => <label key={item.id} className="block rounded-lg bg-slate-950 p-4 text-sm">
+              <span className="font-semibold">{item.title}</span><select className={selectStyle} value={evidence.plans[item.id] ?? ''}
+                onChange={(event) => updateEvidence('decide', { ...evidence, plans: { ...evidence.plans, [item.id]: event.target.value } })}>
+                <option value="">Select response</option>{item.options.map((o) => <option key={o.id} value={o.id}>{o.text}</option>)}
+              </select><FeedbackMark ok={activeFeedback.find((f) => f.id === item.id)?.correct} hint="Review the safest response for this particular difference."/>
+            </label>)}</div>
           </section>}
-        </>}
-      </div>
-    </main>
-  );
+          {view === 'reconcile' && <>
+            <div className="grid gap-4 lg:grid-cols-2"><SnapshotPanel title="Original observed" subtitle="Trusted starting point" content={starter}/>
+              <SnapshotPanel title="Approved desired" subtitle="Read-only target" content={desired}/></div>
+            <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+              <h3 className="font-semibold">Targeted remediation changes</h3><p className="mt-2 text-sm text-slate-400">Choose a concrete change for each field. The server rebuilds the outcome from the starting snapshot; you cannot overwrite the whole document.</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">{lesson.assessment.repairs.map((item) => <label key={item.id} className="block rounded-lg bg-slate-950 p-4 text-sm">
+                <span className="font-semibold">{item.title}</span><select className={selectStyle} value={actions[item.id] ?? ''}
+                  onChange={(event) => updateAction(item.id, event.target.value)}><option value="">Choose a change</option>
+                  {item.options.map((o) => <option key={o.id} value={o.id}>{o.text}</option>)}</select>
+                <FeedbackMark ok={activeFeedback.find((f) => f.id === item.id)?.selected} hint="Select an action for this field." />
+              </label>)}</div>
+            </section>
+            {relevant?.snapshot_preview && <><SnapshotPanel title="Resulting simulated snapshot" subtitle="Server-generated preview, not a real Kubernetes deployment" content={relevant.snapshot_preview}/>
+              <section className="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 className="font-semibold">Remaining differences: {relevant.finding_count}</h3>
+                {relevant.findings?.length ? <ul className="mt-3 space-y-2 text-sm text-amber-200">{relevant.findings.map((f) => <li key={f.id}>{f.title} · <code className="break-all">{f.path}</code></li>)}</ul>
+                  : <p className="mt-2 text-sm text-emerald-300">No differences in the simulated snapshot. Continue to verification.</p>}</section></>}
+          </>}
+          {view === 'verify' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+            <h3 className="text-lg font-semibold">What have we actually verified?</h3>
+            <p className="mt-2 text-sm text-slate-300">Static snapshot comparison cannot prove that a Deployment starts, passes admission, reaches readiness, or serves traffic.</p>
+            <label className="mt-4 block max-w-2xl text-sm"><span className="font-semibold">{lesson.assessment.verification.title}</span>
+              <select className={selectStyle} value={evidence.verification}
+                onChange={(event) => updateEvidence('verify', { ...evidence, verification: event.target.value })}>
+                <option value="">Choose the supported conclusion</option>{lesson.assessment.verification.options.map((o) => <option key={o.id} value={o.id}>{o.text}</option>)}
+              </select><FeedbackMark ok={activeFeedback.find((f) => f.id === 'verification')?.correct} hint="Only offline YAML agreement was checked."/></label>
+            <div className="mt-5 rounded-lg bg-slate-950 p-4 text-sm text-slate-300">Your previous stages were checked by the server. The final submission repeats every prerequisite check before awarding the 500 points once.</div>
+          </section>}
+          <section className="rounded-xl border border-slate-700 bg-slate-900 p-5" aria-live="polite">
+            <div className="flex flex-wrap items-center gap-3">
+              {phaseIndex(phase.id) > 0 && <button className={mutedStyle} onClick={() => setView(PHASES[phaseIndex(phase.id) - 1].id)}>Back</button>}
+              <button className={primaryStyle} disabled={busy} onClick={() => void evaluate(phase.id)}>{busy ? 'Checking…' : `Check ${phase.title.toLowerCase()}`}</button>
+              {relevant?.stage_passed && view !== 'verify' && <button className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold hover:bg-emerald-600" onClick={() => setView(PHASES[phaseIndex(phase.id) + 1].id)}>Continue to {PHASES[phaseIndex(phase.id) + 1].title}</button>}
+              {view === 'verify' && relevant?.stage_passed && <button className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold hover:bg-emerald-600 disabled:opacity-50" disabled={busy} onClick={() => void evaluate('verify', true)}>Submit completed assessment</button>}
+            </div>
+            {notice && <p className={`mt-3 text-sm ${relevant?.stage_passed ? 'text-emerald-300' : 'text-amber-200'}`} role="status">{notice}</p>}
+            {error && <p className="mt-3 text-sm text-rose-300" role="alert">{error}</p>}
+            {relevant && <p className="mt-2 text-xs text-slate-400">Feedback applies to this step only. {relevant.stage_passed ? 'Validated; you can continue.' : 'Correct highlighted items, then check again.'}</p>}
+          </section>
+        </div>}
+        {view === 'review' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <h2 className="text-xl font-semibold">{completed ? 'Assessment completed' : 'Review your understanding'}</h2>
+          {notice && <p role="status" className="mt-3 text-sm text-emerald-300">{notice}</p>}
+          <p className="mt-2 text-sm text-slate-300">This knowledge check provides learning feedback; it does not award additional completion points.</p>
+          <div className="mt-5 space-y-5">{lesson.questions.map((question, index) => {
+            const feedback = quiz?.results.find((item) => item.question_id === question.id);
+            return <fieldset key={question.id} className="border-t border-slate-700 pt-4"><legend className="text-sm font-semibold">{index + 1}. {question.question}</legend>
+              <div className="mt-3 space-y-2">{question.options.map((option) => <label key={option.id} className="flex items-start gap-3 rounded-lg bg-slate-950 p-3 text-sm">
+                <input className="mt-1" type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => { setAnswers((old) => ({ ...old, [question.id]: option.id })); setQuiz(null); }}/><span>{option.text}</span>
+              </label>)}</div>{feedback && <p className={`mt-2 text-sm ${feedback.correct ? 'text-emerald-300' : 'text-amber-200'}`}>{feedback.correct ? 'Correct.' : 'Review the reasoning.'} {feedback.explanation}</p>}
+            </fieldset>;
+          })}</div>
+          <button className={`${primaryStyle} mt-5`} disabled={busy || lesson.questions.some((q) => !answers[q.id])} onClick={() => void checkKnowledge()}>Check my answers</button>
+          {quiz && <p role="status" className="mt-3 text-sm">{quiz.correct_count} of {quiz.total_questions} correct. {quiz.message}</p>}
+          <button className="mt-5 block text-sm text-sky-300 underline" onClick={() => setView('verify')}>Back to verification</button>
+        </section>}
+      </>}
+    </div>
+  </main>;
 };
 
 export default KubernetesDriftLabPage;
