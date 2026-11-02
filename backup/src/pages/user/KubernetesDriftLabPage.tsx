@@ -16,7 +16,30 @@ type Lesson = {
   concepts: { title: string; body: string }[];
   tasks: { id: string; title: string; instruction: string; hint: string }[];
   questions: Question[];
+  assessment: InvestigationAssessment;
 };
+type Choice = { id: string; text: string };
+type InvestigationItem = {
+  id: string; title: string; path: string;
+  observed_options: Choice[]; desired_options: Choice[];
+};
+type InvestigationAssessment = {
+  instructions: string;
+  observations: InvestigationItem[];
+  impact_options: Choice[];
+  plans: { id: string; title: string; options: Choice[] }[];
+  verification: { title: string; options: Choice[] };
+};
+type Evidence = {
+  observations: Record<string, { observed: string; desired: string }>;
+  impacts: Record<string, string>;
+  plans: Record<string, string>;
+  verification: string;
+};
+type PhaseScore = { id: string; title: string; score: number; max_points: number };
+
+const EMPTY_EVIDENCE: Evidence = { observations: {}, impacts: {}, plans: {}, verification: '' };
+
 type Quiz = {
   correct_count: number; total_questions: number; message: string;
   results: { question_id: string; correct: boolean; correct_option_id: string; explanation: string }[];
@@ -24,6 +47,7 @@ type Quiz = {
 type Assessment = {
   findings: Finding[]; finding_count: number; requirements: Requirement[];
   passed: boolean; message: string;
+  review: { phases: PhaseScore[]; score_preview: number; max_points: number; passed: boolean };
   completion?: { already_completed: boolean; points_awarded: number } | null;
 };
 const API = '/api/v1/kubernetes-drift-lab';
@@ -59,6 +83,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [evidence, setEvidence] = useState<Evidence>(EMPTY_EVIDENCE);
   const [expandedHints, setExpandedHints] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
@@ -83,6 +108,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
       setStarter(payload.files[0].content);
       setLesson({ ...payload.learning, questions: shuffleQuestions(payload.learning.questions) });
       setAssessment(null);
+      setEvidence({ observations: {}, impacts: {}, plans: {}, verification: '' });
       setQuiz(null);
       setCompleted(false);
       setNotice('');
@@ -105,7 +131,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
       const response = await apiFetch(`${API}/${submit ? 'submit' : 'scan'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: [{ filename: LIVE_FILE, content: live }] }),
+        body: JSON.stringify({ files: [{ filename: LIVE_FILE, content: live }], evidence }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(errorMessage(payload, 'Snapshot assessment failed.'));
@@ -116,7 +142,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
         setNotice(`Reconciliation completed. ${result.completion?.points_awarded ?? 0} points awarded${result.completion?.already_completed ? ' (previously completed)' : ''}.`);
       } else {
         setNotice(submit ? result.message : result.finding_count === 0
-          ? 'No drift detected in this snapshot. Review the integrity checks, then submit.'
+          ? 'No YAML differences. Complete every investigation and verification stage before submission.'
           : `${result.finding_count} difference${result.finding_count === 1 ? '' : 's'} detected. Examine the evidence paths and compare against approved state.`);
       }
     } catch (err) {
@@ -159,7 +185,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kubernetes Configuration Drift Detection</h1>
             <p className="mt-2 text-sm leading-6 text-slate-300">Compare approved state against an observed snapshot, find discrepancies and restore the intended Deployment.</p>
           </div>
-          <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">OFFLINE SNAPSHOTS · 250 POINTS</span>
+          <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">OFFLINE SNAPSHOTS · 500 POINTS</span>
         </header>
 
         {loading ? <p role="status" className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-slate-300">Loading the approved and observed snapshots…</p> : !lesson ? (
@@ -229,10 +255,79 @@ export const KubernetesDriftLabPage: React.FC = () => {
                 }} className="h-[550px] w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-base leading-6 text-slate-100 outline-none focus:border-sky-400 md:text-sm" />
               </section>
             </div>
+            <section className="rounded-xl border border-slate-700 bg-slate-900 p-5" aria-labelledby="evidence-heading">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="evidence-heading" className="text-lg font-semibold">Evidence and decision record</h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{lesson.assessment.instructions}</p>
+                </div>
+                <span className="rounded-lg border border-slate-600 px-3 py-1 text-sm font-semibold">350 pts for investigation & verification</span>
+              </div>
+              <details className="mb-5 rounded-lg border border-slate-700 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-sky-300">View original observed snapshot (read-only)</summary>
+                <pre className="mt-3 max-h-72 overflow-auto whitespace-pre rounded-lg bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-200">{starter}</pre>
+              </details>
+              <h3 className="font-semibold">1. Detect and document — 120 pts</h3>
+              <p className="mt-1 text-sm text-slate-400">Choose values from the *original* observed snapshot and approved desired state.</p>
+              <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                {lesson.assessment.observations.map((item) => (
+                  <fieldset key={item.id} className="min-w-0 rounded-lg border border-slate-700 bg-slate-950 p-4">
+                    <legend className="px-1 text-sm font-semibold">{item.title}</legend>
+                    <p className="mb-3 break-all font-mono text-xs text-slate-400">{item.path}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {(['observed', 'desired'] as const).map((field) => (
+                        <label key={field} className="block text-xs text-slate-300">
+                          <span className="mb-1 block font-semibold">{field === 'observed' ? 'Original observed' : 'Approved desired'}</span>
+                          <select aria-label={`${item.title} ${field}`} value={evidence.observations[item.id]?.[field] ?? ''}
+                            onChange={(event) => { setEvidence((current) => ({ ...current, observations: { ...current.observations, [item.id]: { observed: current.observations[item.id]?.observed ?? '', desired: current.observations[item.id]?.desired ?? '', [field]: event.target.value } } })); setAssessment(null); }}
+                            className="w-full min-w-0 rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
+                            <option value="">Choose value</option>
+                            {(field === 'observed' ? item.observed_options : item.desired_options).map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="mt-3 block text-xs text-slate-300">
+                      <span className="mb-1 block font-semibold">2. Classify the impact — 90 pts across all six findings</span>
+                      <select aria-label={`${item.title} impact`} value={evidence.impacts[item.id] ?? ''}
+                        onChange={(event) => { setEvidence((current) => ({ ...current, impacts: { ...current.impacts, [item.id]: event.target.value } })); setAssessment(null); }}
+                        className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
+                        <option value="">Choose category</option>
+                        {lesson.assessment.impact_options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+                      </select>
+                    </label>
+                  </fieldset>
+                ))}
+              </div>
+              <h3 className="mt-7 font-semibold">3. Choose a response plan — 90 pts</h3>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                {lesson.assessment.plans.map((item) => <label key={item.id} className="block rounded-lg border border-slate-700 bg-slate-950 p-4 text-sm">
+                  <span className="mb-2 block font-medium">{item.title}</span>
+                  <select aria-label={`${item.title} remediation decision`} value={evidence.plans[item.id] ?? ''}
+                    onChange={(event) => { setEvidence((current) => ({ ...current, plans: { ...current.plans, [item.id]: event.target.value } })); setAssessment(null); }}
+                    className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-2 text-sm text-slate-100">
+                    <option value="">Choose an action</option>
+                    {item.options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+                  </select>
+                </label>)}
+              </div>
+              <p className="mt-6 rounded-lg bg-slate-950 p-3 text-sm leading-6 text-slate-300">4. Reconcile — 150 pts. Make targeted corrections in the editable YAML above. A valid matching snapshot is necessary, but it is not sufficient for completion.</p>
+              <h3 className="mt-7 font-semibold">5. Verify the outcome — 50 pts</h3>
+              <label className="mt-2 block max-w-2xl text-sm text-slate-300">
+                <span className="mb-2 block">{lesson.assessment.verification.title}</span>
+                <select aria-label="Verification conclusion" value={evidence.verification}
+                  onChange={(event) => { setEvidence((current) => ({ ...current, verification: event.target.value })); setAssessment(null); }}
+                  className="w-full rounded-md border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100">
+                  <option value="">Choose a conclusion</option>
+                  {lesson.assessment.verification.options.map((option) => <option key={option.id} value={option.id}>{option.text}</option>)}
+                </select>
+              </label>
+              <p className="mt-4 text-xs leading-5 text-slate-400">Scan evaluates all five stages and previews the assessment. Only a fully completed submission awards points to your account.</p>
+            </section>
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
               <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
                 <h2 className="font-semibold">Validate your reconciliation</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-300">Scan for drift first. A scan gives feedback but never awards points. Submitting a fully reconciled snapshot awards 250 points once per assignment.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">Scan for drift first. A scan gives feedback but never awards points. A complete investigation, impact assessment, response plan, reconciliation and verification award 500 points once per assignment. Copying the desired YAML alone cannot complete the lab.</p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <button disabled={working || !live.trim()} onClick={() => void scan(false)} className="rounded-lg border border-sky-500 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-950 disabled:cursor-not-allowed disabled:opacity-50">{working ? 'Assessing…' : 'Scan for drift'}</button>
                   <button disabled={working || !live.trim()} onClick={() => void scan(true)} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50">Submit reconciliation</button>
@@ -259,6 +354,11 @@ export const KubernetesDriftLabPage: React.FC = () => {
                     </li>)}</ul>
                   )}
                 </section>
+                {assessment && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+                  <h2 className="font-semibold">Assessment progress · {assessment.review.score_preview}/{assessment.review.max_points}</h2>
+                  <p className="mt-2 text-xs text-slate-400">Preview only. No points awarded until every stage passes.</p>
+                  <ul className="mt-3 space-y-2">{assessment.review.phases.map((phase) => <li key={phase.id} className="flex justify-between gap-2 text-xs text-slate-200"><span>{phase.title}</span><strong className="shrink-0">{phase.score}/{phase.max_points}</strong></li>)}</ul>
+                </section>}
                 {assessment && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
                   <h2 className="font-semibold">Reconciliation requirements</h2>
                   <p className="mt-2 text-xs text-slate-400">{met} of {total} checks passed in the last scan.</p>
