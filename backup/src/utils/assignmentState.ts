@@ -64,8 +64,11 @@ function inWords(from: number, to: number, ahead: boolean) {
   const days = calendarDays(from, to);
   if (days >= 2) return plural(days, 'day');
   if (days === 1) return ahead ? 'tomorrow' : plural(1, 'day');
-  const hours = Math.max(1, Math.round((to - from) / HOUR));
-  return plural(hours, 'hour');
+  // Under an hour is counted in minutes: "Due in 1 hour" with five minutes left would mislead.
+  const minutes = Math.round((to - from) / 60e3);
+  if (minutes < 1) return ahead ? 'under a minute' : 'moments';
+  if (minutes < 60) return plural(minutes, 'minute');
+  return plural(Math.round((to - from) / HOUR), 'hour');
 }
 
 export function dueText(item: AssignmentTiming, now = new Date()): string {
@@ -78,7 +81,10 @@ export function dueText(item: AssignmentTiming, now = new Date()): string {
   }
   const end = time(item.end);
   if (end === null) return 'No deadline';
-  if (state === 'closed') return `Closed ${inWords(end, at, false)} ago`;
+  if (state === 'closed') {
+    const words = inWords(end, at, false);
+    return words === 'moments' ? 'Closed just now' : `Closed ${words} ago`;
+  }
   const words = inWords(at, end, true);
   return words === 'tomorrow' ? 'Due tomorrow' : `Due in ${words}`;
 }
