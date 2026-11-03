@@ -182,6 +182,9 @@ function StatChip({ icon: Icon, label, value, prefix = '', unit }: {
   );
 }
 
+// The labs graded on a separate machine (Linux sysadmin, workshop, race).
+const GRADER_LABS = ['linux-sysadmin-lab', 'linux-security-workshop', 'race-conditions-lab'];
+
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, apiFetch } = useAuth();
@@ -197,12 +200,9 @@ export const UserDashboard: React.FC = () => {
   // minimal signup form). Not dismissible — it tracks user.profile_completed
   // directly and disappears on its own once the profile is actually finished.
   // Mirrors the same pattern on AdminDashboard.
-  const [showProfileBanner, setShowProfileBanner] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    setShowProfileBanner(user.profile_completed === false);
-  }, [user]);
+  // Read straight from the signed-in user, so the banner is there on the first paint
+  // instead of appearing a moment later and pushing the page down.
+  const showProfileBanner = user?.profile_completed === false;
 
   useEffect(() => {
     let cancelled = false;
@@ -262,9 +262,17 @@ export const UserDashboard: React.FC = () => {
   const completedCount = labs.filter((lab) => progressOf(lab) >= 1).length;
   const today = useToday(apiFetch);
 
+  // Grader-backed labs: the server counts a passed challenge only inside an assignment,
+  // and the submissions read here are only the latest ones, so each lab takes the higher.
+  const graderCleared = GRADER_LABS.reduce((sum, id) => {
+    const lab = labs.find((row) => row.id === id);
+    const server = lab ? Math.min(lab.solvedChallenges, lab.totalChallenges) : 0;
+    return sum + Math.max(server, today.passedByCourse[id] ?? 0);
+  }, 0);
+
   const skillAreas = useMemo<SkillArea[]>(() => {
     const byArea = new Map<string, SkillArea>();
-    labs.forEach((lab) => {
+    labs.filter((lab) => !today.graderTotal || !GRADER_LABS.includes(lab.id)).forEach((lab) => {
       const key = categoryMeta(lab.category).label;
       const area = byArea.get(key) ?? { category: lab.category, done: 0, total: 0 };
       area.done += Math.min(lab.solvedChallenges, lab.totalChallenges);
@@ -275,25 +283,23 @@ export const UserDashboard: React.FC = () => {
     if (today.graderTotal > 0) {
       const key = categoryMeta('linux').label;
       const area = byArea.get(key) ?? { category: 'linux', done: 0, total: 0 };
-      area.done += today.passedChallenges;
+      area.done += graderCleared;
       area.total += today.graderTotal;
       byArea.set(key, area);
     }
     return [...byArea.values()].filter((area) => area.total > 0).sort((a, b) => b.done / b.total - a.done / a.total);
-  }, [labs, today.graderTotal, today.passedChallenges]);
+  }, [labs, today.graderTotal, graderCleared]);
   const hasScore = (statistics?.total_score ?? 0) > 0;
 
-  // Grader-backed labs count their passed challenges; every other lab counts its solved modules.
-  const graderLabs = ['linux-sysadmin-lab', 'linux-security-workshop', 'race-conditions-lab'];
   const cleared = labs
-    .filter((lab) => !graderLabs.includes(lab.id))
-    .reduce((sum, lab) => sum + Math.min(lab.solvedChallenges, lab.totalChallenges), 0) + today.passedChallenges;
+    .filter((lab) => !GRADER_LABS.includes(lab.id))
+    .reduce((sum, lab) => sum + Math.min(lab.solvedChallenges, lab.totalChallenges), 0) + graderCleared;
   const game = computeGame({
     cleared,
     completedLabs: completedCount,
     streak: today.streak,
     firstTryPasses: today.firstTryPasses,
-    areasStarted: skillAreas.filter((area) => area.done > 0).length + (today.passedChallenges > 0 && !skillAreas.some((a) => a.done > 0 && categoryMeta(a.category).label === 'Linux') ? 1 : 0),
+    areasStarted: skillAreas.filter((area) => area.done > 0).length + (graderCleared > 0 && !skillAreas.some((a) => a.done > 0 && categoryMeta(a.category).label === 'Linux') ? 1 : 0),
   });
   const ready = loaded && today.loaded;
   // Only counts that really loaded are compared with the last visit; a failed

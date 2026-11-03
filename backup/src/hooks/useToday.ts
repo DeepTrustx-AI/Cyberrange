@@ -31,6 +31,8 @@ export interface TodayData {
   activity: DoneItem[];
   /** Distinct grader challenges passed (Linux sysadmin, workshop, race). */
   passedChallenges: number;
+  /** The same, per grader course id. Only the latest submissions are read, so a course's server count can be higher. */
+  passedByCourse: Record<string, number>;
   /** Challenges passed on the very first attempt. */
   firstTryPasses: number;
   /** Challenges in the grader-backed courses this student can see. */
@@ -73,7 +75,7 @@ function streakOf(days: Set<string>) {
 
 export function useToday(apiFetch: AuthenticatedFetch): TodayData {
   const [data, setData] = useState<TodayData>({
-    loaded: false, deadline: null, streak: 0, week: Array(7).fill(false), weekSubmissions: 0, activity: [], passedChallenges: 0, firstTryPasses: 0, graderTotal: 0,
+    loaded: false, deadline: null, streak: 0, week: Array(7).fill(false), weekSubmissions: 0, activity: [], passedChallenges: 0, passedByCourse: {}, firstTryPasses: 0, graderTotal: 0,
   });
 
   useEffect(() => {
@@ -122,6 +124,11 @@ export function useToday(apiFetch: AuthenticatedFetch): TodayData {
         week,
         weekSubmissions: submissions.filter((row) => parseUtc(row.submitted_at).getTime() > weekAgo).length,
         passedChallenges: passed.size,
+        passedByCourse: [...passed].reduce<Record<string, number>>((byCourse, labId) => {
+          const id = courseByPrefix(labId).id;
+          byCourse[id] = (byCourse[id] ?? 0) + 1;
+          return byCourse;
+        }, {}),
         firstTryPasses: [...firstAttempt.values()].filter(Boolean).length,
         activity: finished.slice(0, 6).map((row) => {
           const course = courseByPrefix(row.lab_id);
