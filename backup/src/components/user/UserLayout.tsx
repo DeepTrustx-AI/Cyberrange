@@ -230,7 +230,7 @@ export const UserLayout: React.FC<UserLayoutProps> = memo(({ children }) => {
                   <X className="h-3.5 w-3.5" />
                 </button>
               ) : (
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-slate-50 px-1.5 font-mono text-xs leading-5 text-slate-400 dark:border-slate-700 dark:bg-slate-800">
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-slate-50 px-1.5 font-mono text-xs leading-5 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                   /
                 </kbd>
               )}

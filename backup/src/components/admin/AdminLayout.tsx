@@ -266,7 +266,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
                 onChange={(e) => setAdminSearchQuery(e.target.value)}
                 className="h-10 w-full rounded-full border border-transparent bg-white pl-10 pr-12 text-sm text-slate-900 shadow-xs transition-colors placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-500/15 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
               />
-              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-slate-50 px-1.5 font-mono text-xs leading-5 text-slate-400 dark:border-slate-700 dark:bg-slate-800">
+              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-200 bg-slate-50 px-1.5 font-mono text-xs leading-5 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 ⌘K
               </kbd>
 

@@ -377,9 +377,10 @@ export const SettingsPage: React.FC = () => {
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
             <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Accent Brand Color</label>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1" htmlFor="settings-accent">Accent Brand Color</label>
               <div className="flex items-center gap-3">
                 <input
+                  id="settings-accent"
                   type="color"
                   value={appearance.accent_color}
                   onChange={(e) => setAppearance(prev => ({ ...prev, accent_color: e.target.value }))}
@@ -390,8 +391,9 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Font Scale Size</label>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1" htmlFor="settings-font">Font Scale Size</label>
               <select
+                id="settings-font"
                 value={appearance.font_size}
                 onChange={(e) => setAppearance(prev => ({ ...prev, font_size: e.target.value }))}
                 className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 font-semibold"
@@ -415,8 +417,10 @@ export const SettingsPage: React.FC = () => {
 
             <form onSubmit={handlePasswordChange} className="space-y-4 text-xs max-w-md">
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Current Password</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1" htmlFor="settings-current-password">Current Password</label>
                 <input
+                  id="settings-current-password"
+                  autoComplete="current-password"
                   type="password"
                   required
                   value={passwordForm.current_password}
@@ -426,8 +430,10 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">New Password</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1" htmlFor="settings-new-password">New Password</label>
                 <input
+                  id="settings-new-password"
+                  autoComplete="new-password"
                   type="password"
                   required
                   value={passwordForm.new_password}
@@ -437,8 +443,10 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Confirm New Password</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1" htmlFor="settings-confirm-password">Confirm New Password</label>
                 <input
+                  id="settings-confirm-password"
+                  autoComplete="new-password"
                   type="password"
                   required
                   value={passwordForm.confirm_password}

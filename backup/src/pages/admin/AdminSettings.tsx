@@ -181,8 +181,10 @@ export const AdminSettings: React.FC = () => {
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="font-bold text-slate-500 block mb-1">Current Password</label>
+                <label className="font-bold text-slate-500 block mb-1" htmlFor="admin-current-password">Current Password</label>
                 <input
+                  id="admin-current-password"
+                  autoComplete="current-password"
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
@@ -191,8 +193,10 @@ export const AdminSettings: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-500 block mb-1">New Password</label>
+                <label className="font-bold text-slate-500 block mb-1" htmlFor="admin-new-password">New Password</label>
                 <input
+                  id="admin-new-password"
+                  autoComplete="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -201,8 +205,10 @@ export const AdminSettings: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="font-bold text-slate-500 block mb-1">Confirm New Password</label>
+                <label className="font-bold text-slate-500 block mb-1" htmlFor="admin-confirm-password">Confirm New Password</label>
                 <input
+                  id="admin-confirm-password"
+                  autoComplete="new-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

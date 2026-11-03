@@ -120,7 +120,7 @@ export const UserSidebar: React.FC<UserSidebarProps> = ({ isOpen = true, onClose
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 pt-3">
         {NAV_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="px-3 pb-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">{group.label}</p>
+            <p className="px-3 pb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">{group.label}</p>
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <SidebarLink key={item.path} item={item.path === '/assigned-labs' ? { ...item, badge: urgent } : item} onNavigate={onClose} />

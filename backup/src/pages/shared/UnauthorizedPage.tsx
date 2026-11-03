@@ -23,7 +23,7 @@ export const UnauthorizedPage: React.FC = () => {
         </div>
 
         <div>
-          <span className="text-xs font-semibold text-rose-600 block mb-1">
+          <span className="text-xs font-semibold text-rose-700 dark:text-rose-300 block mb-1">
             HTTP 403 — Access Control Restriction
           </span>
           <h1 className="font-display tracking-tight text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">
