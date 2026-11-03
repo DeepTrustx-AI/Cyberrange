@@ -9,6 +9,7 @@ export function labPath(labId: string): string {
   if (compact === 'commandlinelab') return '/labs/command-line-lab/session/sess-cll-01';
   if (compact === 'cryptographylab') return '/labs/cryptography-lab/session/sess-crypto-01';
   if (compact === 'complianceportal') return '/labs/compliance-portal/session/sess-compliance-01';
+  if (id === 'live-kubernetes-security-lab') return '/labs/live-kubernetes-security-lab';
   if (id === 'kubernetes-drift-lab') return '/labs/kubernetes-drift-lab';
   if (id === 'cloud-static-security-lab') return '/labs/cloud-static-security-lab';
   if (compact.includes('cloud')) return '/labs/cloud-security-lab/session/sess-cloud-01';
