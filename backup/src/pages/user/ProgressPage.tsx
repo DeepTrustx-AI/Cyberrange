@@ -27,23 +27,41 @@ interface Certificate {
   verification_url: string;
 }
 
+// The backend's achievements, unlocked or not. A badge links to a certificate only
+// when it has its own; otherwise an unlocked one just says when it was earned.
+interface Achievement {
+  id: string;
+  title: string;
+  description?: string;
+  reward_points?: number;
+  unlocked: boolean;
+  earned_at?: string;
+  certificate_id?: string | null;
+  display_certificate_id?: string | null;
+}
+
 const card = 'rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-900 dark:ring-slate-800';
 
 // What a student can show for their work: roles and skills from cleared
-// modules, certificates for finished labs, and grades teachers have published.
+// modules, certificates for finished labs, grades teachers have published,
+// achievements and training hours.
 export const ProgressPage: React.FC = () => {
   const { apiFetch } = useAuth();
   const [labs, setLabs] = useState<CatalogueLab[] | null>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [graded, setGraded] = useState<Assignment[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [trainingHours, setTrainingHours] = useState(0);
   const [allRoles, setAllRoles] = useState(false);
 
   useEffect(() => {
     const json = (path: string) => apiFetch(path).then((res) => (res.ok ? res.json() : [])).catch(() => []);
-    void Promise.all([json('/api/v1/labs'), json('/api/v1/reporting/certificates'), json('/api/v1/user/assignments')]).then(([labRows, certRows, workRows]) => {
+    void Promise.all([json('/api/v1/labs'), json('/api/v1/reporting/certificates'), json('/api/v1/user/assignments'), json('/api/v1/reporting/achievements'), json('/api/v1/reporting/dashboard')]).then(([labRows, certRows, workRows, badgeRows, summary]) => {
       setLabs(Array.isArray(labRows) ? labRows : []);
       setCertificates(Array.isArray(certRows) ? certRows : []);
       setGraded((Array.isArray(workRows) ? workRows : []).filter((item: Assignment) => item.published_grade));
+      setAchievements(Array.isArray(badgeRows) ? [...badgeRows].sort((a: Achievement, b: Achievement) => Number(b.unlocked) - Number(a.unlocked)) : []);
+      setTrainingHours(Number(summary?.total_training_hours) || 0);
     });
   }, [apiFetch]);
 
@@ -74,8 +92,8 @@ export const ProgressPage: React.FC = () => {
         </p>
       </header>
 
-      <dl className="grid grid-cols-3 gap-3">
-        {[['Modules cleared', cleared], ['Labs finished', finished], ['Certificates', certificates.length]].map(([label, value]) => (
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[['Modules cleared', cleared], ['Labs finished', finished], ['Certificates', certificates.length], ['Training hours', Math.round(trainingHours * 10) / 10]].map(([label, value]) => (
           <div key={label} className={card}>
             <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
             <dd className="mt-1 font-display text-3xl font-bold tabular text-slate-900 dark:text-white">{value}</dd>
@@ -167,6 +185,38 @@ export const ProgressPage: React.FC = () => {
                 {item.published_grade!.feedback && <p className="w-full text-sm text-slate-600 dark:text-slate-300">{item.published_grade!.feedback}</p>}
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {achievements.length > 0 && (
+        <section className={card} aria-labelledby="badges-title">
+          <h2 id="badges-title" className="font-display text-lg font-semibold text-slate-900 dark:text-white">Achievements</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {achievements.filter((badge) => badge.unlocked).length} of {achievements.length} unlocked
+          </p>
+          <ul className="mt-3 grid gap-x-6 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-y-0 dark:divide-slate-800">
+            {achievements.map((badge) => {
+              const certId = badge.display_certificate_id || badge.certificate_id;
+              return (
+                <li key={badge.id} className={`flex items-center gap-3 py-3 ${badge.unlocked ? '' : 'opacity-60'}`}>
+                  <Award className={`h-5 w-5 shrink-0 ${badge.unlocked ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{badge.title}</p>
+                    {badge.description && <p className="text-xs text-slate-500 dark:text-slate-400">{badge.description}</p>}
+                  </div>
+                  {badge.unlocked && certId ? (
+                    <a href={`/certificate/verify/${encodeURIComponent(certId)}`} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-700 hover:underline dark:text-brand-300">
+                      Verify <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : badge.unlocked ? (
+                    <span className="shrink-0 text-xs font-medium text-emerald-700 dark:text-emerald-400">Earned{badge.earned_at ? ` ${badge.earned_at.slice(0, 10)}` : ''}</span>
+                  ) : (
+                    <span className="shrink-0 text-xs tabular text-slate-500 dark:text-slate-400">{badge.reward_points ? `${badge.reward_points} pts` : 'Locked'}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
