@@ -51,9 +51,13 @@ export function finalPercent(row: GradeRow, adjustment: number) {
   return Math.min(100, Math.max(0, Math.round((row.score_percent ?? 0) + adjustment)));
 }
 
+// Numbers stay numbers. Text is always quoted, and text that starts like a formula
+// is saved as plain text, so a student named "=HYPERLINK(...)" cannot run anything
+// when the file is opened in Excel.
 const cell = (value: string | number) => {
-  const text = String(value);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  if (typeof value === 'number') return String(value);
+  const text = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${text.replace(/"/g, '""')}"`;
 };
 
 export function toCsv(rows: GradeRow[]) {
