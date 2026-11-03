@@ -195,7 +195,7 @@ export const ProgressPage: React.FC = () => {
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {achievements.filter((badge) => badge.unlocked).length} of {achievements.length} unlocked
           </p>
-          <ul className="mt-3 grid gap-x-6 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-y-0 dark:divide-slate-800">
+          <ul className="mt-3 grid grid-cols-1 gap-x-6 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-y-0 dark:divide-slate-800">
             {achievements.map((badge) => {
               const certId = badge.display_certificate_id || badge.certificate_id;
               return (

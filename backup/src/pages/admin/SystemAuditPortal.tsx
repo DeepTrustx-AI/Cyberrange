@@ -254,7 +254,7 @@ export const SystemAuditPortal: React.FC = () => {
           </button>
         </form>
 
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <span className="text-slate-500 dark:text-slate-400 font-medium">Organization:</span>

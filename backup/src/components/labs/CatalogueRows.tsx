@@ -20,7 +20,7 @@ export function ContinueRow({ labs, onResume }: { labs: RowLab[]; onResume: (id:
   return (
     <section aria-labelledby="continue-heading">
       <h2 id="continue-heading" className="font-display text-lg font-semibold text-slate-900 dark:text-white">Continue where you left off</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {open.slice(0, 3).map((lab) => (
           <button
             key={lab.id}
