@@ -431,13 +431,13 @@ export const LabAllocation: React.FC = () => {
                         groupAssigns.map((assign) => {
                           const status = getDerivedStatus(assign);
                           return (
-                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs">
+                            <div key={assign.id} className="flex flex-col gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
                                 <div className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
                                   {assign.lab_title}
                                 </div>
                                 <div className="font-semibold text-slate-500">
-                                  {formatDate(assign.start_datetime).dateStr} ➔ {formatDate(assign.end_datetime).dateStr}
+                                  {formatDate(assign.start_datetime).dateStr} → {formatDate(assign.end_datetime).dateStr}
                                 </div>
                                 <div>
                                   <span className={`inline-block px-2 py-0.2 rounded-full text-xs font-bold border ${status.color}`}>
@@ -446,7 +446,7 @@ export const LabAllocation: React.FC = () => {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1.5 min-w-[200px] justify-end">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:min-w-[200px] sm:justify-end">
                                 <button
                                   onClick={() => {
                                     setActiveAssignment(assign);
@@ -520,13 +520,13 @@ export const LabAllocation: React.FC = () => {
                         studentAssigns.map((assign) => {
                           const status = getDerivedStatus(assign);
                           return (
-                            <div key={assign.id} className="flex items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs">
+                            <div key={assign.id} className="flex flex-col gap-3 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
                                 <div className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={assign.lab_title}>
                                   {assign.lab_title}
                                 </div>
                                 <div className="font-semibold text-slate-500">
-                                  {formatDate(assign.start_datetime).dateStr} ➔ {formatDate(assign.end_datetime).dateStr}
+                                  {formatDate(assign.start_datetime).dateStr} → {formatDate(assign.end_datetime).dateStr}
                                 </div>
                                 <div>
                                   <span className={`inline-block px-2 py-0.2 rounded-full text-xs font-bold border ${status.color}`}>
@@ -535,7 +535,7 @@ export const LabAllocation: React.FC = () => {
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1.5 min-w-[200px] justify-end">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:min-w-[200px] sm:justify-end">
                                 <button
                                   onClick={() => {
                                     setActiveAssignment(assign);

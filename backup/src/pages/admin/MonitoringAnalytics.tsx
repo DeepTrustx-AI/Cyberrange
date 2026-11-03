@@ -397,7 +397,7 @@ export const MonitoringAnalytics: React.FC = () => {
                   <div>
                     <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{labAnalytics.lab_title}</h2>
                     <p className="text-slate-500 font-semibold mt-1">
-                      Assigned: {formatUtcIsoLocal(labAnalytics.assignment_date)} ➔ Due: {formatUtcIsoLocal(labAnalytics.due_date)}
+                      Assigned: {formatUtcIsoLocal(labAnalytics.assignment_date)} → Due: {formatUtcIsoLocal(labAnalytics.due_date)}
                     </p>
                   </div>
                   <button
