@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Loader2, RotateCcw, Save, Send } from 'lucide-react';
 import { useAuth } from '../../context';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { GradebookTable, type Draft } from '../../components/gradebook/GradebookTable';
 import { STANDING_LABEL, studentStanding, toCsv, type GradebookAssignment, type GradeRow, type Standing } from '../../components/gradebook/gradebook';
 import { formatWhen } from '../../components/assignments/assignment';
+import { requestConfirmation } from '../../lib/feedback';
 
 interface Gradebook {
   assignment: { id: number; lab_title: string; group_name: string | null; end_datetime: string | null };
@@ -39,24 +40,38 @@ export const GradebookPage: React.FC = () => {
       .catch(() => setAssignments([]));
   }, [apiFetch]);
 
+  // Only the latest lab asked for may fill the page: switching labs quickly could
+  // otherwise show one lab's marks under another, and Save would write them there.
+  const latest = useRef<number | null>(null);
   const load = useCallback(async (id: number) => {
+    latest.current = id;
     setBusy('load');
     setMessage('');
     try {
       const res = await apiFetch(`/api/v1/gradebook/assignments/${id}`);
       if (!res.ok) throw new Error();
-      setBook(await res.json());
+      const data = await res.json();
+      if (latest.current !== id) return;
+      setBook(data);
       setDrafts({});
     } catch {
-      setMessage('The gradebook could not load. Try again in a moment.');
+      if (latest.current === id) setMessage('The gradebook could not load. Try again in a moment.');
     } finally {
-      setBusy('');
+      if (latest.current === id) setBusy('');
     }
   }, [apiFetch]);
 
   useEffect(() => { if (selected !== null) void load(selected); }, [selected, load]);
 
   const changed = Object.keys(drafts).length;
+  const choose = async (id: number) => {
+    if (id === selected) return;
+    if (changed && !(await requestConfirmation(
+      `You have ${changed} unsaved change${changed === 1 ? '' : 's'} in this lab. Switching labs discards them.`,
+      { title: 'Discard unsaved changes?', confirmLabel: 'Discard and switch', destructive: true },
+    ))) return;
+    setSelected(id);
+  };
   const published = book ? book.summary.published_count : 0;
   const allPublished = book !== null && book.students.length > 0 && published === book.students.length;
   const counts = useMemo(() => {
@@ -98,8 +113,10 @@ export const GradebookPage: React.FC = () => {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `${book.assignment.lab_title} - ${book.assignment.group_name ?? 'class'}.csv`.replace(/[\\/:*?"<>|]/g, '-');
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    // Revoked once the download has started; some browsers cancel it if this runs at once.
+    setTimeout(() => { link.remove(); URL.revokeObjectURL(link.href); }, 100);
   };
 
   return (
@@ -122,7 +139,7 @@ export const GradebookPage: React.FC = () => {
               <button
                 key={item.assignment_id}
                 type="button"
-                onClick={() => setSelected(item.assignment_id)}
+                onClick={() => void choose(item.assignment_id)}
                 aria-pressed={selected === item.assignment_id}
                 className={`min-w-56 shrink-0 rounded-2xl px-4 py-3 text-left ring-1 transition ${
                   selected === item.assignment_id
