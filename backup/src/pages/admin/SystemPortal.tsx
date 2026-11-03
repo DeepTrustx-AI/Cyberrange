@@ -1264,7 +1264,7 @@ export const SystemPortal: React.FC = () => {
                     <div className="text-xs text-slate-600 space-y-1 pt-1 border-t border-slate-100">
                       <p><strong>Location:</strong> {c.city || 'N/A'}, {c.state || 'N/A'}</p>
                       <p><strong>Email:</strong> {c.email || 'N/A'}</p>
-                      <p><strong>Website:</strong> <a href={c.website || '#'} target="_blank" className="text-brand-600 hover:underline font-medium">{c.website || 'N/A'}</a></p>
+                      <p><strong>Website:</strong> <a href={c.website || '#'} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline font-medium">{c.website || 'N/A'}</a></p>
                     </div>
                   </div>
                 ))}
