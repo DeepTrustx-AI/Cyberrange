@@ -224,7 +224,13 @@ export const GradebookPage: React.FC = () => {
       )}
 
       {confirmPublish && book && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="dialog" aria-modal="true" aria-labelledby="publish-title">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="publish-title"
+          onKeyDown={(event) => { if (event.key === 'Escape' && busy === '') setConfirmPublish(false); }}
+        >
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
             <h2 id="publish-title" className="font-display text-lg font-semibold text-slate-900 dark:text-white">Publish {book.students.length} grades?</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
