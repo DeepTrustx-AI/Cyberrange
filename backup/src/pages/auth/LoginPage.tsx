@@ -164,7 +164,7 @@ export const LoginPage: React.FC = () => {
           )}
         </button>
 
-        <div className="flex items-center gap-3 py-1 text-xs text-slate-400">
+        <div className="flex items-center gap-3 py-1 text-xs text-slate-500 dark:text-slate-400">
           <span className="h-px flex-1 bg-slate-200" />
           or
           <span className="h-px flex-1 bg-slate-200" />

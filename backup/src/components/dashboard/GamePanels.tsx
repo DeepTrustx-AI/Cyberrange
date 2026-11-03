@@ -130,6 +130,7 @@ export function BadgeShelf({ badges, fresh }: { badges: Badge[]; fresh: Set<stri
           return (
             <li key={badge.id} className="group relative flex flex-col items-center text-center">
               <span
+                role="img"
                 tabIndex={0}
                 aria-label={`${badge.name}: ${badge.earned ? 'earned' : `locked. ${badge.hint}`}`}
                 className={`relative flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-300 ease-out hover:-translate-y-0.5 hover:rotate-[-4deg] focus-visible:-translate-y-0.5 ${
@@ -146,7 +147,7 @@ export function BadgeShelf({ badges, fresh }: { badges: Badge[]; fresh: Set<stri
                 )}
                 {isNew && <span className="tick-in absolute -right-1.5 -top-1.5 rounded-full bg-emerald-500 px-1.5 py-px text-xs font-bold text-white">New</span>}
               </span>
-              <span className={`mt-1.5 text-xs leading-tight ${badge.earned ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>{badge.name}</span>
+              <span className={`mt-1.5 text-xs leading-tight ${badge.earned ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>{badge.name}</span>
               <span
                 role="tooltip"
                 className={`pointer-events-none absolute bottom-full z-10 mb-2 w-40 ${align} rounded-xl bg-slate-900 px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-white dark:text-slate-900`}

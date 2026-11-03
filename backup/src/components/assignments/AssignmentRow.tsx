@@ -48,7 +48,7 @@ export function AssignmentRow({ item, now, onOpen, onResults }: AssignmentRowPro
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-display text-base font-semibold text-slate-900 dark:text-white">{item.lab_name}</h3>
+            <h2 className="truncate font-display text-base font-semibold text-slate-900 dark:text-white">{item.lab_name}</h2>
             <StateChip state={state} />
             {item.published_grade && (
               <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold tabular text-white dark:bg-white dark:text-slate-900">
