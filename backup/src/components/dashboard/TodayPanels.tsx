@@ -76,7 +76,7 @@ export function TodayStrip({ today }: { today: TodayData }) {
         </p>
         <p className="mt-2 flex items-baseline gap-1.5">
           <span className="font-display text-2xl font-bold tabular text-slate-900 dark:text-white">{today.weekSubmissions}</span>
-          <span className="text-sm text-slate-500 dark:text-slate-400">submission{today.weekSubmissions === 1 ? '' : 's'} graded</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">submission{today.weekSubmissions === 1 ? '' : 's'}</span>
         </p>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           {today.weekSubmissions === 0 ? 'Submit a challenge to get your week going.' : 'Every attempt is checked on a real machine.'}
