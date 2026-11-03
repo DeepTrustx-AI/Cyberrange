@@ -24,3 +24,12 @@ export function webglAvailable() {
   }
   return available;
 }
+
+// Light mode, for the same computers: no 3D, no looping animation and no blurred
+// or drifting backgrounds, which are all redrawn on the processor there. Set once
+// on <html> before the app draws; index.css holds the rules.
+export function applyLiteMode() {
+  if (!webglAvailable()) document.documentElement.classList.add('lite');
+}
+
+export const liteMode = () => document.documentElement.classList.contains('lite');

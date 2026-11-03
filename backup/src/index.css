@@ -655,6 +655,19 @@ html.dark {
   }
 }
 
+/* Light mode (utils/webgl.ts, for computers with no graphics chip): animations
+   play once like reduced motion, and blurred layers, which are redrawn on the
+   processor every frame there, are dropped. */
+.lite *, .lite *::before, .lite *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  backdrop-filter: none !important;
+}
+
+.lite .ambient-field {
+  display: none;
+}
+
 @media print {
   .pdf-viewer-container {
     display: none !important;

@@ -5,6 +5,7 @@ import { CUBE_BLOCKS } from '../three/clay';
 import { webglAvailable } from '../../utils/webgl';
 import { Mascot } from '../mascot/Mascot';
 import { ClayRain } from '../ui/ClayRain';
+import { LabArtImage } from '../art/LabArtImage';
 
 const ClayCube = lazy(() => import('../three/ClayCube'));
 
@@ -61,6 +62,11 @@ export function CubeStage({ game, fresh, dark, ready, levelUp }: CubeStageProps)
         <Suspense fallback={null}>
           <ClayCube mode="progress" filled={game.inLevel} fresh={fresh} dark={dark} levelUp={levelUp} onHover={setHover} onLevelUp={() => setCelebrating(true)} className="absolute inset-x-0 bottom-24 top-10" />
         </Suspense>
+      ) : !webgl ? (
+        // No 3D here (light mode): the clay blocks still, in the cube's place.
+        <div className="absolute inset-x-0 bottom-28 top-16 flex items-center justify-center">
+          <LabArtImage kind="blocks" className="h-full max-h-56 w-auto" />
+        </div>
       ) : null}
 
       <div className="pointer-events-none absolute right-6 top-6 text-right">
