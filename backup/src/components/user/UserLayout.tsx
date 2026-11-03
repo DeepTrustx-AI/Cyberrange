@@ -374,7 +374,7 @@ export const UserLayout: React.FC<UserLayoutProps> = memo(({ children }) => {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-8 pt-2 sm:px-6 lg:px-6">
+        <main className="mx-auto min-h-screen w-full max-w-[1320px] flex-1 px-4 pb-8 pt-2 sm:px-6 lg:px-6">
           {/* Each page gets its own loading boundary, so the layout stays put
               while a page's code downloads and the new page settles in. */}
           <div key={location.pathname} className="page-in">

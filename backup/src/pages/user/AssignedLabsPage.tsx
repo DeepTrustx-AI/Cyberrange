@@ -64,6 +64,8 @@ export const AssignedLabsPage: React.FC = () => {
         </p>
       </header>
 
+      {/* Holds the filters' space while loading, so the list does not jump down when they appear. */}
+      {items === null && !failed && <div className="h-8 w-44 animate-pulse rounded-full bg-slate-100 dark:bg-slate-800/60" aria-hidden="true" />}
       {items && items.length > 0 && (
         <nav className="flex flex-wrap gap-1.5" aria-label="Filter assignments">
           {FILTERS.filter((key) => key === 'all' || counts[key]).map((key) => (
