@@ -103,7 +103,8 @@ const MaintenancePage      = lazy(() => import('./pages/shared/MaintenancePage')
 const UnauthorizedPage     = lazy(() => import('./pages/shared/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
 const NotificationCenterPage = lazy(() => import('./pages/shared/NotificationCenterPage').then(m => ({ default: m.NotificationCenterPage })));
 const HelpFAQPage          = lazy(() => import('./pages/shared/HelpFAQPage').then(m => ({ default: m.HelpFAQPage })));
-const MascotGallery        = lazy(() => import('./pages/dev/MascotGallery').then(m => ({ default: m.MascotGallery })));
+// Development only: the production build leaves the page out entirely.
+const MascotGallery        = import.meta.env.DEV ? lazy(() => import('./pages/dev/MascotGallery').then(m => ({ default: m.MascotGallery }))) : null;
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export function App() {
@@ -121,7 +122,7 @@ export function App() {
             <Routes>
               {/* Root Gateway */}
               <Route path="/" element={<RootRedirect />} />
-              {import.meta.env.DEV && <Route path="/__mascot" element={<MascotGallery />} />}
+              {MascotGallery && <Route path="/__mascot" element={<MascotGallery />} />}
 
               {/* ── Public Verification Portal ───────────────────────────── */}
               <Route path="/certificate/verify/:certificateId" element={<VerificationPage />} />
