@@ -510,7 +510,9 @@ export const AssignedLabsPage: React.FC = () => {
 
                   {activeTab === 'active' ? (
                     <button
-                      onClick={() => navigate(labPath(lab.lab_id))}
+                      onClick={() => navigate(lab.lab_id === 'live-kubernetes-security-lab'
+                        ? `${labPath(lab.lab_id)}?assignment_id=${lab.id}`
+                        : labPath(lab.lab_id))}
                       disabled={!isLive}
                       className={`px-4 py-2 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5 shadow-xs ${
                         isLive
