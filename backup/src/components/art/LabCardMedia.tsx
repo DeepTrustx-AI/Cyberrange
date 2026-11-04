@@ -1,9 +1,10 @@
-import { LabScene } from './LabScene';
+import { LabArtImage } from './LabArtImage';
 import { labArtKind } from '../../utils/labArtKind';
 
 // The top band of every lab card, student catalogue and admin marketplace alike:
 // a soft tint per lab family, the lab's clay illustration and its difficulty.
-// While the card is hovered the illustration comes alive.
+// The illustration is always the pre-rendered picture: a live 3D scene per hovered
+// card made browsers without parallel shader compiling (Firefox) freeze for seconds.
 
 const FAMILY_TINTS: Record<string, string> = {
   linux: 'from-[#FFE9DA] to-[#FFF6EE] dark:from-[#3A2C22] dark:to-[#2A231D]',
@@ -25,7 +26,6 @@ interface LabCardMediaProps {
   labId: string;
   category?: string | null;
   difficulty?: string | null;
-  alive?: boolean;
   size?: 'card' | 'hero';
   complete?: boolean;
 }
@@ -35,7 +35,7 @@ function familyTint(category?: string | null) {
   return FAMILY_TINTS[Object.keys(FAMILY_TINTS).find((name) => family.includes(name)) ?? 'recon'];
 }
 
-export function LabCardMedia({ labId, category, difficulty, alive = false, size = 'card', complete = false }: LabCardMediaProps) {
+export function LabCardMedia({ labId, category, difficulty, size = 'card', complete = false }: LabCardMediaProps) {
   const level = (difficulty ?? '').toLowerCase();
   const style = DIFFICULTY[level];
   const kind = labArtKind(labId, category ?? '');
@@ -43,7 +43,7 @@ export function LabCardMedia({ labId, category, difficulty, alive = false, size 
 
   return (
     <div className={`relative flex items-center justify-center overflow-hidden bg-gradient-to-br ${size === 'hero' ? 'h-72' : 'h-44'} ${familyTint(category)}`}>
-      <LabScene kind={kind} live={alive} className={`${art} transition-transform duration-500 ease-out group-hover:-translate-y-1 group-hover:scale-[1.04]`} />
+      <LabArtImage kind={kind} className={`${art} transition-transform duration-500 ease-out group-hover:-translate-y-1 group-hover:scale-[1.04]`} />
       {complete && (
         <span className="stamp-in absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-emerald-500 py-1 pl-1.5 pr-2.5 text-xs font-semibold text-white shadow-md shadow-emerald-700/20">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25">

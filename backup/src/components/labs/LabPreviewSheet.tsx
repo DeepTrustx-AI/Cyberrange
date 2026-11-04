@@ -57,7 +57,7 @@ export function LabPreviewSheet({ lab, onClose, action }: LabPreviewSheetProps) 
       <button className="fade-in absolute inset-0 bg-slate-950/30 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" tabIndex={-1} />
       <aside className="sheet-in relative flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl sm:m-3 sm:h-[calc(100%-1.5rem)] sm:rounded-[2rem] dark:bg-slate-900">
         <div className="group relative">
-          <LabCardMedia labId={lab.id} category={lab.category} difficulty={lab.difficulty} size="hero" alive />
+          <LabCardMedia labId={lab.id} category={lab.category} difficulty={lab.difficulty} size="hero" />
           <button
             ref={closeRef}
             onClick={onClose}

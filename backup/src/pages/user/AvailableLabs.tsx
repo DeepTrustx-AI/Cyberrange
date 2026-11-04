@@ -88,7 +88,6 @@ export const AvailableLabs: React.FC = () => {
 
   // Tabs
   const [activeTab, setActiveTab] = useState<'all' | 'purchased'>('all');
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [rentals, setRentals] = useState<any[]>([]);
   const [rentalsLoading, setRentalsLoading] = useState(false);
@@ -534,13 +533,11 @@ export const AvailableLabs: React.FC = () => {
               return (
                 <article
                   key={lab.id}
-                  onMouseEnter={() => setHoveredId(lab.id)}
-                  onMouseLeave={() => setHoveredId((id) => (id === lab.id ? null : id))}
                   className="rise-in group flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-slate-900 dark:ring-slate-800"
                   style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}
                 >
                   <button onClick={() => setPreviewId(lab.id)} className="block text-left" aria-label={`About ${lab.title}`}>
-                    <LabCardMedia labId={lab.id} category={lab.category} difficulty={lab.difficulty} alive={hoveredId === lab.id} complete={Boolean(lab.isCompleted)} />
+                    <LabCardMedia labId={lab.id} category={lab.category} difficulty={lab.difficulty} complete={Boolean(lab.isCompleted)} />
                   </button>
 
                   <div className="flex flex-1 flex-col p-5">

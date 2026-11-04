@@ -20,7 +20,6 @@ const ADMIN: Record<string, () => Promise<unknown>> = {
   '/admin/labs': () => import('../pages/admin/LabMarketplace'),
   '/admin/users': () => import('../pages/admin/UserManagement'),
   '/admin/allocations': () => import('../pages/admin/LabAllocation'),
-  '/admin/monitoring': () => import('../pages/admin/MonitoringAnalytics'),
   '/admin/settings': () => import('../pages/admin/AdminSettings'),
   '/admin/purchased-labs': () => import('../pages/admin/PurchasedLabsPage'),
   '/admin/reports': () => import('../pages/admin/ReportsPage'),

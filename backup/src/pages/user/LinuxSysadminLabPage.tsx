@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 import { RealTerminal } from '../../components/RealTerminal';
-import { LabScene } from '../../components/art/LabScene';
+import { LabArtImage } from '../../components/art/LabArtImage';
 import { useAuth } from '../../context';
 import { Mascot } from '../../components/mascot/Mascot';
 import { AmbientBackground } from '../../components/ui/AmbientBackground';
@@ -928,7 +928,7 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean; race?: boolean
                         </div>
                       </div>
                     ) : (
-                      <LabScene kind={artKind} live className="mb-2 h-48 w-64" />
+                      <LabArtImage kind={artKind} className="mb-2 h-48 w-64" />
                     )}
                     <h2 className="font-display text-2xl font-bold">{workspaceBusy ? 'Setting up your machine' : 'Ready when you are'}</h2>
                     <p className="mt-2 max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
