@@ -1,11 +1,11 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { Award, ShieldCheck, SquareTerminal } from 'lucide-react';
 import { LogoMark } from '../brand/LogoMark';
 import { MASCOT_SEAT, Mascot, type MascotPose } from '../mascot/Mascot';
 import { AmbientBackground } from '../ui/AmbientBackground';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { webglAvailable } from '../../utils/webgl';
+import { useRichGraphics } from '../../utils/webgl';
 
 const ClayCube = lazy(() => import('../three/ClayCube'));
 
@@ -275,7 +275,7 @@ function useSeatTop(columnRef: RefObject<HTMLDivElement | null>, formRef: RefObj
 // the left, the form on the right with the mascot perched on its first field. On
 // small screens a short cube band sits above the form.
 export function AuthShell({ title, subtitle, children, footer, audience = 'student' }: AuthShellProps) {
-  const webgl = useMemo(webglAvailable, []);
+  const webgl = useRichGraphics();
   // One cube per page: the hero's on wide screens, the short band's on narrow ones
   // (lg, where the hero appears). A hidden second cube would double the GPU work.
   const wide = useMediaQuery('(min-width: 64rem)');

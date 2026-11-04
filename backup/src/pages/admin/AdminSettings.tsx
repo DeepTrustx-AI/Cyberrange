@@ -14,6 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { FEEDBACK_GOOGLE_FORM_URL, FEEDBACK_FORM_CONFIGURED } from '../../config/feedbackForm';
+import { GraphicsSetting } from '../../components/settings/GraphicsSetting';
 
 export const AdminSettings: React.FC = () => {
   const { user, logout } = useAuth();
@@ -167,6 +168,9 @@ export const AdminSettings: React.FC = () => {
               <Save className="w-4 h-4" /> Save Theme
             </button>
           </form>
+          <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+            <GraphicsSetting />
+          </div>
         </div>
 
         {/* Change Password Settings */}

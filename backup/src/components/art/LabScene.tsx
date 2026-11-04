@@ -1,7 +1,7 @@
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { LabArtImage } from './LabArtImage';
 import type { LabArtKind } from '../../utils/labArtKind';
-import { webglAvailable } from '../../utils/webgl';
+import { useRichGraphics } from '../../utils/webgl';
 import { useTheme } from '../../context/ThemeContext';
 
 const LiveDiorama = lazy(() => import('./LiveDiorama'));
@@ -12,7 +12,7 @@ const LiveDiorama = lazy(() => import('./LiveDiorama'));
 // the pointer, so no second copy ever shows behind it.
 export function LabScene({ kind, live, className = '' }: { kind: LabArtKind; live: boolean; className?: string }) {
   const [liveShown, setLiveShown] = useState(false);
-  const webgl = useMemo(webglAvailable, []);
+  const webgl = useRichGraphics();
   const dark = useTheme().theme === 'dark';
   const showLive = live && webgl;
 

@@ -1,8 +1,8 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Award, Box, Boxes, CalendarCheck, Compass, Crown, Flame, Lock, Sparkles, Zap } from 'lucide-react';
 import type { Badge, GameState } from '../../utils/progressGame';
 import { CUBE_BLOCKS } from '../three/clay';
-import { webglAvailable } from '../../utils/webgl';
+import { useRichGraphics } from '../../utils/webgl';
 import { Mascot } from '../mascot/Mascot';
 import { ClayRain } from '../ui/ClayRain';
 import { LabArtImage } from '../art/LabArtImage';
@@ -43,7 +43,7 @@ interface CubeStageProps {
 // A finished cube gets its moment: the card shows the cube being completed, then,
 // as the cube spins and lifts away, "Level up!", the new level and clay confetti.
 export function CubeStage({ game, fresh, dark, ready, levelUp }: CubeStageProps) {
-  const webgl = useMemo(webglAvailable, []);
+  const webgl = useRichGraphics();
   const [hover, setHover] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   // Without WebGL there is no cube to wait for, so the card celebrates at once.

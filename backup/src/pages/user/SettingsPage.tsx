@@ -21,6 +21,7 @@ import { useAuth } from '../../context';
 import { parseApiErrorMessage } from '../../lib/api';
 import { downloadAuthenticatedFile } from '../../utils/exportUtils';
 import { FEEDBACK_GOOGLE_FORM_URL, FEEDBACK_FORM_CONFIGURED } from '../../config/feedbackForm';
+import { GraphicsSetting } from '../../components/settings/GraphicsSetting';
 
 const SETTINGS_TABS = ['paymentHistory', 'appearance', 'security', 'notifications', 'institution', 'feedback'] as const;
 type SettingsTab = (typeof SETTINGS_TABS)[number];
@@ -373,6 +374,10 @@ export const SettingsPage: React.FC = () => {
                 <span className="font-bold text-xs">Dark Mode</span>
               </button>
             </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+            <GraphicsSetting />
           </div>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
