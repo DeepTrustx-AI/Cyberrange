@@ -63,8 +63,13 @@ function Hero({ audience, cube, live }: { audience: 'student' | 'enterprise'; cu
           {cube && (
             <div className="relative h-full max-h-[460px] w-full">
               {/* The picture holds the cube's place until the live one is drawn over it,
-                  and stays in light mode. */}
-              <CubeStill live={live && drawn} className="absolute inset-x-0 -top-[8%] bottom-0 h-[108%] w-full" />
+                  framed exactly like the canvas so the swap does not move. In light mode
+                  it is the final picture, so it sits inside the stage instead, clear of
+                  the text above and below. */}
+              <CubeStill
+                live={live && drawn}
+                className={live ? 'absolute inset-x-0 -top-[8%] bottom-0 h-[108%] w-full' : 'absolute inset-0 h-full w-full pb-2 pt-6'}
+              />
               {live && (
                 <Suspense fallback={null}>
                   {/* The canvas reaches a little above the stage into empty space, so the

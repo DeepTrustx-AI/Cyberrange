@@ -5,7 +5,7 @@ import { CUBE_BLOCKS } from '../three/clay';
 import { useRichGraphics } from '../../utils/webgl';
 import { Mascot } from '../mascot/Mascot';
 import { ClayRain } from '../ui/ClayRain';
-import { LabArtImage } from '../art/LabArtImage';
+import { FlatCube } from './FlatCube';
 
 const ClayCube = lazy(() => import('../three/ClayCube'));
 
@@ -59,10 +59,10 @@ export function CubeStage({ game, fresh, dark, ready, levelUp }: CubeStageProps)
   return (
     <div className="relative h-full w-full">
       {celebrating && <ClayRain count={48} delay={0.1} />}
-      {/* The clay blocks still holds the cube's place while the 3D loads (or never
-          starts), and for good in light mode. */}
+      {/* The flat drawing of the student's own cube holds its place while the 3D
+          loads (or never starts), and stays for good in light mode. */}
       <div className={`absolute inset-x-0 bottom-28 top-16 flex items-center justify-center transition-opacity duration-500 ${webgl && drawn ? 'opacity-0' : 'opacity-100'}`}>
-        <LabArtImage kind="blocks" className="h-full max-h-56 w-auto" />
+        <FlatCube filled={inLevel} dark={dark} className="h-full max-h-80 w-auto" />
       </div>
       {webgl && ready && (
         <Suspense fallback={null}>
