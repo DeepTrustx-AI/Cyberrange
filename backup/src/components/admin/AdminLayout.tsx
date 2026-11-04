@@ -499,10 +499,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
         <footer className="mt-auto px-4 py-5 text-xs text-slate-500 sm:px-6 dark:text-slate-400">
           <div className="mx-auto flex max-w-[1320px] flex-col items-center justify-between gap-2 sm:flex-row">
             <span>© 2026 CyberRange</span>
-            <div className="flex items-center gap-5">
-              <a href="#privacy" className="hover:text-slate-900 dark:hover:text-white">Privacy</a>
-              <a href="#terms" className="hover:text-slate-900 dark:hover:text-white">Terms</a>
-            </div>
           </div>
         </footer>
       </div>
