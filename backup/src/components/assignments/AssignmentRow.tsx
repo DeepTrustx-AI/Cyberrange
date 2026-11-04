@@ -98,7 +98,7 @@ export function AssignmentRow({ item, now, onOpen, onResults }: AssignmentRowPro
         </p>
       )}
       {state !== 'opens' && (!finished || item.published_grade) && (
-        <button type="button" onClick={() => onResults(item)} className="hidden text-xs font-medium text-slate-500 underline-offset-4 hover:text-slate-800 hover:underline sm:block dark:hover:text-white">
+        <button type="button" onClick={() => onResults(item)} className="hidden text-xs font-medium text-slate-500 underline-offset-4 hover:text-slate-800 hover:underline sm:block dark:text-slate-400 dark:hover:text-white">
           Results
         </button>
       )}
