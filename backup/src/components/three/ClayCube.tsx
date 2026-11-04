@@ -183,7 +183,8 @@ function mountCube(host: HTMLDivElement, options: CubeOptions, events: CubeEvent
   // The cube follows a mouse anywhere on the page, not only over its own canvas, so
   // it does not drop back to idle as the pointer crosses to the form or an overlay.
   // Moves are sent once per frame, the latest one, however fast the events come.
-  // A finger only steers it while touching the canvas, so scrolling does not.
+  // Only a mouse or pen steers it: on a phone or tablet a finger scrolls the page and
+  // taps, and the cube just plays its own animation.
   let pending: { x: number; y: number } | null = null;
   let moveFrame = 0;
   const sendMove = () => {
@@ -194,7 +195,7 @@ function mountCube(host: HTMLDivElement, options: CubeOptions, events: CubeEvent
     pending = null;
   };
   const onMove = (event: PointerEvent) => {
-    if (event.pointerType === 'touch' && !host.contains(event.target as Node)) return;
+    if (event.pointerType === 'touch') return;
     pending = { x: event.clientX, y: event.clientY };
     if (!moveFrame) moveFrame = requestAnimationFrame(sendMove);
   };
