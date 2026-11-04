@@ -2,6 +2,8 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FlaskConical, Play, RefreshCw } from 'lucide-react';
+import { accessDeniedReason } from '../../utils/accessDenied';
+import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
 interface PurchasedLabRecord {
   id: number | string;
@@ -25,6 +27,7 @@ export const PurchasedLabsPage: React.FC = () => {
 
   const [purchasedLabs, setPurchasedLabs] = useState<PurchasedLabRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPurchased = async () => {
@@ -33,6 +36,7 @@ export const PurchasedLabsPage: React.FC = () => {
         const res = await routedApiFetch('/api/v1/admin/purchased-labs', {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
+        setAccessDenied(await accessDeniedReason(res));
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -73,6 +77,10 @@ export const PurchasedLabsPage: React.FC = () => {
         <div className="w-8 h-8 border-4 border-[#0052CC] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  if (accessDenied) {
+    return <AccessDeniedNotice reason={accessDenied} />;
   }
 
   return (

@@ -15,10 +15,13 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context';
+import { accessDeniedReason } from '../../utils/accessDenied';
+import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
 export const AdminDashboard: React.FC = () => {
   const { user, authorization } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   // Profile-incomplete banner: mandatory until the admin replaces their
   // placeholder organization name with a real one, or adds a verified
@@ -85,6 +88,7 @@ export const AdminDashboard: React.FC = () => {
       try {
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await routedApiFetch('/api/v1/admin/dashboard/summary', { headers });
+        setAccessDenied(await accessDeniedReason(res));
 
         if (res.ok) {
           const data = await res.json();
@@ -102,6 +106,10 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return <div className="py-12 text-center text-slate-400 font-medium">Loading summary details...</div>;
+  }
+
+  if (accessDenied) {
+    return <AccessDeniedNotice reason={accessDenied} />;
   }
 
   const isDbConnected = summaryData.databaseConnected;

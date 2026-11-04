@@ -2,6 +2,8 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Download, FileText } from 'lucide-react';
+import { accessDeniedReason } from '../../utils/accessDenied';
+import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
 interface LabAssignmentReport {
   assignment_id: number;
@@ -20,6 +22,7 @@ interface LabAssignmentReport {
 export const ReportsPage: React.FC = () => {
   const [reports, setReports] = useState<LabAssignmentReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchReports = async () => {
@@ -28,6 +31,7 @@ export const ReportsPage: React.FC = () => {
       const res = await routedApiFetch('/api/v1/admin/reports/lab-assignments', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
+      setAccessDenied(await accessDeniedReason(res));
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) setReports(data);
@@ -97,6 +101,8 @@ export const ReportsPage: React.FC = () => {
 
       {loading ? (
         <div className="py-12 text-center text-slate-400 font-medium">Loading reports...</div>
+      ) : accessDenied ? (
+        <AccessDeniedNotice reason={accessDenied} />
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="overflow-x-auto">

@@ -714,8 +714,14 @@ export const SystemPortal: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    const token = localStorage.getItem('token');
     try {
-      await routedApiFetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
+      // The server can only end the session it is told about.
+      await routedApiFetch('/api/v1/auth/logout', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+      });
     } catch {
       // ignore
     }
