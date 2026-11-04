@@ -19,7 +19,6 @@ import {
   Zap
 } from 'lucide-react';
 import '@xterm/xterm/css/xterm.css';
-import { requestConfirmation } from '../../lib/feedback';
 
 // ─── Phase Data ────────────────────────────────────────────────────────────────
 interface Level {

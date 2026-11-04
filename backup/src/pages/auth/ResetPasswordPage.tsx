@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { AuthShell } from '../../components/auth/AuthShell';
-import { errorBox, fieldHint, fieldInput, fieldInputWithIcon, fieldLabel, primaryButton } from '../../components/auth/formStyles';
+import { errorBox, fieldInputWithIcon, fieldLabel, primaryButton } from '../../components/auth/formStyles';
 import { PasswordStrengthMeter, evaluatePasswordPolicy } from '../../components/PasswordStrengthMeter';
 
 export const ResetPasswordPage: React.FC = () => {
