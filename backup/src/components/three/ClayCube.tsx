@@ -177,21 +177,44 @@ function mountCube(host: HTMLDivElement, options: CubeOptions, events: CubeEvent
   });
   visibility.observe(host);
   document.addEventListener('visibilitychange', onVisibility);
-  const onMove = (event: PointerEvent) => {
+  // The cube follows a mouse anywhere on the page, not only over its own canvas, so
+  // it does not drop back to idle as the pointer crosses to the form or an overlay.
+  // Moves are sent once per frame, the latest one, however fast the events come.
+  // A finger only steers it while touching the canvas, so scrolling does not.
+  let pending: { x: number; y: number } | null = null;
+  let moveFrame = 0;
+  const sendMove = () => {
+    moveFrame = 0;
+    if (!pending) return;
     const rect = host.getBoundingClientRect();
-    control?.pointer(((event.clientX - rect.left) / rect.width) * 2 - 1, ((event.clientY - rect.top) / rect.height) * 2 - 1);
+    if (rect.width && rect.height) control?.pointer(((pending.x - rect.left) / rect.width) * 2 - 1, ((pending.y - rect.top) / rect.height) * 2 - 1);
+    pending = null;
   };
-  const onLeave = () => control?.leave();
-  host.addEventListener('pointermove', onMove);
-  host.addEventListener('pointerleave', onLeave);
+  const onMove = (event: PointerEvent) => {
+    if (event.pointerType === 'touch' && !host.contains(event.target as Node)) return;
+    pending = { x: event.clientX, y: event.clientY };
+    if (!moveFrame) moveFrame = requestAnimationFrame(sendMove);
+  };
+  const onLeave = () => {
+    pending = null;
+    control?.leave();
+  };
+  const onOut = (event: PointerEvent) => {
+    if (!event.relatedTarget) onLeave();
+  };
+  window.addEventListener('pointermove', onMove, { passive: true });
+  document.addEventListener('pointerout', onOut);
+  window.addEventListener('blur', onLeave);
 
   return () => {
     disposed = true;
     sizeWatcher.disconnect();
     visibility.disconnect();
     document.removeEventListener('visibilitychange', onVisibility);
-    host.removeEventListener('pointermove', onMove);
-    host.removeEventListener('pointerleave', onLeave);
+    window.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerout', onOut);
+    window.removeEventListener('blur', onLeave);
+    cancelAnimationFrame(moveFrame);
     control?.dispose();
   };
 }

@@ -88,6 +88,8 @@ function colorFor(index: number, logo: boolean) {
 }
 
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
+// Maps any number into -1..1, nearly straight near 0 and flattening far out.
+const soften = (v: number) => v / Math.sqrt(1 + v * v);
 const easeOutQuint = (t: number) => 1 - Math.pow(1 - clamp01(t), 5);
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - clamp01(t), 3);
 const easeInCubic = (t: number) => Math.pow(clamp01(t), 3);
@@ -363,12 +365,17 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
   let visible = true;
   let yaw = 0;
   let pitch = 0;
+  let lastFrame = 0;
   let hop = { index: -1, at: -10 };
   // Only top-layer blocks hop; a lower block would jump into the one above it.
   const hoppers = [18, 19, 20, 21, 22, 23, 24, 25, 26];
 
   const tick = (now: number) => {
     const t = (now - start) / 1000;
+    // Easing by elapsed time, not per frame, so the cube turns at the same speed at
+    // 30, 60 or 144 frames a second, and catches up after a dropped frame.
+    const dt = lastFrame ? Math.min(0.1, (now - lastFrame) / 1000) : 1 / 60;
+    lastFrame = now;
     let busy = !reduced;
 
     blocks.forEach((block, i) => {
@@ -512,10 +519,13 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
 
     const breathe = reduced ? 0 : Math.sin(t * 0.9) * 0.05;
     cube.position.y = breathe;
-    const targetYaw = reduced ? 0 : pointer.inside ? pointer.x * 0.35 : Math.sin(t * 0.25) * 0.22;
-    const targetPitch = reduced ? 0 : pointer.inside ? pointer.y * 0.06 : 0;
-    yaw += (targetYaw - yaw) * 0.05;
-    pitch += (targetPitch - pitch) * 0.05;
+    // The pointer is anywhere on the page, in canvas units (±1 at the canvas edges).
+    // The soft curve keeps the turn growing past the edge without ever snapping.
+    const targetYaw = reduced ? 0 : pointer.inside ? soften(pointer.x) * 0.5 : Math.sin(t * 0.25) * 0.22;
+    const targetPitch = reduced ? 0 : pointer.inside ? soften(pointer.y) * 0.16 : 0;
+    const follow = 1 - Math.exp(-dt * (pointer.inside ? 6 : 2.5));
+    yaw += (targetYaw - yaw) * follow;
+    pitch += (targetPitch - pitch) * follow;
     root.rotation.y = yaw;
     root.rotation.x = pitch;
     const settling = looping && t > assembledAt && (t - assembledAt) % CYCLE >= HOLD + SPREAD + RANGE + GATHER;
@@ -556,9 +566,12 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
       pointer.x = x;
       pointer.y = y;
       pointer.inside = true;
-      ndc.set(x, -y);
-      raycaster.setFromCamera(ndc, camera);
-      const over = raycaster.intersectObject(cube, true).length > 0;
+      let over = false;
+      if (Math.abs(x) <= 1 && Math.abs(y) <= 1) {
+        ndc.set(x, -y);
+        raycaster.setFromCamera(ndc, camera);
+        over = raycaster.intersectObject(cube, true).length > 0;
+      }
       if (over !== hovering) {
         hovering = over;
         events.hover(over);
