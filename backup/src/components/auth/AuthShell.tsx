@@ -6,6 +6,7 @@ import { MASCOT_SEAT, Mascot, type MascotPose } from '../mascot/Mascot';
 import { AmbientBackground } from '../ui/AmbientBackground';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useRichGraphics } from '../../utils/webgl';
+import { CubeStill } from '../three/CubeStill';
 
 const ClayCube = lazy(() => import('../three/ClayCube'));
 
@@ -30,7 +31,8 @@ const SKY = [
   'linear-gradient(180deg, oklch(0.985 0.01 80), oklch(0.965 0.02 75))',
 ].join(', ');
 
-function Hero({ audience, cube }: { audience: 'student' | 'enterprise'; cube: boolean }) {
+function Hero({ audience, cube, live }: { audience: 'student' | 'enterprise'; cube: boolean; live: boolean }) {
+  const [drawn, setDrawn] = useState(false);
 
   return (
     <aside className="relative m-3 hidden overflow-hidden rounded-[2rem] ring-1 ring-slate-900/5 lg:flex lg:flex-col" aria-label="About CyberRange">
@@ -60,11 +62,16 @@ function Hero({ audience, cube }: { audience: 'student' | 'enterprise'; cube: bo
         <div className="relative flex min-h-[14rem] flex-1 items-center">
           {cube && (
             <div className="relative h-full max-h-[460px] w-full">
-              <Suspense fallback={null}>
-                {/* The canvas reaches a little above the stage into empty space, so the
-                    cube can be larger while its breaking blocks stay inside the canvas. */}
-                <ClayCube mode="logo" loop dark={false} className="absolute inset-x-0 -top-[8%] bottom-0" />
-              </Suspense>
+              {/* The picture holds the cube's place until the live one is drawn over it,
+                  and stays in light mode. */}
+              <CubeStill live={live && drawn} className="absolute inset-x-0 -top-[8%] bottom-0 h-[108%] w-full" />
+              {live && (
+                <Suspense fallback={null}>
+                  {/* The canvas reaches a little above the stage into empty space, so the
+                      cube can be larger while its breaking blocks stay inside the canvas. */}
+                  <ClayCube mode="logo" loop dark={false} onReady={() => setDrawn(true)} className="absolute inset-x-0 -top-[8%] bottom-0" />
+                </Suspense>
+              )}
             </div>
           )}
         </div>
@@ -286,11 +293,12 @@ export function AuthShell({ title, subtitle, children, footer, audience = 'stude
   const { pose, look } = useMascotMood(formRef, mascotRef);
   const seatTop = useSeatTop(columnRef, formRef);
   const mascotSize = roomy ? 92 : 76;
+  const [bandDrawn, setBandDrawn] = useState(false);
 
   return (
     <div className="isolate grid min-h-screen bg-slate-100 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <AmbientBackground />
-      <Hero audience={audience} cube={webgl && wide} />
+      <Hero audience={audience} cube={wide} live={webgl} />
 
       <main className="flex min-h-screen flex-col px-6 py-8 sm:px-10">
         <Link to="/" className="inline-flex items-center gap-2.5 lg:hidden" aria-label="CyberRange home">
@@ -301,12 +309,15 @@ export function AuthShell({ title, subtitle, children, footer, audience = 'stude
           <p className="text-balance font-display text-3xl font-extrabold leading-tight tracking-tight text-slate-900">
             {audience === 'enterprise' ? 'Run your own cyber range.' : 'Learn security by doing it for real.'}
           </p>
-          {webgl && !wide && (
+          {!wide && (
             <div className="relative mt-3 h-48 overflow-hidden rounded-3xl" aria-hidden="true">
               <div className="absolute inset-0" style={{ background: SKY }} />
-              <Suspense fallback={null}>
-                <ClayCube mode="logo" loop dark={false} className="absolute inset-0" />
-              </Suspense>
+              <CubeStill live={webgl && bandDrawn} className="absolute inset-0 h-full w-full p-3" />
+              {webgl && (
+                <Suspense fallback={null}>
+                  <ClayCube mode="logo" loop dark={false} onReady={() => setBandDrawn(true)} className="absolute inset-0" />
+                </Suspense>
+              )}
             </div>
           )}
         </div>

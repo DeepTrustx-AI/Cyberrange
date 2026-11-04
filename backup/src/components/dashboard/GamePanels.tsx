@@ -46,6 +46,7 @@ export function CubeStage({ game, fresh, dark, ready, levelUp }: CubeStageProps)
   const webgl = useRichGraphics();
   const [hover, setHover] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
+  const [drawn, setDrawn] = useState(false);
   // Without WebGL there is no cube to wait for, so the card celebrates at once.
   useEffect(() => {
     if (levelUp && !webgl) setCelebrating(true);
@@ -58,16 +59,16 @@ export function CubeStage({ game, fresh, dark, ready, levelUp }: CubeStageProps)
   return (
     <div className="relative h-full w-full">
       {celebrating && <ClayRain count={48} delay={0.1} />}
-      {webgl && ready ? (
+      {/* The clay blocks still holds the cube's place while the 3D loads (or never
+          starts), and for good in light mode. */}
+      <div className={`absolute inset-x-0 bottom-28 top-16 flex items-center justify-center transition-opacity duration-500 ${webgl && drawn ? 'opacity-0' : 'opacity-100'}`}>
+        <LabArtImage kind="blocks" className="h-full max-h-56 w-auto" />
+      </div>
+      {webgl && ready && (
         <Suspense fallback={null}>
-          <ClayCube mode="progress" filled={game.inLevel} fresh={fresh} dark={dark} levelUp={levelUp} onHover={setHover} onLevelUp={() => setCelebrating(true)} className="absolute inset-x-0 bottom-24 top-10" />
+          <ClayCube mode="progress" filled={game.inLevel} fresh={fresh} dark={dark} levelUp={levelUp} onReady={() => setDrawn(true)} onHover={setHover} onLevelUp={() => setCelebrating(true)} className="absolute inset-x-0 bottom-24 top-10" />
         </Suspense>
-      ) : !webgl ? (
-        // No 3D here (light mode): the clay blocks still, in the cube's place.
-        <div className="absolute inset-x-0 bottom-28 top-16 flex items-center justify-center">
-          <LabArtImage kind="blocks" className="h-full max-h-56 w-auto" />
-        </div>
-      ) : null}
+      )}
 
       <div className="pointer-events-none absolute right-6 top-6 text-right">
         <p className="text-sm font-semibold text-slate-900 dark:text-white">Your cube</p>

@@ -22,22 +22,26 @@ interface ClayCubeProps {
   /** Progress mode: the new blocks finished a cube; `previous` blocks of it were already there. */
   levelUp?: { previous: number } | null;
   onAssembled?: () => void;
+  /** The live cube is drawn and fading in (a still picture in its place can go). */
+  onReady?: () => void;
   onHover?: (hovering: boolean) => void;
   /** The finished cube starts its level-up celebration. */
   onLevelUp?: () => void;
   className?: string;
 }
 
-export default function ClayCube({ mode, filled = CUBE_BLOCKS, fresh = 0, dark, intro = 'full', loop = false, levelUp = null, onAssembled, onHover, onLevelUp, className }: ClayCubeProps) {
+export default function ClayCube({ mode, filled = CUBE_BLOCKS, fresh = 0, dark, intro = 'full', loop = false, levelUp = null, onAssembled, onReady, onHover, onLevelUp, className }: ClayCubeProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef(onHover);
   const assembledRef = useRef(onAssembled);
   const levelUpRef = useRef(onLevelUp);
+  const readyRef = useRef(onReady);
   useEffect(() => {
     hoverRef.current = onHover;
     assembledRef.current = onAssembled;
     levelUpRef.current = onLevelUp;
-  }, [onHover, onAssembled, onLevelUp]);
+    readyRef.current = onReady;
+  }, [onHover, onAssembled, onLevelUp, onReady]);
   const levelUpFrom = levelUp ? levelUp.previous : null;
 
   useEffect(() => {
@@ -54,7 +58,7 @@ export default function ClayCube({ mode, filled = CUBE_BLOCKS, fresh = 0, dark, 
       levelUp: levelUpFrom === null ? null : { previous: levelUpFrom },
     };
     const events: CubeEvents = {
-      ready: () => {},
+      ready: () => readyRef.current?.(),
       assembled: () => assembledRef.current?.(),
       hover: (over) => hoverRef.current?.(over),
       levelUp: () => levelUpRef.current?.(),
