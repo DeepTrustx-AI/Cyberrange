@@ -355,7 +355,7 @@ export const SettingsPage: React.FC = () => {
                 type="button"
                 onClick={() => handleSaveAppearance('light')}
                 className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
-                  theme === 'light' ? 'border-brand-600 bg-blue-50/50 dark:bg-blue-950/20 text-brand-600' : 'border-slate-200 dark:border-slate-800 text-brand-800 dark:text-brand-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  theme === 'light' ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-slate-200 dark:border-slate-800 text-brand-800 dark:text-brand-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <Sun className="w-6 h-6 text-amber-500" />
@@ -366,7 +366,7 @@ export const SettingsPage: React.FC = () => {
                 type="button"
                 onClick={() => handleSaveAppearance('dark')}
                 className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
-                  theme === 'dark' ? 'border-brand-600 bg-blue-50/50 dark:bg-blue-950/20 text-brand-600' : 'border-slate-200 dark:border-slate-800 text-brand-800 dark:text-brand-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  theme === 'dark' ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-slate-200 dark:border-slate-800 text-brand-800 dark:text-brand-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <Moon className="w-6 h-6 text-indigo-500" />

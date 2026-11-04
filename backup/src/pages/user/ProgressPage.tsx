@@ -199,10 +199,10 @@ export const ProgressPage: React.FC = () => {
             {achievements.map((badge) => {
               const certId = badge.display_certificate_id || badge.certificate_id;
               return (
-                <li key={badge.id} className={`flex items-center gap-3 py-3 ${badge.unlocked ? '' : 'opacity-60'}`}>
+                <li key={badge.id} className="flex items-center gap-3 py-3">
                   <Award className={`h-5 w-5 shrink-0 ${badge.unlocked ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{badge.title}</p>
+                    <p className={`truncate text-sm font-medium ${badge.unlocked ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{badge.title}</p>
                     {badge.description && <p className="text-xs text-slate-500 dark:text-slate-400">{badge.description}</p>}
                   </div>
                   {badge.unlocked && certId ? (
