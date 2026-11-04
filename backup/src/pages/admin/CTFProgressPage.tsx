@@ -1,4 +1,5 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
+import { downloadCsv } from '../../utils/exportUtils';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -42,14 +43,20 @@ export const CTFProgressPage: React.FC = () => {
       const lbData = await lbRes.json();
       setLeaderboard(lbData.entries || []);
 
-      // 4. Fetch Submissions (to build solves matrix)
-      const subRes = await routedApiFetch(`/api/v1/ctf/${ctfId}/submissions?limit=1000`, { headers });
-      if (!subRes.ok) throw new Error('Failed to load submissions.');
-      const subData = await subRes.json();
+      // 4. Fetch Submissions (to build solves matrix). The server sends at most 200 per page,
+      // so read every page.
+      const entries: any[] = [];
+      for (let page = 1; ; page++) {
+        const subRes = await routedApiFetch(`/api/v1/ctf/${ctfId}/submissions?page=${page}&limit=200`, { headers });
+        if (!subRes.ok) throw new Error('Failed to load submissions.');
+        const subData = await subRes.json();
+        const pageEntries = subData.entries || [];
+        entries.push(...pageEntries);
+        if (pageEntries.length === 0 || entries.length >= (subData.total ?? 0)) break;
+      }
 
       // Build solves map: { participant_id: Set of challenge_ids }
       const newSolvesMap: Record<string, Set<number>> = {};
-      const entries = subData.entries || [];
       entries.forEach((sub: any) => {
         if (sub.is_correct) {
           const key = String(sub.participant_id);
@@ -75,30 +82,16 @@ export const CTFProgressPage: React.FC = () => {
     if (!ctf || leaderboard.length === 0) return;
 
     // Headers: Rank, Name, Solved Count, Total Points, <Challenge Titles...>
-    const challengeHeaders = challenges.map((ch) => `"${ch.title.replace(/"/g, '""')}"`);
-    const csvHeaders = ['Rank', 'Participant Name', 'Solved Count', 'Total Points', ...challengeHeaders];
+    const csvHeaders = ['Rank', 'Participant Name', 'Solved Count', 'Total Points', ...challenges.map((ch) => ch.title)];
 
     const csvRows = leaderboard.map((p) => {
       const studentSolves = solvesMap[String(p.participant_id)] || new Set();
       const chSolveStates = challenges.map((ch) => (studentSolves.has(ch.id) ? 'Solved' : ''));
-      return [
-        p.rank,
-        `"${p.participant_name.replace(/"/g, '""')}"`,
-        p.solve_count,
-        p.total_points,
-        ...chSolveStates,
-      ];
+      return [p.rank, p.participant_name, p.solve_count, p.total_points, ...chSolveStates];
     });
 
-    const csvContent = [csvHeaders.join(','), ...csvRows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `ctf_${ctfId}_progress_export.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Names are typed by students, so the helper keeps them from running as formulas in Excel.
+    downloadCsv(`ctf_${ctfId}_progress_export.csv`, csvHeaders, csvRows);
   };
 
   return (

@@ -58,3 +58,27 @@ export async function downloadAuthenticatedFile(
     window.URL.revokeObjectURL(blobUrl);
   }, 100);
 }
+
+// One CSV cell. Quotes are doubled so a value can't break the row, and a value starting with
+// = + - @ or a tab/return gets a leading ' so Excel shows it as text instead of running it as a formula.
+const csvCell = (value: unknown): string => {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+// Builds a CSV file in the browser and downloads it.
+export function downloadCsv(filename: string, headers: string[], rows: unknown[][]): void {
+  const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+  const blobUrl = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  }, 100);
+}
