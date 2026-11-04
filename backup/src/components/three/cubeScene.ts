@@ -367,10 +367,38 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
   let pitch = 0;
   let lastFrame = 0;
   let hop = { index: -1, at: -10 };
+
+  // Frames waiting on the GPU. Firefox lets a worker hand over frames as fast as the
+  // screen refreshes (240 a second on a fast laptop panel) even when the GPU finishes
+  // far fewer, so they queued up and the cube on screen trailed the mouse by seconds.
+  // A fence after each frame says when the GPU is done with it; with two still
+  // unfinished, the next frame waits. Frames are also kept to about 75 a second.
+  const gl = renderer.getContext();
+  const gl2 = 'fenceSync' in gl ? (gl as WebGL2RenderingContext) : null;
+  const inFlight: WebGLSync[] = [];
+  const gpuBehind = () => {
+    if (!gl2) return false;
+    while (inFlight.length && gl2.getSyncParameter(inFlight[0], gl2.SYNC_STATUS) === gl2.SIGNALED) gl2.deleteSync(inFlight.shift()!);
+    return inFlight.length >= 2;
+  };
+  const MIN_FRAME_MS = 13;
+  const draw = () => {
+    renderer.render(scene, camera);
+    const fence = gl2?.fenceSync(gl2.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    if (fence) {
+      inFlight.push(fence);
+      gl2!.flush();
+    }
+  };
   // Only top-layer blocks hop; a lower block would jump into the one above it.
   const hoppers = [18, 19, 20, 21, 22, 23, 24, 25, 26];
 
   const tick = (now: number) => {
+    // (A GPU that never reports a frame done gets a frame every quarter second anyway.)
+    if (visible && lastFrame && (now - lastFrame < MIN_FRAME_MS || (gpuBehind() && now - lastFrame < 250))) {
+      frame = nextFrame(tick);
+      return;
+    }
     const t = (now - start) / 1000;
     // Easing by elapsed time, not per frame, so the cube turns at the same speed at
     // 30, 60 or 144 frames a second, and catches up after a dropped frame.
@@ -534,7 +562,7 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
       cube.scale.setScalar(cube.scale.x + (targetScale - cube.scale.x) * 0.15);
     }
 
-    renderer.render(scene, camera);
+    draw();
     if (busy && visible) frame = nextFrame(tick);
     else running = false;
   };
@@ -590,6 +618,7 @@ export function runCubeScene(renderer: WebGLRenderer, { mode, filled, fresh, dar
     dispose() {
       disposed = true;
       cancelFrame(frame);
+      inFlight.forEach((fence) => gl2?.deleteSync(fence));
       geometry.dispose();
       slotEdges.dispose();
       slotLines.dispose();
