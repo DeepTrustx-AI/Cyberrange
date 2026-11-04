@@ -1,10 +1,23 @@
+import { useEffect, useState } from 'react';
 import { LabArtImage } from './LabArtImage';
-import { labArtKind } from '../../utils/labArtKind';
+import { labArtKind, type LabArtKind } from '../../utils/labArtKind';
+import { useRichGraphics } from '../../utils/webgl';
+import { useTheme } from '../../context/ThemeContext';
 
 // The top band of every lab card, student catalogue and admin marketplace alike:
 // a soft tint per lab family, the lab's clay illustration and its difficulty.
-// The illustration is always the pre-rendered picture: a live 3D scene per hovered
-// card made browsers without parallel shader compiling (Firefox) freeze for seconds.
+// While a card is hovered (`alive`) with full graphics, the scene plays: a short
+// looping clip rendered from the same 3D scene (scripts/render-lab-art.mjs), which
+// opens on the still's exact frame. A clip is only a picture to the browser, so a
+// page of cards never builds a 3D scene or compiles shaders. Light mode and reduced
+// motion keep the still.
+
+// URLs only: a clip is downloaded the first time its card is hovered.
+const CLIPS = Object.fromEntries(
+  Object.entries(import.meta.glob('../../assets/lab-clips/*.webp', { eager: true, query: '?url', import: 'default' })).map(
+    ([path, url]) => [path.slice(path.lastIndexOf('/') + 1, -'.webp'.length), url as string],
+  ),
+);
 
 const FAMILY_TINTS: Record<string, string> = {
   linux: 'from-[#FFE9DA] to-[#FFF6EE] dark:from-[#5A3420] dark:to-[#2E2019]',
@@ -28,6 +41,40 @@ interface LabCardMediaProps {
   difficulty?: string | null;
   size?: 'card' | 'hero';
   complete?: boolean;
+  /** The card is hovered (or the preview is open): play the scene's clip. */
+  alive?: boolean;
+}
+
+// The clip over the still: shown once it has loaded, faded out when the card is left,
+// then removed, so the next hover starts again from the still's frame.
+function LabClip({ kind, alive }: { kind: LabArtKind; alive: boolean }) {
+  const dark = useTheme().theme === 'dark';
+  const rich = useRichGraphics();
+  const [mounted, setMounted] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const src = CLIPS[`${kind}-${dark ? 'dark' : 'light'}`];
+  const allowed = rich && Boolean(src) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  useEffect(() => {
+    if (alive && allowed) setMounted(true);
+  }, [alive, allowed]);
+  if (!mounted) return null;
+  return (
+    <img
+      src={src}
+      alt=""
+      aria-hidden="true"
+      draggable={false}
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      onTransitionEnd={() => {
+        if (!alive) {
+          setMounted(false);
+          setLoaded(false);
+        }
+      }}
+      className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${alive && loaded ? 'opacity-100' : 'opacity-0'}`}
+    />
+  );
 }
 
 function familyTint(category?: string | null) {
@@ -35,7 +82,7 @@ function familyTint(category?: string | null) {
   return FAMILY_TINTS[Object.keys(FAMILY_TINTS).find((name) => family.includes(name)) ?? 'recon'];
 }
 
-export function LabCardMedia({ labId, category, difficulty, size = 'card', complete = false }: LabCardMediaProps) {
+export function LabCardMedia({ labId, category, difficulty, size = 'card', complete = false, alive = false }: LabCardMediaProps) {
   const level = (difficulty ?? '').toLowerCase();
   const style = DIFFICULTY[level];
   const kind = labArtKind(labId, category ?? '');
@@ -43,7 +90,10 @@ export function LabCardMedia({ labId, category, difficulty, size = 'card', compl
 
   return (
     <div className={`relative flex items-center justify-center overflow-hidden bg-gradient-to-br ${size === 'hero' ? 'h-72' : 'h-44'} ${familyTint(category)}`}>
-      <LabArtImage kind={kind} className={`${art} transition-transform duration-500 ease-out group-hover:-translate-y-1 group-hover:scale-[1.04]`} />
+      <div className={`relative ${art} transition-transform duration-500 ease-out group-hover:-translate-y-1 group-hover:scale-[1.04]`}>
+        <LabArtImage kind={kind} className="absolute inset-0 h-full w-full" />
+        <LabClip kind={kind} alive={alive} />
+      </div>
       {complete && (
         <span className="stamp-in absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-emerald-500 py-1 pl-1.5 pr-2.5 text-xs font-semibold text-white shadow-md shadow-emerald-700/20">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25">

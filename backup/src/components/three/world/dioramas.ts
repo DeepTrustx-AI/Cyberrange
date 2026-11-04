@@ -34,6 +34,12 @@ interface Build {
 
 const wave = (t: number, speed = 1, phase = 0) => Math.sin(t * speed + phase);
 
+// Every motion repeats exactly every LOOP seconds, so the hover clips rendered from
+// these scenes (scripts/render-lab-art.mjs) loop without a jump. Speeds are whole
+// multiples of TURN, one full cycle per loop.
+export const LOOP = 6;
+const TURN = (Math.PI * 2) / LOOP;
+
 function plinth(b: Build, color: string) {
   const m = block(4, PT, 4, b.dark ? mixHex(color, '#2B241F', 0.62) : color, 0, 0, 0, 0.14);
   m.castShadow = false;
@@ -54,9 +60,9 @@ function server(b: Build) {
   const cube = block(0.5, 0.5, 0.5, CLAY.mint, 1.25, 1.9, -1.0, 0.1);
   b.add(cube);
   b.on((t) => {
-    cursor.visible = Math.floor(t * 1.6) % 2 === 0;
-    cube.position.y = 2.15 + wave(t, 1.6) * 0.12;
-    cube.rotation.y = t * 0.6;
+    cursor.visible = Math.floor(t * 2) % 2 === 0;
+    cube.position.y = 2.15 + wave(t, TURN * 2) * 0.12;
+    cube.rotation.y = t * (TURN / 2); // half a turn per loop, after which the block looks the same
   });
 }
 
@@ -82,7 +88,7 @@ function rack(b: Build) {
     leds.forEach((led) => {
       led.material.emissiveIntensity = led.fast
         ? (Math.floor(t * 5 + led.phase) % 3 === 0 ? 0.05 : 1.1)
-        : 0.45 + 0.45 * Math.max(0, wave(t, 2.2, led.phase));
+        : 0.45 + 0.45 * Math.max(0, wave(t, TURN * 2, led.phase));
     });
   });
 }
@@ -107,9 +113,9 @@ function railway(b: Build) {
   train.position.z = 0.4;
   b.add(train);
   b.on((t) => {
-    const s = wave(t, 0.55);
+    const s = wave(t, TURN);
     train.position.x = s * 1.05;
-    const heading = Math.cos(t * 0.55) > 0;
+    const heading = Math.cos(t * TURN) > 0;
     lamps[0].emissiveIntensity = heading ? 0.15 : 1.0;
     lamps[1].emissiveIntensity = heading ? 1.0 : 0.15;
   });
@@ -141,7 +147,7 @@ function water(b: Build) {
   ripple.position.set(0.75, PT + 0.47, 0.6);
   b.add(ripple);
   b.on((t) => {
-    const cycle = (t % 1.8) / 1.8;
+    const cycle = (t % 2) / 2;
     const fall = Math.min(1, cycle / 0.55);
     drop.position.y = PT + 1.25 - fall * fall * 0.8;
     drop.visible = cycle < 0.55;
@@ -172,12 +178,12 @@ function cloud(b: Build) {
   glow(packet, '#FFB088', 0.5);
   b.add(packet);
   b.on((t) => {
-    puffs.position.y = wave(t, 0.9) * 0.08;
-    puffs.rotation.y = wave(t, 0.3) * 0.08;
-    const p = (t % 2.2) / 2.2;
+    puffs.position.y = wave(t, TURN) * 0.08;
+    puffs.rotation.y = wave(t, TURN, 1) * 0.08;
+    const p = (t % 2) / 2;
     packet.position.set(-0.85 + p * 0.8, PT + 1.3 + p * 1.25, 0.75 - p * 0.75);
     packet.scale.setScalar(p > 0.85 ? (1 - p) / 0.15 : 1);
-    packet.rotation.y = t * 2;
+    packet.rotation.y = t * TURN * 2;
   });
 }
 
@@ -195,7 +201,7 @@ function lock(b: Build) {
   const keyGlow = glow(keyhole, '#FFC94D', 0);
   b.add(keyhole, block(0.1, 0.3, 0.05, CLAY.ink, 0, PT + 0.5, 0.52, 0.02));
   b.on((t) => {
-    const open = Math.max(0, wave(t, 0.8));
+    const open = Math.max(0, wave(t, TURN));
     top.position.y = open * 0.28;
     top.rotation.y = open * 0.5;
     keyGlow.emissiveIntensity = open * 0.9;
@@ -237,9 +243,9 @@ function radar(b: Build) {
     },
   );
   b.on((t) => {
-    const angle = t * 1.1;
+    const angle = t * TURN;
     sweep.rotation.z = angle - 0.3;
-    head.rotation.y = -angle * 0.5;
+    head.rotation.y = -Math.sin(angle) * 0.5;
     blips.forEach(({ blip, angle: at, h }) => {
       const lag = (((angle - at) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
       const ping = Math.max(0, 1 - lag / 1.2);
@@ -276,8 +282,8 @@ function industrial(b: Build) {
   const steam = mesh(new SphereGeometry(0.16, 20, 14), CLAY.white, 0.8);
   b.add(steam);
   b.on((t) => {
-    valve.rotation.z = t * 1.4;
-    const p = (t % 2.4) / 2.4;
+    valve.rotation.z = t * TURN;
+    const p = (t % 2) / 2;
     steam.position.set(-0.7 + p * 0.3, PT + 2.7 + p * 0.9, 0.35);
     steam.scale.setScalar(0.6 + p * 0.9);
     steam.visible = p < 0.92;
@@ -315,11 +321,10 @@ function race(b: Build) {
   watch.rotation.y = Math.PI / 4;
   b.add(watch);
   b.on((t) => {
-    second.rotation.z = -t * 2.4;
-    minute.rotation.z = -t * 0.2;
-    runnerA.position.x = 0.3 + wave(t, 1.3) * 0.55;
-    runnerB.position.x = 0.1 + wave(t, 1.3, 1.4) * 0.55;
-    watch.position.y = 2.15 + wave(t, 1.1) * 0.06;
+    second.rotation.z = -1.1 - Math.floor((t / LOOP) * 12) * (Math.PI / 6);
+    runnerA.position.x = 0.3 + wave(t, TURN) * 0.55;
+    runnerB.position.x = 0.1 + wave(t, TURN, 1.4) * 0.55;
+    watch.position.y = 2.15 + wave(t, TURN) * 0.06;
   });
 }
 
@@ -366,8 +371,8 @@ function shield(b: Build) {
   crest.position.y = PT + 1.65;
   b.add(crest, block(0.9, 0.18, 0.6, '#9CC9EA', 0, PT, 0, 0.06));
   b.on((t) => {
-    crest.position.y = PT + 1.65 + wave(t, 1.2) * 0.1;
-    crest.rotation.y = wave(t, 0.6) * 0.35;
+    crest.position.y = PT + 1.65 + wave(t, TURN) * 0.1;
+    crest.rotation.y = wave(t, TURN, 1) * 0.35;
   });
 }
 
@@ -379,9 +384,9 @@ function puzzle(b: Build) {
   const topper = block(0.95, 0.95, 0.95, CLAY.peach, 0, PT + 0.95, 0.0);
   b.add(topper, block(0.6, 0.6, 0.6, CLAY.blush, -1.1, PT, -1.1));
   b.on((t) => {
-    const hop = Math.abs(wave(t, 1.6));
+    const hop = Math.abs(wave(t, TURN * 2));
     topper.position.y = PT + 0.95 + 0.475 + hop * 0.35;
-    topper.rotation.y = Math.floor(t * 1.6 / Math.PI) * (Math.PI / 2);
+    topper.rotation.y = Math.floor((t * TURN * 2) / Math.PI) * (Math.PI / 2);
   });
 }
 
@@ -396,7 +401,7 @@ function blocks(b: Build) {
   );
   b.on((t) => {
     columns.forEach(({ column, h }, i) => {
-      const s = 1 + wave(t, 1.1, i * 1.3) * 0.12;
+      const s = 1 + wave(t, TURN, i * 1.3) * 0.12;
       column.scale.y = s;
       column.position.y = PT + (h * s) / 2;
     });
@@ -423,8 +428,8 @@ function flag(b: Build) {
   b.add(block(0.35, 0.35, 0.35, CLAY.butter, 1.25, PT, 1.25));
   b.add(block(0.3, 0.3, 0.3, CLAY.blush, -1.35, PT, 0.9));
   b.on((t) => {
-    cloth.rotation.y = Math.PI / 4 + wave(t, 2.2) * 0.3;
-    cloth.scale.x = 1 + wave(t, 3.1) * 0.06;
+    cloth.rotation.y = Math.PI / 4 + wave(t, TURN * 2) * 0.3;
+    cloth.scale.x = 1 + wave(t, TURN * 3) * 0.06;
   });
 }
 

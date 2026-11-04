@@ -1,6 +1,6 @@
 import { Mesh, OrthographicCamera, PlaneGeometry, Scene, ShadowMaterial, type WebGLRenderer } from 'three';
 import type { LabArtKind } from '../../utils/labArtKind';
-import { buildDiorama } from '../three/world/dioramas';
+import { LOOP, buildDiorama } from '../three/world/dioramas';
 import { compileInParallel, createRenderer, disposeTree, lightScene, studioEnvironment } from '../three/world/kit';
 
 // Renders each lab illustration once, as a real 3D clay scene, into a PNG data URL.
@@ -67,6 +67,33 @@ async function paint(kind: LabArtKind, dark: boolean) {
     // Render and read back in one go, so scenes painted at the same time never mix.
     r.render(scene, camera);
     return r.domElement.toDataURL('image/png');
+  } finally {
+    disposeTree(scene);
+  }
+}
+
+// The frames of a scene's hover clip: `count` evenly spaced moments of one loop,
+// starting at the still's moment, so the clip opens on exactly the still image and
+// its last frame runs straight back into its first. Used by scripts/render-lab-art.mjs.
+export async function renderLabArtFrames(kind: LabArtKind, dark: boolean, count: number): Promise<string[]> {
+  const r = getRenderer();
+  const environment = await studioEnvironment(r);
+  const scene = new Scene();
+  lightScene(scene, environment, dark, 5);
+  scene.add(artFloor(dark));
+  const diorama = buildDiorama(kind, dark);
+  diorama.animate(POSE_TIME);
+  scene.add(diorama.group);
+  const camera = artCamera();
+  try {
+    await compileInParallel(r, scene, camera);
+    const frames: string[] = [];
+    for (let i = 0; i < count; i++) {
+      diorama.animate(POSE_TIME + (LOOP * i) / count);
+      r.render(scene, camera);
+      frames.push(r.domElement.toDataURL('image/png'));
+    }
+    return frames;
   } finally {
     disposeTree(scene);
   }
