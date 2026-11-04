@@ -254,14 +254,14 @@ export const SystemAuditPortal: React.FC = () => {
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-3 text-xs sm:w-auto">
           <div className="flex min-w-0 max-w-full items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 shrink-0 text-slate-400" />
             <span className="shrink-0 text-slate-500 dark:text-slate-400 font-medium">Organization:</span>
             <select
               value={selectedOrg}
               onChange={(e) => setSelectedOrg(e.target.value)}
-              className="min-w-0 max-w-full truncate bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
+              className="w-40 truncate sm:w-auto sm:max-w-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 font-bold text-slate-800 dark:text-slate-200 focus:outline-none"
             >
               <option value="all">All Organizations</option>
               {data?.organizations?.map((o: any) => (
