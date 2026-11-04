@@ -403,7 +403,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
             <div className="relative border-l border-slate-200 dark:border-slate-700 pl-3 sm:pl-4">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none"
+                aria-haspopup="menu"
+                aria-expanded={isProfileMenuOpen}
+                className="flex items-center gap-2 rounded-full hover:opacity-80 transition-opacity"
               >
                 <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                   {getInitials(user?.name || 'Security Admin')}

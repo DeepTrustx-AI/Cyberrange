@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context';
+import { useAuth, useTheme } from '../../context';
 import {
   Lock,
   MessageSquare,
@@ -17,8 +17,11 @@ import { FEEDBACK_GOOGLE_FORM_URL, FEEDBACK_FORM_CONFIGURED } from '../../config
 export const AdminSettings: React.FC = () => {
   const { user, logout } = useAuth();
 
-  // Theme state
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  // Theme: the same saved preference the rest of the app uses, so the choice shown is
+  // the one in force and saving it lasts after a reload.
+  const { theme: savedTheme, setTheme: saveTheme } = useTheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>(savedTheme);
+  useEffect(() => { setTheme(savedTheme); }, [savedTheme]);
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -54,17 +57,9 @@ export const AdminSettings: React.FC = () => {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  const handleSaveTheme = (e: React.FormEvent) => {
+  const handleSaveTheme = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('theme', theme);
-
-    // Apply theme change
-    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
+    await saveTheme(theme);
     showToast('Theme preference updated successfully!');
   };
 
@@ -148,11 +143,12 @@ export const AdminSettings: React.FC = () => {
           </h3>
           <form onSubmit={handleSaveTheme} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex gap-2">
-              {['light', 'dark', 'system'].map((t) => (
+              {(['light', 'dark'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setTheme(t as any)}
+                  aria-pressed={theme === t}
+                  onClick={() => setTheme(t)}
                   className={`px-4 py-2 border rounded-full font-bold uppercase text-xs cursor-pointer transition-all ${
                     theme === t
                       ? 'bg-brand-600 border-brand-600 text-white'
