@@ -16,12 +16,15 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { accessDeniedReason } from '../../utils/accessDenied';
+import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
 export const GroupManagement: React.FC = () => {
   const navigate = useNavigate();
 
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -36,6 +39,7 @@ export const GroupManagement: React.FC = () => {
       const res = await routedApiFetch('/api/v1/admin/groups', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
+      setAccessDenied(await accessDeniedReason(res));
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -157,7 +161,11 @@ export const GroupManagement: React.FC = () => {
 
       {/* Group Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredGroups.length === 0 ? (
+        {accessDenied ? (
+          <div className="col-span-full">
+            <AccessDeniedNotice reason={accessDenied} />
+          </div>
+        ) : filteredGroups.length === 0 ? (
           <div className="col-span-full py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
             <UsersRound className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <h3 className="text-base font-bold text-slate-700 dark:text-slate-200">No Groups Found</h3>
