@@ -1,6 +1,7 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
-import { useAuth, useTheme } from '../../context';
+import { useAuth } from '../../context';
+import { useTheme } from '../../context/ThemeContext';
 import {
   Lock,
   MessageSquare,

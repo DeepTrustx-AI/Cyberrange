@@ -29,7 +29,11 @@ export function FeedbackSurface() {
       setToasts((current) => [...current.slice(-3), toast]);
       window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== toast.id)), 6000);
     };
-    const onConfirmation = (event: Event) => setConfirmation((event as CustomEvent<Confirmation>).detail);
+    // requestConfirmation() sends the title, button label and tone inside `options`.
+    const onConfirmation = (event: Event) => {
+      const { message, options, resolve } = (event as CustomEvent<{ message: string; options?: Omit<Confirmation, 'message' | 'resolve'>; resolve: Confirmation['resolve'] }>).detail;
+      setConfirmation({ message, ...options, resolve });
+    };
 
     window.alert = (message?: unknown) => {
       window.dispatchEvent(new CustomEvent(feedbackEvents.ALERT_EVENT, {
