@@ -327,9 +327,10 @@
 
   .dark .range-wash {
     background:
-      radial-gradient(60% 55% at 15% 15%, oklch(0.42 0.1 55 / 0.45), transparent 70%),
-      radial-gradient(55% 50% at 90% 25%, oklch(0.4 0.07 168 / 0.35), transparent 70%),
-      oklch(0.2 0.012 58);
+      radial-gradient(60% 55% at 15% 15%, oklch(0.46 0.13 50 / 0.7), transparent 70%),
+      radial-gradient(55% 50% at 90% 25%, oklch(0.44 0.1 168 / 0.6), transparent 70%),
+      radial-gradient(60% 50% at 60% 100%, oklch(0.46 0.1 90 / 0.5), transparent 70%),
+      oklch(0.2 0.014 58);
   }
 
   .font-display {
@@ -432,9 +433,9 @@ html.dark {
 
 .dark .ambient {
   background:
-    radial-gradient(circle 34vmax at 18vmax 8vmax, oklch(0.5 0.12 50 / 0.3), transparent 72%),
-    radial-gradient(circle 34vmax at calc(100% - 8vmax) 40vmax, oklch(0.42 0.08 168 / 0.3), transparent 72%),
-    radial-gradient(circle 34vmax at 50vmax 100%, oklch(0.45 0.09 75 / 0.3), transparent 72%);
+    radial-gradient(circle 36vmax at 18vmax 8vmax, oklch(0.52 0.15 50 / 0.5), transparent 72%),
+    radial-gradient(circle 36vmax at calc(100% - 8vmax) 40vmax, oklch(0.48 0.11 168 / 0.45), transparent 72%),
+    radial-gradient(circle 36vmax at 50vmax 100%, oklch(0.5 0.11 85 / 0.4), transparent 72%);
 }
 
 /* Buttons give under the finger: a small press that composes with any transform. */

@@ -122,8 +122,11 @@ function mountCube(host: HTMLDivElement, options: CubeOptions, events: CubeEvent
     }
     const post = (message: CubeWorkerMessage, transfer: Transferable[] = []) => worker.postMessage(message, transfer);
     // A worker whose scripts never load (blocked by an extension or a proxy, say)
-    // never says it started; the page draws the cube itself instead.
-    const watchdog = window.setTimeout(() => giveUp(), 5000);
+    // never says it started; the page draws the cube itself instead. The wait is
+    // long because a slow connection is still downloading the worker, and falling
+    // back there downloads three.js again and compiles on the page, which freezes
+    // Firefox; the still picture holds the cube's place meanwhile.
+    const watchdog = window.setTimeout(() => giveUp(), 20000);
     let gaveUp = false;
     const giveUp = () => {
       if (gaveUp) return;

@@ -7,12 +7,12 @@ import { labArtKind } from '../../utils/labArtKind';
 // card made browsers without parallel shader compiling (Firefox) freeze for seconds.
 
 const FAMILY_TINTS: Record<string, string> = {
-  linux: 'from-[#FFE9DA] to-[#FFF6EE] dark:from-[#3A2C22] dark:to-[#2A231D]',
-  cloud: 'from-[#DDF6EC] to-[#F2FBF7] dark:from-[#20332C] dark:to-[#1F2724]',
-  crypto: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#3A331D] dark:to-[#29261B]',
-  recon: 'from-[#E7EEF9] to-[#F5F8FD] dark:from-[#262B36] dark:to-[#22252C]',
-  ot: 'from-[#F7E6F0] to-[#FCF4F8] dark:from-[#36252F] dark:to-[#2A2128]',
-  puzzle: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#3A331D] dark:to-[#29261B]',
+  linux: 'from-[#FFE9DA] to-[#FFF6EE] dark:from-[#5A3420] dark:to-[#2E2019]',
+  cloud: 'from-[#DDF6EC] to-[#F2FBF7] dark:from-[#17493A] dark:to-[#1A2722]',
+  crypto: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#55451A] dark:to-[#2C271B]',
+  recon: 'from-[#E7EEF9] to-[#F5F8FD] dark:from-[#22385E] dark:to-[#1E2430]',
+  ot: 'from-[#F7E6F0] to-[#FCF4F8] dark:from-[#552645] dark:to-[#2C1F28]',
+  puzzle: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#55451A] dark:to-[#2C271B]',
 };
 
 const DIFFICULTY: Record<string, { dot: string; text: string }> = {
