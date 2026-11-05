@@ -2,6 +2,77 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Guided configuration labs use the same calm application shell as the rest of
+   CyberRange. YAML and code surfaces remain deliberately dark, but the learning
+   chrome is Soft Daylight / Ember rather than a separate control-room theme. */
+.guided-lab {
+  background: var(--color-slate-50);
+  color: var(--color-slate-800);
+}
+
+.guided-lab > div {
+  max-width: 80rem;
+}
+
+.guided-lab header h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--color-slate-900);
+}
+
+.guided-lab [class~="bg-slate-900"] {
+  background: var(--color-white);
+}
+
+.guided-lab [class~="border-slate-700"],
+.guided-lab [class~="border-slate-800"] {
+  border-color: var(--color-slate-200);
+}
+
+.guided-lab [class~="text-slate-100"] { color: var(--color-slate-900); }
+.guided-lab [class~="text-slate-200"] { color: var(--color-slate-700); }
+.guided-lab [class~="text-slate-300"] { color: var(--color-slate-600); }
+.guided-lab [class~="text-slate-400"] { color: var(--color-slate-500); }
+
+/* Code, YAML, and compact assessment output retain terminal-night contrast. */
+.guided-lab [class~="bg-slate-950"],
+.guided-lab [class~="bg-slate-950"] [class~="text-slate-100"] { color: var(--color-slate-100); }
+.guided-lab [class~="bg-slate-950"] [class~="text-slate-200"] { color: var(--color-slate-200); }
+.guided-lab [class~="bg-slate-950"] [class~="text-slate-300"] { color: var(--color-slate-300); }
+.guided-lab [class~="bg-slate-950"] [class~="text-slate-400"] { color: var(--color-slate-400); }
+.guided-lab textarea,
+.guided-lab pre { color: var(--color-slate-100); }
+
+.guided-lab button[class~="bg-sky-950"] {
+  background: var(--color-brand-100);
+  border-color: var(--color-brand-200);
+  color: var(--color-brand-800);
+}
+
+.guided-lab button[class~="bg-sky-950"] [class~="text-sky-300"] {
+  color: var(--color-brand-700);
+}
+
+.dark .guided-lab {
+  background: var(--color-slate-950);
+  color: var(--color-slate-100);
+}
+
+.dark .guided-lab header h1 { color: var(--color-white); }
+.dark .guided-lab [class~="bg-slate-900"] { background: var(--color-slate-900); }
+.dark .guided-lab [class~="border-slate-700"],
+.dark .guided-lab [class~="border-slate-800"] { border-color: var(--color-slate-800); }
+.dark .guided-lab [class~="text-slate-100"] { color: var(--color-white); }
+.dark .guided-lab [class~="text-slate-200"] { color: var(--color-slate-200); }
+.dark .guided-lab [class~="text-slate-300"] { color: var(--color-slate-300); }
+.dark .guided-lab [class~="text-slate-400"] { color: var(--color-slate-400); }
+.dark .guided-lab button[class~="bg-sky-950"] {
+  background: color-mix(in oklch, var(--color-amber-500) 18%, var(--color-slate-900));
+  border-color: color-mix(in oklch, var(--color-amber-500) 38%, var(--color-slate-700));
+  color: var(--color-amber-200);
+}
+
 /*
   Soft Daylight: one colour system for the whole app.
 
