@@ -1126,12 +1126,12 @@ export const ChallengeSession: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={`h-screen flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors overflow-hidden ${
-      isManagedOTLab ? 'bg-[#eef4f2] dark:bg-[#071817]' : 'bg-[#F8FAFC] dark:bg-slate-950'
+      isManagedOTLab ? 'bg-slate-50 dark:bg-slate-950' : 'bg-[#F8FAFC] dark:bg-slate-950'
     }`}>
       {/* Top Nav */}
       <header className={`h-16 border-b px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0 ${
         isManagedOTLab
-          ? 'bg-[#fbfdfc] dark:bg-[#0b211e] border-[#d9e5e1] dark:border-[#1d3934]'
+          ? 'bg-slate-50/90 backdrop-blur-sm dark:bg-slate-950/90 border-slate-200 dark:border-slate-800'
           : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xs'
       }`}>
         <div className="flex items-center gap-4">
@@ -1147,10 +1147,10 @@ export const ChallengeSession: React.FC = () => {
           <div className="flex items-center gap-2">
             {isManagedOTLab ? (
               <>
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f766e] text-white shadow-sm">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-900/15 dark:bg-amber-600 dark:text-amber-950">
                   <CircleDot className="h-4 w-4" />
                 </span>
-                <span className="font-semibold text-slate-900 dark:text-white text-sm">{otLab.heading}</span>
+                <span className="font-display font-semibold text-slate-900 dark:text-white text-sm">{otLab.heading}</span>
               </>
             ) : (
               <>
@@ -1166,7 +1166,7 @@ export const ChallengeSession: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <div className={`hidden sm:flex items-center gap-2 text-xs font-bold border px-3 py-1.5 rounded-lg ${
-            isManagedOTLab ? 'bg-[#f1f7f5] dark:bg-[#102b27] border-[#d9e5e1] dark:border-[#26443e]' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+            isManagedOTLab ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-full' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
           }`}>
             <span className="text-slate-400 dark:text-slate-500">{isManagedOTLab ? 'Stage' : 'Module'}</span>
             <span className="text-slate-800 dark:text-slate-100">{activeChallengeIdx + 1} of {currentModules.length}</span>
@@ -1208,19 +1208,19 @@ export const ChallengeSession: React.FC = () => {
 
         {/* ── Left Panel ── */}
         <div className={`bg-white dark:bg-slate-900 border flex flex-col min-h-0 overflow-y-auto ${isManagedOTLab
-          ? 'w-full rounded-xl border-[#d9e5e1] dark:border-[#1d3934] p-5 space-y-5 shadow-[0_10px_30px_rgba(15,118,110,0.06)]'
+          ? 'w-full rounded-3xl border-slate-200 dark:border-slate-800 p-5 space-y-5 shadow-sm'
           : 'w-full md:w-[45%] border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6'
         }`}>
 
           {/* Module pill selector */}
           {isOTWaterLab && (
-            <nav aria-label="OT Water Treatment learning journey" className="space-y-1 border-b border-[#d9e5e1] pb-4 dark:border-[#1d3934]">
+            <nav aria-label="OT Water Treatment learning journey" className="space-y-1 border-b border-slate-200 pb-4 dark:border-slate-800">
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Learning journey</p>
               {currentModules.map((module, index) => {
                 const locked = index === 3 && (!currentModules[2] || !solvedModules.has(currentModules[2].id));
                 const active = index === activeChallengeIdx;
-                return <button key={module.id} type="button" disabled={locked} onClick={() => { setActiveChallengeIdx(index); setFlagInput(''); setSubmissionStatus('idle'); }} className={`grid w-full grid-cols-[1.5rem_1fr_auto] items-center gap-2 rounded-lg px-2 py-2 text-left text-xs transition-colors ${locked ? 'cursor-not-allowed opacity-45' : active ? 'bg-[#0f766e] text-white' : 'text-slate-700 hover:bg-[#f0f6f4] dark:text-slate-300 dark:hover:bg-[#102b27]'}`}>
-                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${solvedModules.has(module.id) ? 'bg-emerald-400 text-emerald-950' : active ? 'bg-white text-[#0f766e]' : 'border border-current'}`}>{solvedModules.has(module.id) ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}</span>
+                return <button key={module.id} type="button" disabled={locked} onClick={() => { setActiveChallengeIdx(index); setFlagInput(''); setSubmissionStatus('idle'); }} className={`grid w-full grid-cols-[1.5rem_1fr_auto] items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ${locked ? 'cursor-not-allowed opacity-45' : active ? 'bg-brand-600 text-white dark:bg-amber-600 dark:text-amber-950' : 'text-slate-700 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${solvedModules.has(module.id) ? 'bg-mint-400 text-mint-950' : active ? 'bg-white text-brand-600 dark:bg-slate-950 dark:text-amber-300' : 'border border-current'}`}>{solvedModules.has(module.id) ? <CheckCircle2 className="h-3.5 w-3.5" /> : index + 1}</span>
                   <span className="font-medium">{WATER_STAGE_GUIDES[index]?.journeyLabel}</span>
                   {locked ? <Lock className="h-3.5 w-3.5 text-amber-600" aria-label="Safety gate" /> : <span className="tabular-nums opacity-70">{WATER_STAGE_GUIDES[index]?.duration}</span>}
                 </button>;
@@ -1281,15 +1281,15 @@ export const ChallengeSession: React.FC = () => {
           </div>
 
           {/* Mission box */}
-          <div className={`border rounded-xl p-4 space-y-2 ${isOTWaterLab ? 'bg-[#e9f6f2] border-[#b8e3d8] dark:bg-[#102b27] dark:border-[#1d5d50]' : 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'}`}>
-            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#2563EB] dark:text-blue-400 uppercase tracking-wider">
+          <div className={`border rounded-2xl p-4 space-y-2 ${isOTWaterLab ? 'bg-brand-50 border-brand-200 dark:bg-slate-900 dark:border-slate-700' : 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/40'}`}>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-brand-700 dark:text-amber-300">
               <Zap className="w-3.5 h-3.5 fill-current" />
               <span>{isOTWaterLab ? 'Mission brief — start here' : 'Mission'}</span>
             </div>
             <p className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
               {activeModule.mission}
             </p>
-            {isOTWaterLab && <p className="border-t border-[#b8e3d8] pt-2 text-xs leading-relaxed text-[#0b554e] dark:border-[#1d5d50] dark:text-emerald-200"><strong>Next:</strong> {activeChallengeIdx === 3 ? 'Complete the safety record on the right, then use only the approved simulated change.' : activeChallengeIdx === 4 ? 'Use the evidence you collected to complete the operational review on the right.' : 'Start the operator console, then complete the first objective below. This stage is read-only.'}</p>}
+            {isOTWaterLab && <p className="border-t border-brand-200 pt-2 text-xs leading-relaxed text-slate-700 dark:border-slate-700 dark:text-slate-200"><strong>Next:</strong> {activeChallengeIdx === 3 ? 'Complete the safety record on the right, then use only the approved simulated change.' : activeChallengeIdx === 4 ? 'Use the evidence you collected to complete the operational review on the right.' : 'Start the operator console, then complete the first objective below. This stage is read-only.'}</p>}
           </div>
 
           {/* Railroad uses investigation guidance rather than hard command-detection gates. */}
@@ -1312,9 +1312,9 @@ export const ChallengeSession: React.FC = () => {
                   {activeModule.objectives.map((obj, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-xs font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300"
+                      className="flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300"
                     >
-                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#dcefe9] text-[10px] font-black text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300">
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-black text-brand-700 dark:bg-slate-900 dark:text-amber-300">
                         {i + 1}
                       </span>
                       <span className="leading-snug">{obj.label}</span>
@@ -1399,7 +1399,7 @@ export const ChallengeSession: React.FC = () => {
             {isOTWaterLab ? <>
               <p className="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Complete stage</p>
               <p className="text-xs leading-5 text-slate-600 dark:text-slate-300">Completion is based on your saved evidence check and stage record. No flag is required.</p>
-              <button type="button" onClick={completeWaterStage} disabled={isSolved || !waterStageReady} className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">
+              <button type="button" onClick={completeWaterStage} disabled={isSolved || !waterStageReady} className="w-full rounded-full bg-brand-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-amber-600 dark:text-amber-950 dark:hover:bg-amber-500">
                 {isSolved ? 'Stage completed' : 'Complete stage from evidence'}
               </button>
               {!isSolved && !waterStageReady && <p className="text-xs text-amber-700 dark:text-amber-300">Save the evidence check and stage finding{activeChallengeIdx === 3 ? ', plus the safety record' : activeChallengeIdx === 4 ? ', plus the operational handover' : ''} to enable completion.</p>}
@@ -1469,7 +1469,7 @@ export const ChallengeSession: React.FC = () => {
                   )}
                 </button>
               </div>}
-              {isRailroadNetworkStage && <button type="submit" disabled={isSolved || submissionStatus === 'success' || !railroadNetworkEvidence.sourcePort} className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-40">Submit investigation evidence</button>}
+              {isRailroadNetworkStage && <button type="submit" disabled={isSolved || submissionStatus === 'success' || !railroadNetworkEvidence.sourcePort} className="w-full rounded-full bg-brand-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-40 dark:bg-amber-600 dark:text-amber-950">Submit investigation evidence</button>}
 
               {submissionStatus === 'success' && (
                 <p className="text-xs font-bold text-[#10B981] animate-in fade-in flex items-center gap-1.5">
@@ -1489,8 +1489,8 @@ export const ChallengeSession: React.FC = () => {
         </div>
 
         {/* ── Right Terminal Panel ── */}
-        <div className={`bg-[#091513] border border-[#18342f] flex flex-col min-h-[32rem] overflow-hidden ${
-          isManagedOTLab ? 'rounded-xl shadow-[0_18px_48px_rgba(7,24,23,0.2)]' : 'flex-1 rounded-2xl border-slate-800 shadow-xl'
+        <div className={`bg-[#0C0E14] border border-slate-800 flex flex-col min-h-[32rem] overflow-hidden ${
+          isManagedOTLab ? 'rounded-3xl shadow-xl' : 'flex-1 rounded-2xl border-slate-800 shadow-xl'
         }`}>
           {/* Terminal Header */}
           <div className="h-11 bg-[#0F172A] border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400 flex-shrink-0">
@@ -1500,17 +1500,17 @@ export const ChallengeSession: React.FC = () => {
                 <span className="w-3 h-3 rounded-full bg-amber-500 inline-block" />
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
               </div>
-              <span className="font-mono text-xs font-bold text-slate-300">
+              <span className="font-mono text-xs font-medium text-slate-300">
                 {isReconLab ? 'SecureGuard Red Team Workstation — Live Container' : isManagedOTLab ? 'Operator console · isolated environment' : isRuntimeShieldLab ? 'Runtime Shield · isolated AI security workshop' : 'Terminal Emulator — Execution Environment'}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-[#00FF9D] bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00FF9D] animate-pulse" />
+              <span className="flex items-center gap-1.5 text-xs font-medium text-mint-300 bg-mint-950/60 border border-mint-800/80 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-mint-400 animate-pulse" />
                 {isReconLab
                   ? (reconProvisioned ? 'CONTAINER LIVE' : reconProvisionError ? 'PROVISION FAILED' : reconProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : isManagedOTLab
-                    ? (otProvisioned ? 'OT TASK LIVE' : otProvisionError ? 'PROVISION FAILED' : otProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
+                    ? (otProvisioned ? 'OT environment live' : otProvisionError ? 'Provisioning failed' : otProvisioning ? 'Provisioning…' : 'Not started')
                   : isRuntimeShieldLab
                     ? (runtimeProvisioned ? 'WORKSHOP LIVE' : runtimeProvisionError ? 'PROVISION FAILED' : runtimeProvisioning ? 'PROVISIONING...' : 'NOT STARTED')
                   : 'INFRASTRUCTURE ONLINE'}
@@ -1520,7 +1520,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={startReconLab}
                     disabled={reconProvisioning || reconProvisioned}
-                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className={`flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors ${isManagedOTLab ? 'bg-brand-600 hover:bg-brand-700 text-white dark:bg-amber-600 dark:text-amber-950 dark:hover:bg-amber-500' : 'bg-emerald-500 hover:bg-emerald-400 text-emerald-950'}`}
                   >
                     {reconProvisioning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                     <span>{reconProvisioning ? 'Starting...' : 'Start Terminal'}</span>
@@ -1528,7 +1528,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={disconnectReconLab}
                     disabled={!reconProvisioned && !reconStarted}
-                    className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors"
                   >
                     <span>Disconnect</span>
                   </button>
@@ -1539,7 +1539,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={isManagedOTLab ? startManagedOTLab : isRuntimeShieldLab ? startRuntimeShieldLab : () => setTerminalConnected(true)}
                     disabled={isRuntimeShieldLab ? (runtimeProvisioned || runtimeProvisioning) : (terminalConnected || otProvisioning)}
-                    className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-950 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className={`flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors ${isManagedOTLab ? 'bg-brand-600 hover:bg-brand-700 text-white dark:bg-amber-600 dark:text-amber-950 dark:hover:bg-amber-500' : 'bg-emerald-500 hover:bg-emerald-400 text-emerald-950'}`}
                   >
                     <Play className="w-3.5 h-3.5" />
                     <span>{isRuntimeShieldLab ? (runtimeProvisioning ? 'Starting...' : 'Start Workshop') : (otProvisioning ? 'Starting...' : isOTSecurityLab ? 'Start Simulator' : 'Start Terminal')}</span>
@@ -1547,7 +1547,7 @@ export const ChallengeSession: React.FC = () => {
                   <button
                     onClick={isManagedOTLab ? stopManagedOTLab : isRuntimeShieldLab ? stopRuntimeShieldLab : () => setTerminalConnected(false)}
                     disabled={isRuntimeShieldLab ? !runtimeProvisioned : (!terminalConnected || commandBusy)}
-                    className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-extrabold px-3 py-1 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors"
                   >
                     <span>Disconnect</span>
                   </button>
@@ -1645,9 +1645,9 @@ export const ChallengeSession: React.FC = () => {
           ) : isManagedOTLab && terminalConnected ? (
             <>
               {otUrls?.scada && otUrls.wireshark && (
-                <div className="px-5 py-2.5 bg-[#0d211e] border-b border-[#18342f] flex flex-wrap gap-2 text-xs font-bold">
-                  <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.scada} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> SCADA workspace</a>
-                  <a className="inline-flex items-center gap-1.5 rounded-md bg-[#12332d] px-2.5 py-1.5 text-emerald-300 hover:bg-[#17443a] focus:outline-none focus:ring-2 focus:ring-emerald-300" href={otUrls.wireshark} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Packet analysis</a>
+                <div className="px-5 py-3 bg-slate-950 border-b border-slate-800 flex flex-wrap gap-2 text-xs font-medium">
+                  <a className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-mint-300 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-mint-300" href={otUrls.scada} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> SCADA workspace</a>
+                  <a className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-mint-300 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-mint-300" href={otUrls.wireshark} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Packet analysis</a>
                 </div>
               )}
               <RealTerminal
@@ -1708,9 +1708,9 @@ export const ChallengeSession: React.FC = () => {
         </div>
 
         {isOTWaterLab && (
-          <aside className="min-h-0 overflow-y-auto rounded-xl border border-[#d9e5e1] bg-[#fbfdfc] p-5 text-slate-800 shadow-[0_10px_30px_rgba(15,118,110,0.06)] dark:border-[#1d3934] dark:bg-[#0b211e] dark:text-slate-100 xl:order-none">
+          <aside className="min-h-0 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 xl:order-none">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#dcefe9] text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-amber-300">
                 <BookOpen className="h-4 w-4" />
               </span>
               <div>
@@ -1719,23 +1719,23 @@ export const ChallengeSession: React.FC = () => {
               </div>
             </div>
 
-            <section className="mt-6 border-y border-[#d9e5e1] py-4 dark:border-[#1d3934]">
+            <section className="mt-6 border-y border-slate-200 py-4 dark:border-slate-800">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>Lab progress</span>
-                <span className="font-semibold tabular-nums text-[#0f766e] dark:text-emerald-300">{completedModules}/{currentModules.length} stages</span>
+                <span className="font-semibold tabular-nums text-mint-700 dark:text-mint-300">{completedModules}/{currentModules.length} stages</span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#dce8e4] dark:bg-[#17342f]" aria-label={`${completedModules} of ${currentModules.length} stages complete`}>
-                <div className="h-full rounded-full bg-[#0f766e] transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} />
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" aria-label={`${completedModules} of ${currentModules.length} stages complete`}>
+                <div className="h-full rounded-full bg-mint-500 transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} />
               </div>
             </section>
 
-            <section className="mt-6 border-y border-[#d9e5e1] py-5 dark:border-[#1d3934]">
+            <section className="mt-6 border-y border-slate-200 py-5 dark:border-slate-800">
               {learningSaveError && <p role="alert" className="mb-3 text-xs font-medium text-rose-700 dark:text-rose-300">{learningSaveError} Retry the learning record; console work is unaffected.</p>}
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">What to look for</h3>
-              <p className="mt-1 text-xs font-medium text-[#0f766e] dark:text-emerald-300">Observe first. Use the evidence to support a specific conclusion.</p>
+              <p className="mt-1 text-xs font-medium text-brand-700 dark:text-amber-300">Observe first. Use the evidence to support a specific conclusion.</p>
               <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.brief}</p>
               <p className="mt-3 border-y border-amber-300/70 py-2 text-xs leading-5 text-amber-900 dark:border-amber-700 dark:text-amber-200">{waterGuide.safetyNote}</p>
-              <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" />{waterGuide.interpretation}</div>
+              <div className="mt-3 flex gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-amber-300" />{waterGuide.interpretation}</div>
               {activeChallengeIdx === 2 && (
                 <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-950 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-100">
                   <p className="font-bold">Stage 3 — find actual alarm evidence</p>
@@ -1756,9 +1756,9 @@ export const ChallengeSession: React.FC = () => {
                 </div>
               )}
               <fieldset className="mt-4"><legend className="text-xs font-semibold text-slate-700 dark:text-slate-200">Evidence check</legend><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">{waterGuide.evidenceQuestion}</p><div className="mt-2 space-y-2">{waterGuide.answers.map((answer, index) => <label key={answer} className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-slate-600 dark:text-slate-300"><input type="radio" name={`evidence-${activeModule.id}`} checked={activeCheckAnswer === index} onChange={() => updateLearningCheck(index)} className="mt-1 accent-emerald-600" />{answer}</label>)}</div>{activeCheckAnswer !== undefined && <p className={`mt-2 text-xs font-medium ${hasCorrectLearningCheck ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>{hasCorrectLearningCheck ? waterGuide.challengeReady : 'Revisit the interpretation note, then try again.'}</p>}</fieldset>
-              <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Stage finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, and next safe action" className="mt-2 min-h-20 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-md bg-[#24303A] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{handoverSaved[activeModule.id] ? 'Finding saved' : 'Save finding'}</button>
-              {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{([{ key: 'prediction', label: 'Expected effect' }, { key: 'target', label: 'Approved target' }, { key: 'verification', label: 'How you will verify the effect' }, { key: 'restoration', label: 'How you will restore the baseline' }] as const).map(({ key, label }) => <label key={key} className="block text-[11px] font-medium text-slate-600 dark:text-slate-300">{label}<input value={controlRecord[key]} onChange={(event) => updateControlRecord(key, event.target.value)} className="mt-1 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-amber-950 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
-              {activeChallengeIdx === 4 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operational handover</h4>{([{ key: 'currentState', label: 'Current state' }, { key: 'evidence', label: 'Safety-critical evidence' }, { key: 'nextAction', label: 'Next safe action' }] as const).map(({ key, label }) => <label key={key} className="block text-[11px] font-medium text-slate-600 dark:text-slate-300">{label}<textarea value={operationalReview[key]} onChange={(event) => updateOperationalReview(key, event.target.value)} className="mt-1 min-h-16 w-full rounded-md border border-[#b8cbc5] bg-white px-2 py-1.5 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:border-[#26443e] dark:bg-[#071817] dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(operationalReview).every((value) => value.trim())} onClick={saveOperationalReview} className="rounded-md bg-[#0f766e] px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">{operationalReviewSaved[activeModule.id] ? 'Handover saved' : 'Save handover'}</button></div>}
+              <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200">Stage finding<textarea value={handoverNote} onChange={(event) => { setHandoverNotes((previous) => ({ ...previous, [activeModule.id]: event.target.value })); setHandoverSaved((previous) => ({ ...previous, [activeModule.id]: false })); }} placeholder="Observed state, safety relevance, and next safe action" className="mt-2 min-h-20 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" /></label><button type="button" disabled={!handoverNote.trim()} onClick={saveHandoverNote} className="mt-2 rounded-full bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-40 dark:bg-amber-600 dark:text-amber-950">{handoverSaved[activeModule.id] ? 'Finding saved' : 'Save finding'}</button>
+              {activeChallengeIdx === 3 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Safety record</h4>{([{ key: 'prediction', label: 'Expected effect' }, { key: 'target', label: 'Approved target' }, { key: 'verification', label: 'How you will verify the effect' }, { key: 'restoration', label: 'How you will restore the baseline' }] as const).map(({ key, label }) => <label key={key} className="block text-xs font-medium text-slate-600 dark:text-slate-300">{label}<input value={controlRecord[key]} onChange={(event) => updateControlRecord(key, event.target.value)} className="mt-1 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(controlRecord).every((value) => value.trim())} onClick={saveControlRecord} className="rounded-full bg-amber-500 px-3 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-400 disabled:opacity-40">{controlRecordSaved[activeModule.id] ? 'Safety record saved' : 'Save safety record'}</button></div>}
+              {activeChallengeIdx === 4 && <div className="mt-4 space-y-2"><h4 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operational handover</h4>{([{ key: 'currentState', label: 'Current state' }, { key: 'evidence', label: 'Safety-critical evidence' }, { key: 'nextAction', label: 'Next safe action' }] as const).map(({ key, label }) => <label key={key} className="block text-xs font-medium text-slate-600 dark:text-slate-300">{label}<textarea value={operationalReview[key]} onChange={(event) => updateOperationalReview(key, event.target.value)} className="mt-1 min-h-16 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-normal text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" /></label>)}<button type="button" disabled={!Object.values(operationalReview).every((value) => value.trim())} onClick={saveOperationalReview} className="rounded-full bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-40 dark:bg-amber-600 dark:text-amber-950">{operationalReviewSaved[activeModule.id] ? 'Handover saved' : 'Save handover'}</button></div>}
             </section>
 
             <section className="mt-6">
@@ -1775,9 +1775,9 @@ export const ChallengeSession: React.FC = () => {
                         key={material.id}
                         type="button"
                         onClick={() => setActiveStudyMaterialId(material.id)}
-                        className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#0f766e] ${active
-                          ? 'bg-[#dcefe9] text-[#0b554e] dark:bg-[#12332d] dark:text-emerald-200'
-                          : 'text-slate-600 hover:bg-[#f0f6f4] dark:text-slate-300 dark:hover:bg-[#102b27]'}`}
+                        className={`w-full rounded-2xl px-3 py-2 text-left text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${active
+                          ? 'bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-amber-300'
+                          : 'text-slate-600 hover:bg-brand-50 dark:text-slate-300 dark:hover:bg-slate-800'}`}
                       >
                         <span className="block truncate font-medium">{material.title}</span>
                         <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">{material.readTime || material.category}</span>
@@ -1790,15 +1790,15 @@ export const ChallengeSession: React.FC = () => {
               )}
 
               {activeStudyMaterial && (
-                <div className="mt-3 border-t border-[#d9e5e1] pt-3 dark:border-[#1d3934]">
+                <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-800">
                   <p className="text-xs leading-5 text-slate-600 dark:text-slate-300">{activeStudyMaterial.description}</p>
                   {!!activeStudyMaterial.content?.length && (
                     <ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                      {activeStudyMaterial.content.slice(0, 3).map((point, index) => <li key={index} className="flex gap-2"><span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[#0f766e]" />{point}</li>)}
+                      {activeStudyMaterial.content.slice(0, 3).map((point, index) => <li key={index} className="flex gap-2"><span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-brand-600 dark:bg-amber-300" />{point}</li>)}
                     </ul>
                   )}
                   {activeStudyMaterial.pdfUrl && (
-                    <button type="button" onClick={() => navigate(`/study-material/view/${activeStudyMaterial.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#0f766e] hover:text-[#0a5b54] focus:outline-none focus:ring-2 focus:ring-[#0f766e] dark:text-emerald-300">
+                    <button type="button" onClick={() => navigate(`/study-material/view/${activeStudyMaterial.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-amber-300">
                       Open full reference <ExternalLink className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -1808,21 +1808,21 @@ export const ChallengeSession: React.FC = () => {
           </aside>
         )}
         {isOTRailroadLab && (
-          <aside className="min-h-0 overflow-y-auto rounded-xl border border-[#d9e5e1] bg-[#fbfdfc] p-5 text-slate-800 shadow-[0_10px_30px_rgba(15,118,110,0.06)] dark:border-[#1d3934] dark:bg-[#0b211e] dark:text-slate-100 xl:order-none">
+          <aside className="min-h-0 overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 xl:order-none">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#dcefe9] text-[#0f766e] dark:bg-[#12332d] dark:text-emerald-300"><BookOpen className="h-4 w-4" /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700 dark:bg-slate-800 dark:text-amber-300"><BookOpen className="h-4 w-4" /></span>
               <div><h2 className="text-sm font-semibold">Operations support</h2><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Use the mission brief and console evidence together.</p></div>
             </div>
-            <section className="mt-6 border-y border-[#d9e5e1] py-4 dark:border-[#1d3934]">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Lab progress</span><span className="font-semibold tabular-nums text-[#0f766e] dark:text-emerald-300">{completedModules}/{currentModules.length} stages</span></div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#dce8e4] dark:bg-[#17342f]"><div className="h-full rounded-full bg-[#0f766e] transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} /></div>
+            <section className="mt-6 border-y border-slate-200 py-4 dark:border-slate-800">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"><span>Lab progress</span><span className="font-semibold tabular-nums text-mint-700 dark:text-mint-300">{completedModules}/{currentModules.length} stages</span></div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full rounded-full bg-mint-500 transition-[width] duration-200" style={{ width: `${currentModules.length ? (completedModules / currentModules.length) * 100 : 0}%` }} /></div>
             </section>
             <section className="mt-6 space-y-4 text-xs leading-5 text-slate-600 dark:text-slate-300">
-              <div className="flex gap-2"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Observe signal, switch, and route state before making a conclusion.</p></div>
-              <div className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Record the expected safety effect before attempting any simulated action.</p></div>
-              <div className="flex gap-2"><FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f766e]" /><p>Use the SCADA view and packet evidence to support your answer.</p></div>
+              <div className="flex gap-2"><Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-amber-300" /><p>Observe signal, switch, and route state before making a conclusion.</p></div>
+              <div className="flex gap-2"><ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-amber-300" /><p>Record the expected safety effect before attempting any simulated action.</p></div>
+              <div className="flex gap-2"><FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-600 dark:text-amber-300" /><p>Use the SCADA view and packet evidence to support your answer.</p></div>
             </section>
-            <section className="mt-6 border-t border-[#d9e5e1] pt-4 dark:border-[#1d3934]"><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Current stage</p><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{activeModule.title}</p></section>
+            <section className="mt-6 border-t border-slate-200 pt-4 dark:border-slate-800"><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Current stage</p><p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{activeModule.title}</p></section>
           </aside>
         )}
       </div>

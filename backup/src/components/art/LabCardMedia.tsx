@@ -24,7 +24,9 @@ const FAMILY_TINTS: Record<string, string> = {
   cloud: 'from-[#DDF6EC] to-[#F2FBF7] dark:from-[#17493A] dark:to-[#1A2722]',
   crypto: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#55451A] dark:to-[#2C271B]',
   recon: 'from-[#E7EEF9] to-[#F5F8FD] dark:from-[#22385E] dark:to-[#1E2430]',
-  ot: 'from-[#F7E6F0] to-[#FCF4F8] dark:from-[#552645] dark:to-[#2C1F28]',
+  // OT belongs to the clay/industrial family: warm, quiet, and distinct without
+  // inventing a second neon-control-room visual language.
+  ot: 'from-brand-100 to-slate-50 dark:from-brand-950 dark:to-slate-900',
   puzzle: 'from-[#FFF3C9] to-[#FFFAEA] dark:from-[#55451A] dark:to-[#2C271B]',
 };
 
