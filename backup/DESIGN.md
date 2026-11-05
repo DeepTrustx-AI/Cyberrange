@@ -382,6 +382,12 @@ The cube is the recurring silhouette. The logo mark is one isometric block in th
 
 ## Components
 
+### My work ordering
+My work opens with newest assignments first, using the API's auto-generated
+assignment IDs as creation order. A labelled native sort select offers Newest
+first, Oldest first and Most urgent first, independent of the status filters.
+The selected order is kept in the URL. The dashboard still prioritizes urgent work.
+
 ### Buttons
 - **Shape:** full pill (9999px).
 - **Primary:** slate ink fill, white semibold 14px text, 10 by 20px, md shadow tinted brand at 20%, often a filled play icon. Hover steps to deepest ink. In Ember the same class renders burnt orange; celebration and 404 buttons use apricot-deep with espresso text.
