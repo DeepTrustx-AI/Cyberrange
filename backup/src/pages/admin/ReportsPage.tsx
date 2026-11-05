@@ -80,8 +80,8 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-xs text-slate-800 dark:text-slate-200">
       <div>
-        <h1 className="text-lg font-black text-slate-900 dark:text-slate-100">Lab Assignment Reports</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">Lab Assignment Reports</h1>
+        <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
           Historical lab assignments for each training group, with participation and downloadable reports.
         </p>
       </div>
@@ -104,11 +104,11 @@ export const ReportsPage: React.FC = () => {
       ) : accessDenied ? (
         <AccessDeniedNotice reason={accessDenied} />
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 font-extrabold uppercase text-[10px]">
+                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-400 font-semibold text-xs">
                   <th className="p-4">Group Name</th>
                   <th className="p-4">Lab Name</th>
                   <th className="p-4 text-center">Assigned Date</th>
@@ -128,16 +128,16 @@ export const ReportsPage: React.FC = () => {
                 ) : (
                   filteredReports.map((r) => (
                     <tr key={r.assignment_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                      <td className="p-4 font-extrabold text-slate-900 dark:text-slate-100">{r.group_name}</td>
+                      <td className="p-4 font-semibold text-slate-900 dark:text-slate-100">{r.group_name}</td>
                       <td className="p-4 font-bold text-slate-700 dark:text-slate-200">{r.lab_name}</td>
                       <td className="p-4 text-center text-slate-500">{r.assigned_date}</td>
                       <td className="p-4 text-center text-slate-500">{r.end_date}</td>
                       <td className="p-4 text-center font-bold">{r.participated}/{r.total_students}</td>
                       <td className="p-4 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-[9px] border ${
+                        <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-xs border ${
                           r.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                           : r.status === 'Running' ? 'bg-blue-50 text-blue-600 border-blue-200'
-                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
                         }`}>
                           {r.status}
                         </span>
@@ -159,7 +159,7 @@ export const ReportsPage: React.FC = () => {
                         <button
                           onClick={() => handleExport(r.group_id, r.assignment_id, 'pdf')}
                           title="Download PDF"
-                          className="px-2 py-1.5 rounded-lg text-slate-500 hover:text-[#0052CC] hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+                          className="px-2 py-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
                         >
                           <FileText className="w-3.5 h-3.5 inline" />
                         </button>

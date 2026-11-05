@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState } from 'react';
-import { X, Shield, CreditCard, Building, CheckCircle2, ArrowRight, Download, RefreshCw } from 'lucide-react';
+import { X, Shield, CreditCard, CheckCircle2, ArrowRight, Download } from 'lucide-react';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -64,7 +64,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setLoading(true);
     setError('');
 
-    const token = localStorage.getItem('token');
 
     // Load Razorpay SDK dynamically if not yet available
     if (!(window as any).Razorpay) {
@@ -120,7 +119,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             name: institutionName,
             email: 'admin@cyberrange.in'
           },
-          theme: { color: '#0052CC' }
+          theme: { color: '#2A2F3D' }
         };
 
         const rzp = new (window as any).Razorpay(options);
@@ -178,12 +177,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 max-w-lg w-full overflow-hidden shadow-2xl animate-in zoom-in-95">
         {/* Header */}
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-600" />
-            <h3 className="font-black text-slate-900 dark:text-white text-base">Secure Checkout</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base">Secure Checkout</h3>
           </div>
           <button
             onClick={onClose}
@@ -242,7 +241,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             <div className="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 flex justify-between items-center">
               <span>Grand Total Amount Payable:</span>
-              <span className="text-base font-black text-blue-600 dark:text-blue-400">
+              <span className="text-base font-bold text-blue-600 dark:text-blue-400">
                 ₹{cartSummary.grandTotal?.toLocaleString()}
               </span>
             </div>
@@ -258,7 +257,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md transition-all inline-flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-md transition-all inline-flex items-center gap-2"
               >
                 <span>{loading ? 'Creating Order...' : 'Continue to Payment'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -271,7 +270,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {step === 'payment' && (
           <div className="p-6 space-y-6">
             <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Payment Gateway</span>
+              <span className="text-xs font-bold text-slate-400 block">Payment Gateway</span>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                 Select your preferred enterprise payment channel for Order #{orderResult?.order_number}.
               </p>
@@ -283,7 +282,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <CreditCard className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-100">Razorpay Production Gateway</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">UPI, QR Code, NetBanking, Corporate Cards, Wallets, EMI</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">UPI, QR Code, NetBanking, Corporate Cards, Wallets, EMI</p>
                   </div>
                 </div>
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -319,7 +318,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white">Payment Successful!</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Payment Successful!</h2>
               <p className="text-xs text-slate-500 mt-1">
                 Your lab licenses have been activated. Invoice #{orderResult?.invoice_number} has been generated.
               </p>
@@ -336,7 +335,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Amount Paid:</span>
-                <span className="font-extrabold text-emerald-600">₹{orderResult?.amount_paid?.toLocaleString()}</span>
+                <span className="font-semibold text-emerald-600">₹{orderResult?.amount_paid?.toLocaleString()}</span>
               </div>
             </div>
 
@@ -369,7 +368,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <button
                 onClick={onClose}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-md"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-md"
               >
                 Done
               </button>

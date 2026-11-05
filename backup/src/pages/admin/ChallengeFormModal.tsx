@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState } from 'react';
-import { X, HelpCircle, Info, Calculator, FileText } from 'lucide-react';
+import { X, Info, Calculator } from 'lucide-react';
 import type { CtfChallenge, CtfChallengeFile } from '../../types/ctf';
 import { HintManager } from './HintManager';
 import type { LocalHint } from './HintManager';
@@ -191,7 +191,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-150">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/70 dark:ring-slate-800 animate-in zoom-in-95 duration-150">
 
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-bottom border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
@@ -294,7 +294,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Flag Pattern</label>
-                  <span className="text-[10px] text-slate-400">(case-sensitive, exact match)</span>
+                  <span className="text-xs text-slate-400">(case-sensitive, exact match)</span>
                 </div>
                 <input
                   type="text"
@@ -354,7 +354,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
                       required
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal block">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 leading-normal block">
                     Points remain fixed throughout the competition, regardless of how many solves are recorded.
                   </span>
                 </div>
@@ -362,7 +362,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-500 block truncate">Max (Ceiling)</label>
+                      <label className="text-xs font-bold text-slate-500 block truncate">Max (Ceiling)</label>
                       <input
                         type="number"
                         min="1"
@@ -373,7 +373,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-500 block truncate">Min (Floor)</label>
+                      <label className="text-xs font-bold text-slate-500 block truncate">Min (Floor)</label>
                       <input
                         type="number"
                         min="1"
@@ -384,7 +384,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-500 block truncate">Decay Constant (k)</label>
+                      <label className="text-xs font-bold text-slate-500 block truncate">Decay Constant (k)</label>
                       <input
                         type="number"
                         min="1"
@@ -402,7 +402,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
                       <Calculator className="w-3.5 h-3.5 text-indigo-500" />
                       <span>Decay Point Projection</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-[10px]">
+                    <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs">
                       {getDecayPreview().map((item) => (
                         <div key={item.solves} className="flex justify-between border-b border-slate-100 dark:border-slate-800/40 pb-1 last:border-b-0">
                           <span className="text-slate-400 font-medium font-mono">{item.solves} solve{item.solves > 1 ? 's' : ''}:</span>
@@ -434,7 +434,7 @@ export const ChallengeFormModal: React.FC<ChallengeFormModalProps> = ({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-xl transition-colors shadow-lg shadow-indigo-500/25"
+            className="text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-full transition-colors shadow-lg shadow-indigo-500/25"
           >
             {loading ? 'Saving...' : 'Save Challenge'}
           </button>

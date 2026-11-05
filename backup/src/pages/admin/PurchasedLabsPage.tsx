@@ -1,7 +1,7 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FlaskConical, Play, RefreshCw } from 'lucide-react';
+import { FlaskConical, Play } from 'lucide-react';
 import { accessDeniedReason } from '../../utils/accessDenied';
 import { AccessDeniedNotice } from '../../components/admin/AccessDeniedNotice';
 
@@ -66,15 +66,11 @@ export const PurchasedLabsPage: React.FC = () => {
     }
   };
 
-  const handleRenew = (labTitle: string) => {
-    alert(`Renewing license duration for ${labTitle}... Redirecting to marketplace.`);
-    navigate('/admin/labs');
-  };
 
   if (loading) {
     return (
       <div className="min-h-[350px] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#0052CC] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -87,9 +83,9 @@ export const PurchasedLabsPage: React.FC = () => {
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Grid List (3-col Desktop, 2-col Tablet, 1-col Mobile) */}
       {purchasedLabs.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800">
           <FlaskConical className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <h3 className="text-base font-extrabold text-slate-700 dark:text-slate-200">No active lab licenses purchased yet</h3>
+          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200">No active lab licenses purchased yet</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">Explore the lab catalog to add security labs to your organization portal.</p>
         </div>
       ) : (
@@ -97,19 +93,19 @@ export const PurchasedLabsPage: React.FC = () => {
           {purchasedLabs.map((lab) => (
             <div
               key={lab.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
+              className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden"
             >
               <div className="p-5 border-b border-slate-100 dark:border-slate-800 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
                     {lab.lab_id.includes('cloud') ? 'Cloud' : lab.lab_id.includes('ot') ? 'OT' : lab.lab_id.includes('recon') ? 'Recon' : lab.lab_id.includes('puzzle') ? 'Puzzle' : 'Linux'}
                   </span>
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                     lab.is_sysadmin_assigned
                       ? (lab.fixed_rate ?? 0) <= 0
-                        ? 'bg-emerald-50 text-[#28A745] border-emerald-200'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                         : 'bg-blue-50 text-blue-600 border-blue-200'
-                      : 'bg-emerald-50 text-[#28A745] border-emerald-200'
+                      : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                   }`}>
                     {lab.is_sysadmin_assigned
                       ? ((lab.fixed_rate ?? 0) <= 0 ? 'Free' : 'Granted by SysAdmin')
@@ -117,7 +113,7 @@ export const PurchasedLabsPage: React.FC = () => {
                   </span>
                 </div>
 
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 line-clamp-1">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">
                   {lab.lab_title}
                 </h3>
               </div>

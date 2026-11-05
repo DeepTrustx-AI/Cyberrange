@@ -1,7 +1,7 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User, GraduationCap, Briefcase, Camera, Trash2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, User, GraduationCap, Briefcase, Camera, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context';
 
 export const OnboardingPage: React.FC = () => {
@@ -186,14 +186,14 @@ export const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 sm:p-6 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 sm:p-6 transition-colors">
       <div className="max-w-2xl w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300 transition-colors">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-[#2563EB] mb-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-brand-600 mb-2">
             <Shield className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Update Your Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Update Your Profile</h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             Add your remaining details — college, department, and more — whenever you're ready.
           </p>
@@ -212,7 +212,7 @@ export const OnboardingPage: React.FC = () => {
               type="button"
               onClick={() => setAccountType('STUDENT')}
               className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                accountType === 'STUDENT' ? 'bg-[#2563EB] text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                accountType === 'STUDENT' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <GraduationCap className="w-4 h-4" /> Student Account
@@ -222,14 +222,14 @@ export const OnboardingPage: React.FC = () => {
               type="button"
               onClick={() => setAccountType('INDIVIDUAL')}
               className={`flex-1 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                accountType === 'INDIVIDUAL' ? 'bg-[#2563EB] text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                accountType === 'INDIVIDUAL' ? 'bg-brand-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Briefcase className="w-4 h-4" /> Individual / Professional
             </button>
           </div>
         ) : (
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-xs font-bold text-[#2563EB]">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-xs font-bold text-brand-600">
             {user.role === 'admin' ? (
               <span className="flex items-center justify-center gap-2">
                 <Briefcase className="w-4 h-4" /> Professional Profile Onboarding
@@ -246,14 +246,14 @@ export const OnboardingPage: React.FC = () => {
           {/* PHOTO UPLOAD WIDGET */}
           <div className="flex flex-col items-center justify-center space-y-3 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="relative group">
-              <div className="w-24 h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center font-black text-2xl shadow-xl overflow-hidden ring-4 ring-[#2563EB]/30">
+              <div className="w-24 h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-2xl shadow-xl overflow-hidden ring-4 ring-brand-600/30">
                 {photoPreview ? (
                   <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   form.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'AO'
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 p-2 bg-[#2563EB] text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-600 transition-all">
+              <label className="absolute bottom-0 right-0 p-2 bg-brand-600 text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-600 transition-all">
                 <Camera className="w-4 h-4" />
                 <input
                   type="file"
@@ -265,14 +265,14 @@ export const OnboardingPage: React.FC = () => {
             </div>
             <div className="text-center">
               <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Profile Avatar Photo</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">JPG, PNG or WEBP (Max 5 MB)</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">JPG, PNG or WEBP (Max 5 MB)</p>
             </div>
           </div>
 
           {/* SECTION 1: PERSONAL DETAILS */}
           <div className="space-y-4">
-            <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4 text-[#2563EB]" /> Personal Information
+            <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <User className="w-4 h-4 text-brand-600" /> Personal Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -285,7 +285,7 @@ export const OnboardingPage: React.FC = () => {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Alex Operator"
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                 />
               </div>
 
@@ -308,7 +308,7 @@ export const OnboardingPage: React.FC = () => {
                   value={form.phone}
                   onChange={handleChange}
                   placeholder="+91 9876543210"
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                 />
               </div>
 
@@ -320,7 +320,7 @@ export const OnboardingPage: React.FC = () => {
                   required
                   value={form.dob}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                 />
               </div>
 
@@ -330,7 +330,7 @@ export const OnboardingPage: React.FC = () => {
                   name="gender"
                   value={form.gender}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                 >
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -345,7 +345,7 @@ export const OnboardingPage: React.FC = () => {
                   name="country"
                   value={form.country}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export const OnboardingPage: React.FC = () => {
                     placeholder="City"
                     value={form.city}
                     onChange={handleChange}
-                    className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                   <input
                     type="text"
@@ -366,7 +366,7 @@ export const OnboardingPage: React.FC = () => {
                     placeholder="State"
                     value={form.state}
                     onChange={handleChange}
-                    className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
               </div>
@@ -376,8 +376,8 @@ export const OnboardingPage: React.FC = () => {
           {/* SECTION 2: CONDITIONAL STUDENT OR INDIVIDUAL DETAILS */}
           {accountType === 'STUDENT' ? (
             <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-              <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-[#2563EB]" /> College & Academic Details
+              <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-brand-600" /> College & Academic Details
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -388,7 +388,7 @@ export const OnboardingPage: React.FC = () => {
                     required
                     value={form.college_id}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   >
                     <option value="">Select your institution</option>
                     {colleges.map(c => (
@@ -405,7 +405,7 @@ export const OnboardingPage: React.FC = () => {
                     required
                     value={form.department}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
 
@@ -417,7 +417,7 @@ export const OnboardingPage: React.FC = () => {
                     required
                     value={form.course}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
 
@@ -427,7 +427,7 @@ export const OnboardingPage: React.FC = () => {
                     name="year"
                     value={form.year}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   >
                     <option value={1}>Year 1</option>
                     <option value={2}>Year 2</option>
@@ -442,7 +442,7 @@ export const OnboardingPage: React.FC = () => {
                     name="semester"
                     value={form.semester}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
                       <option key={s} value={s}>Semester {s}</option>
@@ -459,7 +459,7 @@ export const OnboardingPage: React.FC = () => {
                     value={form.roll_number}
                     onChange={handleChange}
                     placeholder="CS23B101"
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
 
@@ -472,7 +472,7 @@ export const OnboardingPage: React.FC = () => {
                       placeholder="Sec (A)"
                       value={form.section}
                       onChange={handleChange}
-                      className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                      className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                     />
                     <input
                       type="text"
@@ -480,7 +480,7 @@ export const OnboardingPage: React.FC = () => {
                       placeholder="Batch (2023-2027)"
                       value={form.batch}
                       onChange={handleChange}
-                      className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                      className="w-1/2 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                     />
                   </div>
                 </div>
@@ -488,8 +488,8 @@ export const OnboardingPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-              <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-[#2563EB]" /> Professional Demographics
+              <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-brand-600" /> Professional Demographics
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -502,7 +502,7 @@ export const OnboardingPage: React.FC = () => {
                     value={form.profession}
                     onChange={handleChange}
                     placeholder="SOC Analyst"
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
 
@@ -515,7 +515,7 @@ export const OnboardingPage: React.FC = () => {
                     value={form.organization}
                     onChange={handleChange}
                     placeholder="CyberSecurity Inc"
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
 
@@ -525,7 +525,7 @@ export const OnboardingPage: React.FC = () => {
                     name="experience"
                     value={form.experience}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   >
                     <option value="Student / Beginner">Student / Beginner</option>
                     <option value="1-2 Years">1-2 Years</option>
@@ -543,7 +543,7 @@ export const OnboardingPage: React.FC = () => {
                     value={form.highest_qualification}
                     onChange={handleChange}
                     placeholder="B.Tech / M.Tech / BSc"
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-brand-600"
                   />
                 </div>
               </div>
@@ -553,7 +553,7 @@ export const OnboardingPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[#2563EB] hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-3.5 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             {loading ? 'Saving Profile & Photo...' : 'Complete Profile & Launch Range Console'}
             <ArrowRight className="w-4 h-4" />

@@ -2,29 +2,19 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  User,
   ArrowLeft,
   Award,
   Clock,
   CheckCircle2,
   Trophy,
   FlaskConical,
-  Calendar,
   Edit3,
   Trash2,
-  Save,
-  X,
   AlertTriangle,
-  FileCheck,
   Activity,
   Zap,
   Flame,
-  Star,
-  TrendingUp,
-  Crown,
-  Shield,
-  Medal
-} from 'lucide-react';
+  Shield} from 'lucide-react';
 
 const toXY = (angle: number, r: number, cx: number, cy: number) => ({
   x: cx + r * Math.sin(angle),
@@ -161,7 +151,7 @@ export const StudentDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center gap-3">
-        <div className="w-8 h-8 border-4 border-[#0052CC] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold">Loading student profile & analytics...</p>
       </div>
     );
@@ -171,7 +161,7 @@ export const StudentDetailsPage: React.FC = () => {
     return (
       <div className="py-20 text-center space-y-4">
         <p className="text-sm font-bold text-slate-600">Student record not found.</p>
-        <Link to="/admin/users" className="text-xs font-bold text-[#0052CC] hover:underline">Return to Student Roster</Link>
+        <Link to="/admin/users" className="text-xs font-bold text-brand-600 hover:underline">Return to Student Roster</Link>
       </div>
     );
   }
@@ -206,25 +196,25 @@ export const StudentDetailsPage: React.FC = () => {
     });
     return (
       <div className="flex flex-col items-center gap-4">
-        <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
+        <svg className="text-brand-600 dark:text-brand-400" viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
           {gridPts.map((pts: string, li: number) => (
-            <polygon key={li} points={pts} fill="none" stroke="#E2E8F0" strokeWidth="0.8" strokeDasharray="3,3" />
+            <polygon key={li} points={pts} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth="0.8" strokeDasharray="3,3" />
           ))}
           {angles.map((a: number, i: number) => {
             const p = toXY(a, R, cx, cy);
-            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#E2E8F0" strokeWidth="0.8" />;
+            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="currentColor" strokeOpacity={0.15} strokeWidth="0.8" />;
           })}
-          <polygon points={dataPts.join(' ')} fill="rgba(0,82,204,0.15)" stroke="#0052CC" strokeWidth="2" strokeLinejoin="round" />
+          <polygon points={dataPts.join(' ')} fill="currentColor" fillOpacity={0.15} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           {angles.map((a: number, i: number) => {
             const p = toXY(a, ((radarValues[i] || 0) / 100) * R, cx, cy);
-            return <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0052CC" stroke="white" strokeWidth="2" />;
+            return <circle key={i} cx={p.x} cy={p.y} r="4" fill="currentColor" stroke="white" strokeWidth="2" />;
           })}
           {angles.map((a: number, i: number) => {
             const lp = toXY(a, R + 22, cx, cy);
             return (
               <g key={i}>
-                <text x={lp.x} y={lp.y - 4} textAnchor="middle" style={{ fontSize: '8px', fontWeight: 700, fill: '#64748B' }}>{radarLabels[i]}</text>
-                <text x={lp.x} y={lp.y + 7} textAnchor="middle" style={{ fontSize: '7.5px', fontWeight: 900, fill: '#0052CC' }}>{radarRaw[radarRawKeys[i]] ?? 0}</text>
+                <text x={lp.x} y={lp.y - 4} textAnchor="middle" style={{ fontSize: '8px', fontWeight: 700, fill: '#686B77' }}>{radarLabels[i]}</text>
+                <text x={lp.x} y={lp.y + 7} textAnchor="middle" style={{ fontSize: '7.5px', fontWeight: 900, fill: 'currentColor' }}>{radarRaw[radarRawKeys[i]] ?? 0}</text>
               </g>
             );
           })}
@@ -233,9 +223,9 @@ export const StudentDetailsPage: React.FC = () => {
           {radarLabels.map((label: string, i: number) => (
             <div key={label} className="text-center p-1.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
               <p className="text-[8px] font-bold text-slate-400 uppercase">{label}</p>
-              <p className="text-sm font-black text-[#0052CC]">{radarRaw[radarRawKeys[i]] ?? 0}</p>
+              <p className="text-sm font-bold text-brand-600">{radarRaw[radarRawKeys[i]] ?? 0}</p>
               <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full mt-1 overflow-hidden">
-                <div className="h-full bg-[#0052CC] rounded-full" style={{ width: `${radarValues[i] || 0}%` }} />
+                <div className="h-full bg-brand-600 rounded-full" style={{ width: `${radarValues[i] || 0}%` }} />
               </div>
             </div>
           ))}
@@ -249,12 +239,12 @@ export const StudentDetailsPage: React.FC = () => {
 
       {/* Breadcrumb + Actions */}
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate('/admin/users')} className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-[#0052CC] transition-colors cursor-pointer">
+        <button onClick={() => navigate('/admin/users')} className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors cursor-pointer">
           <ArrowLeft className="w-4 h-4" /> Back to Student Management Roster
         </button>
         <div className="flex items-center gap-2">
           <button onClick={() => setIsEditing(!isEditing)} className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs">
-            <Edit3 className="w-3.5 h-3.5 text-[#0052CC]" /> Edit Profile
+            <Edit3 className="w-3.5 h-3.5 text-brand-600" /> Edit Profile
           </button>
           <button onClick={() => setIsDeleteModalOpen(true)} className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold text-xs hover:bg-rose-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs">
             <Trash2 className="w-3.5 h-3.5" /> Delete
@@ -263,10 +253,10 @@ export const StudentDetailsPage: React.FC = () => {
       </div>
 
       {/* Profile Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm">
         {isEditing ? (
           <form onSubmit={handleSaveEdit} className="space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 border-b pb-2">Edit Student Roster Information</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 border-b pb-2">Edit Student Roster Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               {[
                 { label: 'Full Name', key: 'fullName', type: 'text', required: true },
@@ -282,7 +272,7 @@ export const StudentDetailsPage: React.FC = () => {
                     type={f.type}
                     value={(editForm as any)[f.key]}
                     onChange={e => setEditForm({ ...editForm, [f.key]: e.target.value })}
-                    className={`w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#0052CC] ${f.readOnly ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-slate-50 dark:bg-slate-800'}`}
+                    className={`w-full p-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:border-brand-600 ${f.readOnly ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 cursor-not-allowed' : 'bg-slate-50 dark:bg-slate-800'}`}
                     required={f.required}
                     readOnly={f.readOnly}
                   />
@@ -291,7 +281,7 @@ export const StudentDetailsPage: React.FC = () => {
             </div>
             <div className="flex justify-end gap-2 text-xs pt-2">
               <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700 cursor-pointer">Cancel</button>
-              <button type="submit" disabled={actionLoading} className="px-4 py-2 bg-[#0052CC] text-white font-bold rounded-lg hover:bg-blue-600 cursor-pointer disabled:opacity-60">
+              <button type="submit" disabled={actionLoading} className="px-4 py-2 bg-brand-600 text-white font-bold rounded-full hover:bg-blue-600 cursor-pointer disabled:opacity-60">
                 {actionLoading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
@@ -299,11 +289,11 @@ export const StudentDetailsPage: React.FC = () => {
         ) : (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-[#0052CC] text-white flex items-center justify-center font-black text-xl shadow-md">{initials}</div>
+              <div className="w-16 h-16 rounded-2xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md">{initials}</div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{name}</h1>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#28A745] border border-emerald-200">{student.status || 'Active'}</span>
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{name}</h1>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">{student.status || 'Active'}</span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">{student.email}{student.phone ? ` • ${student.phone}` : ''}</p>
                 {/* Fields the admin left blank at import (or the student hasn't
@@ -331,17 +321,17 @@ export const StudentDetailsPage: React.FC = () => {
       {/* Live Statistics KPI Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total Score', value: `${totalScore.toLocaleString()}`, sub: 'pts', color: 'text-[#0052CC]', bg: 'bg-blue-50', icon: <Trophy className="w-4 h-4" /> },
+          { label: 'Total Score', value: `${totalScore.toLocaleString()}`, sub: 'pts', color: 'text-brand-600', bg: 'bg-blue-50', icon: <Trophy className="w-4 h-4" /> },
           { label: 'Global Rank', value: `#${globalRank}`, sub: 'platform', color: 'text-amber-500', bg: 'bg-amber-50', icon: <Zap className="w-4 h-4" /> },
           { label: 'Labs Done', value: `${completedCount}`, sub: 'labs', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: <Award className="w-4 h-4" /> },
           { label: 'Training Hrs', value: `${trainingHours}`, sub: 'hours', color: 'text-indigo-600', bg: 'bg-indigo-50', icon: <Clock className="w-4 h-4" /> },
-          { label: 'Challenges', value: `${challengesSolved}`, sub: 'flags', color: 'text-violet-600', bg: 'bg-violet-50', icon: <Shield className="w-4 h-4" /> },
+          { label: 'Challenges', value: `${challengesSolved}`, sub: 'flags', color: 'text-brand-600', bg: 'bg-brand-50', icon: <Shield className="w-4 h-4" /> },
           { label: 'Active Days', value: `${activeDays}`, sub: 'streak', color: 'text-orange-500', bg: 'bg-orange-50', icon: <Flame className="w-4 h-4" /> },
         ].map(m => (
           <div key={m.label} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 shadow-xs flex flex-col gap-1.5">
             <div className={`w-8 h-8 rounded-xl ${m.bg} ${m.color} flex items-center justify-center`}>{m.icon}</div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{m.label}</p>
-            <p className={`text-base font-black ${m.color}`}>{m.value} <span className="text-[10px] font-semibold text-slate-400">{m.sub}</span></p>
+            <p className="text-xs font-bold text-slate-400">{m.label}</p>
+            <p className={`text-base font-bold ${m.color}`}>{m.value} <span className="text-xs font-semibold text-slate-400">{m.sub}</span></p>
           </div>
         ))}
       </div>
@@ -350,39 +340,39 @@ export const StudentDetailsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Spiderweb Activity Radar */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Activity className="w-5 h-5 text-[#0052CC]" /> Activity Radar
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <Activity className="w-5 h-5 text-brand-600" /> Activity Radar
           </h3>
           <RadarChart />
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-center p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
-              <p className="text-[9px] text-slate-400 font-bold uppercase">Avg Session</p>
-              <p className="font-black text-[#0052CC]">{avgSession} min</p>
+              <p className="text-xs text-slate-400 font-bold uppercase">Avg Session</p>
+              <p className="font-bold text-brand-600">{avgSession} min</p>
             </div>
             <div className="text-center p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
-              <p className="text-[9px] text-slate-400 font-bold uppercase">Completion</p>
-              <p className="font-black text-emerald-600">{liveStats?.completion_rate ?? analytics?.completionRate ?? 0}%</p>
+              <p className="text-xs text-slate-400 font-bold uppercase">Completion</p>
+              <p className="font-bold text-emerald-600">{liveStats?.completion_rate ?? analytics?.completionRate ?? 0}%</p>
             </div>
             <div className="text-center p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
-              <p className="text-[9px] text-slate-400 font-bold uppercase">Badges</p>
-              <p className="font-black text-amber-500">{liveStats?.badges_unlocked ?? 0}</p>
+              <p className="text-xs text-slate-400 font-bold uppercase">Badges</p>
+              <p className="font-bold text-amber-500">{liveStats?.badges_unlocked ?? 0}</p>
             </div>
           </div>
         </div>
 
         {/* Lab Domain Progress */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <FlaskConical className="w-5 h-5 text-[#0052CC]" /> Lab Domain Progress
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <FlaskConical className="w-5 h-5 text-brand-600" /> Lab Domain Progress
           </h3>
           <div className="space-y-3 text-xs">
             {(!analytics?.domainProgress || analytics.domainProgress.length === 0) ? (
               <p className="text-slate-400 font-medium py-4 text-center">No lab domain progress available yet.</p>
             ) : (
               analytics.domainProgress.map((dp: any, idx: number) => {
-                const colors = ['bg-[#0052CC]', 'bg-[#28A745]', 'bg-[#6F42C1]', 'bg-[#FFA500]', 'bg-rose-500'];
-                const tColors = ['text-[#0052CC]', 'text-[#28A745]', 'text-[#6F42C1]', 'text-[#FFA500]', 'text-rose-500'];
+                const colors = ['bg-brand-600', 'bg-emerald-600', 'bg-brand-600', 'bg-amber-500', 'bg-rose-500'];
+                const tColors = ['text-brand-600', 'text-emerald-600', 'text-brand-600', 'text-amber-500', 'text-rose-500'];
                 return (
                   <div key={dp.domain}>
                     <div className="flex justify-between font-bold mb-1">
@@ -404,10 +394,10 @@ export const StudentDetailsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Completed Labs List */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
             <Trophy className="w-5 h-5 text-amber-500" /> Completed Labs
-            {completedLabs.length > 0 && <span className="ml-auto bg-[#0052CC] text-white text-[9px] font-black rounded-full px-2 py-0.5">{completedLabs.length}</span>}
+            {completedLabs.length > 0 && <span className="ml-auto bg-brand-600 text-white text-xs font-bold rounded-full px-2 py-0.5">{completedLabs.length}</span>}
           </h3>
           {completedLabs.length === 0 ? (
             <div className="py-8 text-center text-slate-400">
@@ -424,13 +414,13 @@ export const StudentDetailsPage: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{lab.name}</p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        {lab.difficulty && <span className={`text-[9px] font-bold px-1 py-0.5 rounded border ${dc}`}>{lab.difficulty}</span>}
-                        <span className="text-[10px] text-slate-400">{lab.category}</span>
+                        {lab.difficulty && <span className={`text-xs font-bold px-1 py-0.5 rounded border ${dc}`}>{lab.difficulty}</span>}
+                        <span className="text-xs text-slate-400">{lab.category}</span>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs font-black text-[#0052CC]">+{lab.score ?? 0} pts</p>
-                      <p className="text-[9px] text-slate-400">{lab.completed_at || '--'}</p>
+                      <p className="text-xs font-bold text-brand-600">+{lab.score ?? 0} pts</p>
+                      <p className="text-xs text-slate-400">{lab.completed_at || '--'}</p>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   </div>
@@ -441,9 +431,9 @@ export const StudentDetailsPage: React.FC = () => {
         </div>
 
         {/* Recent Learning Activity Timeline */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
-          <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Clock className="w-5 h-5 text-[#28A745]" /> Recent Learning Activity
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <Clock className="w-5 h-5 text-emerald-600" /> Recent Learning Activity
           </h3>
           <div className="space-y-2.5 text-xs max-h-64 overflow-y-auto pr-1">
             {(!analytics?.recentActivity || analytics.recentActivity.length === 0) ? (
@@ -453,9 +443,9 @@ export const StudentDetailsPage: React.FC = () => {
                 <div key={`act-${idx}`} className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-bold text-slate-900 dark:text-slate-100">{act.labName} — {act.moduleName}</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Score: {act.score} • {act.timeTaken} • {act.timestamp}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Score: {act.score} • {act.timeTaken} • {act.timestamp}</p>
                   </div>
-                  <span className={`font-bold px-2 py-0.5 rounded-md text-[10px] flex-shrink-0 ${act.status === 'Completed' ? 'bg-emerald-50 text-[#28A745] border border-emerald-200' : 'bg-blue-50 text-[#0052CC] border border-blue-200'}`}>
+                  <span className={`font-bold px-2 py-0.5 rounded-md text-xs flex-shrink-0 ${act.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-blue-50 text-brand-600 border border-blue-200'}`}>
                     {act.status}
                   </span>
                 </div>
@@ -468,12 +458,12 @@ export const StudentDetailsPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Delete Student Account?</h3>
+              <h3 className="text-base font-semibold text-slate-900">Delete Student Account?</h3>
               <p className="text-xs text-slate-500 mt-1">Are you sure you want to permanently delete <span className="font-bold text-slate-800">{name}</span>? This will remove all group memberships, lab assignments, and analytics records.</p>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-2">

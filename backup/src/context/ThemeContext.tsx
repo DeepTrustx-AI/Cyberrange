@@ -47,6 +47,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else {
         root.classList.add(theme);
       }
+      // Phones tint their browser bar with theme-color; keep it the page's own canvas.
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', root.classList.contains('dark') ? '#130E0B' : '#F7F4EF');
     };
 
     applyTheme();

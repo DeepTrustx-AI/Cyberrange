@@ -26,7 +26,7 @@ export function getGradeColor(grade: string | null | undefined): string {
       return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-800';
     case 'A+':
     case 'A':
-      return 'text-[#0052CC] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800';
+      return 'text-brand-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800';
     case 'B+':
     case 'B':
       return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800';

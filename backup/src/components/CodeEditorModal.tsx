@@ -6,7 +6,7 @@ import { indentWithTab } from '@codemirror/commands';
 import { HighlightStyle, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { python } from '@codemirror/lang-python';
-import { Loader2, Save, Wand2 } from 'lucide-react';
+import { Info, Loader2, Save, Wand2 } from 'lucide-react';
 import { tidyIndentation } from './terminalEditor';
 
 interface CodeEditorModalProps {
@@ -23,7 +23,7 @@ interface CodeEditorModalProps {
 const darkHighlight = HighlightStyle.define([
   { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword, tags.operatorKeyword], color: '#93C5FD', fontWeight: '600' },
   { tag: [tags.string, tags.special(tags.string)], color: '#86EFAC' },
-  { tag: tags.comment, color: '#94A3B8', fontStyle: 'italic' },
+  { tag: tags.comment, color: '#838690', fontStyle: 'italic' },
   { tag: [tags.number, tags.bool, tags.null], color: '#FCD34D' },
   { tag: [tags.function(tags.definition(tags.variableName)), tags.function(tags.variableName)], color: '#F9A8D4' },
   { tag: [tags.className, tags.definition(tags.className)], color: '#A5F3FC' },
@@ -32,13 +32,14 @@ const darkHighlight = HighlightStyle.define([
 ]);
 
 const editorTheme = EditorView.theme({
-  '&': { height: '100%', fontSize: '13px', backgroundColor: '#0B0F17', color: '#F3F4F6' },
-  '.cm-scroller': { fontFamily: 'Fira Code, Menlo, Monaco, Consolas, "Courier New", monospace', lineHeight: '1.5' },
-  '.cm-gutters': { backgroundColor: '#111827', color: '#6B7280', border: 'none' },
-  '.cm-activeLine': { backgroundColor: '#1F293780' },
-  '.cm-activeLineGutter': { backgroundColor: '#1F2937' },
-  '.cm-cursor': { borderLeftColor: '#60A5FA' },
-  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': { backgroundColor: '#1D4ED866' },
+  '&': { height: '100%', fontSize: '13px', backgroundColor: '#0C0E14', color: '#F2F4F7' },
+  '.cm-scroller': { fontFamily: '"JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace', lineHeight: '1.5' },
+  '.cm-gutters': { backgroundColor: '#0C0E14', color: '#5C6170', border: 'none', paddingLeft: '8px' },
+  '.cm-activeLine': { backgroundColor: '#FFFFFF08' },
+  '.cm-activeLineGutter': { backgroundColor: 'transparent', color: '#C9CDD6' },
+  '.cm-content': { padding: '12px 0' },
+  '.cm-cursor': { borderLeftColor: '#83E8C3' },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': { backgroundColor: '#F6C6A638' },
 }, { dark: true });
 
 const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
@@ -110,38 +111,52 @@ const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
     view.focus();
   };
 
+  // Sits under the terminal's header bar, whose button switches back, so the brief stays
+  // readable beside it and the switch never moves.
   return (
-    // Sits under the terminal's header bar, whose button switches back, so the switch never moves.
-    <div className="absolute inset-x-0 bottom-0 top-10 z-20 flex flex-col" role="dialog"
-         aria-label={`Code editor: ${filename}`}>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#0B0F17]">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-800 bg-[#111827] px-4 py-2.5">
+    <div className="fade-in absolute inset-x-0 bottom-0 top-10 z-20 flex flex-col bg-[#0C0E14]" role="dialog" aria-label={`Code editor: ${filename}`}>
+      <div className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-3">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <div className="truncate font-mono text-sm font-bold text-slate-200">~/{filename}</div>
-            <div className="text-[11px] text-slate-500">
-              Save writes this file, the one the brief asks for · Python · 4 spaces<span className="hidden sm:inline"> · Tab indents, Shift+Tab outdents · Ctrl+S saves · Esc closes</span>
-            </div>
+            <div className="truncate font-mono text-[13px] font-semibold text-slate-100">~/{filename}</div>
+            <div className="truncate text-[11px] text-slate-400">Save writes this file, the one the brief asks for</div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={fixIndentation}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-800"
-                    title="Turn tabs into four spaces and remove trailing spaces">
-              <Wand2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Fix indentation</span>
-            </button>
-            <button type="button" onClick={save} disabled={saving}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50">
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{saving ? 'Saving…' : 'Save to workspace'}</span>
-            </button>
-          </div>
+          <span className="hidden shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-400 lg:inline">Python · 4 spaces</span>
         </div>
-        {note && <div className="border-b border-amber-900/50 bg-amber-950/30 px-4 py-1.5 text-xs text-amber-300">{note}</div>}
-        <div ref={hostRef} className="min-h-0 flex-1 overflow-hidden" />
-        <div className="flex items-center justify-between border-t border-slate-800 bg-[#111827] px-4 py-1.5 text-[11px] text-slate-500">
-          <span>Ln {cursor.line}, Col {cursor.col}</span>
-          <span role="status" className={saveMessage?.startsWith('Saved') ? 'text-emerald-400' : 'text-amber-300'}>{saveMessage ?? ''}</span>
-          <span className="hidden md:inline">When you are done, run <code className="font-mono text-slate-300">submit ~/{filename}</code> in the terminal.</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={fixIndentation}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
+            title="Turn tabs into four spaces and remove trailing spaces"
+          >
+            <Wand2 className="h-3.5 w-3.5" /><span className="hidden sm:inline">Tidy indentation</span>
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-900 transition-colors hover:bg-slate-200 disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? 'Saving…' : 'Save'}
+            <kbd className="hidden rounded bg-slate-900/10 px-1 font-sans text-[0.7rem] font-medium text-slate-500 sm:inline">Ctrl S</kbd>
+          </button>
         </div>
+      </div>
+      {note && (
+        <div className="flex items-start gap-2 border-b border-white/[0.06] bg-white/[0.03] px-4 py-2 text-xs leading-5 text-slate-300">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+          {note}
+        </div>
+      )}
+      <div ref={hostRef} className="min-h-0 flex-1 overflow-hidden" />
+      <div className="flex h-9 shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] px-4 text-xs text-slate-500">
+        <span className="tabular">Ln {cursor.line}, Col {cursor.col}</span>
+        <span role="status" className={saveMessage?.startsWith('Saved') ? 'text-emerald-400' : 'text-amber-300'}>{saveMessage ?? ''}</span>
+        <span className="hidden truncate md:inline">
+          Esc goes back to the terminal · then run <code className="font-mono text-slate-300">submit ~/{filename}</code>
+        </span>
       </div>
     </div>
   );

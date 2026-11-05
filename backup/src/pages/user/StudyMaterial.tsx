@@ -32,7 +32,7 @@ export const StudyMaterial: React.FC = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('System Security');
   const [description, setDescription] = useState('');
-  const [readTime, setReadTime] = useState('15 min read');
+  const [readTime] = useState('15 min read');
   const [difficulty, setDifficulty] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Intermediate');
   const [bulletPoints, setBulletPoints] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -161,11 +161,11 @@ export const StudyMaterial: React.FC = () => {
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+    <div className="p-6 max-w-7xl mx-auto min-h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-200">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+          <h1 className="font-display tracking-tight text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
             <Book className="w-7 h-7 text-blue-600 dark:text-blue-400" />
             Study Materials & Domain Notes
           </h1>
@@ -177,7 +177,7 @@ export const StudyMaterial: React.FC = () => {
         {isAdmin && (
           <button
             onClick={() => setShowUploadModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md transition-all flex items-center gap-2 self-start md:self-auto"
+            className="px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md transition-all flex items-center gap-2 self-start md:self-auto"
           >
             <Plus className="w-4 h-4" />
             Upload Study Material
@@ -186,7 +186,7 @@ export const StudyMaterial: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 mb-8 shadow-sm flex flex-col md:flex-row md:items-center gap-4">
+      <div className="bg-white dark:bg-slate-950 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 mb-8 shadow-sm flex flex-col md:flex-row md:items-center gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
           <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -205,7 +205,7 @@ export const StudyMaterial: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+              className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
                 selectedCategory === cat
                   ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -221,7 +221,7 @@ export const StudyMaterial: React.FC = () => {
       {loading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 h-48 animate-pulse" />
+            <div key={i} className="skeleton h-48 rounded-3xl" />
           ))}
         </div>
       ) : (
@@ -230,16 +230,16 @@ export const StudyMaterial: React.FC = () => {
           {filteredMaterials.map((item) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white dark:bg-slate-950 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div>
                 {/* Card Badge Header */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
                     {item.category}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                       item.difficulty === 'Advanced'
                         ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400'
                         : item.difficulty === 'Intermediate'
@@ -271,7 +271,7 @@ export const StudyMaterial: React.FC = () => {
 
               {/* Bottom Info & Action buttons */}
               <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
-                <div className="flex items-center gap-4 text-[11px] text-slate-400">
+                <div className="flex items-center gap-4 text-xs text-slate-400">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
                     {item.readTime}
@@ -310,7 +310,7 @@ export const StudyMaterial: React.FC = () => {
           ))}
 
           {filteredMaterials.length === 0 && (
-            <div className="col-span-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center">
+            <div className="col-span-full bg-white dark:bg-slate-950 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-12 text-center">
               <Book className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No study materials found</h3>
               <p className="text-xs text-slate-400 mt-1">Try refining your keyword search or filtering other domains.</p>
@@ -322,10 +322,10 @@ export const StudyMaterial: React.FC = () => {
       {/* Reader Modal */}
       {activeNote && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-slate-950 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl w-full max-w-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start gap-4">
               <div>
-                <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-bold">
                   {activeNote.category}
                 </span>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-1.5">{activeNote.title}</h2>
@@ -344,7 +344,7 @@ export const StudyMaterial: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Key Study Bulletins & Commands</h4>
+                <h4 className="text-xs font-bold text-slate-400">Key Study Bulletins & Commands</h4>
                 {activeNote.content.map((point, index) => (
                   <div key={index} className="flex gap-3 items-start text-sm text-slate-700 dark:text-slate-300">
                     <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -366,7 +366,7 @@ export const StudyMaterial: React.FC = () => {
                 {activeNote.pdfUrl ? (
                   <Link
                     to={`/study-material/view/${activeNote.id}`}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
                   >
                     <Eye className="w-4 h-4" />
                     View Secure PDF
@@ -390,7 +390,7 @@ export const StudyMaterial: React.FC = () => {
       {/* Admin Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-slate-950 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Upload className="w-5 h-5 text-blue-600" />
@@ -494,7 +494,7 @@ export const StudyMaterial: React.FC = () => {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {uploading ? 'Uploading...' : 'Save & Publish'}
                 </button>

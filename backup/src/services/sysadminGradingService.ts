@@ -19,6 +19,7 @@ export interface SysadminLabSummary {
 
 export interface SysadminLabDetail extends SysadminLabSummary {
   question_markdown: string;
+  hints?: string[];
 }
 
 export interface SysadminCriterionResult {
@@ -80,9 +81,23 @@ async function apiJson<T>(
   throw new Error(detail);
 }
 
+// Lab lists change only when lab files do, yet the dashboard, the catalogue and
+// the workspace (on every challenge switch) all ask for them. One answer per
+// catalog is kept for a minute and shared by requests that overlap; a failed
+// request is not kept. Signing out reloads the page, which clears it.
+const LAB_LIST_TTL_MS = 60_000;
+const labLists = new Map<string, { at: number; rows: Promise<SysadminLabSummary[]> }>();
+
 export const sysadminGradingService = {
   listLabs(apiFetch: AuthenticatedFetch, catalog = "linux-sysadmin-lab"): Promise<SysadminLabSummary[]> {
-    return apiJson(apiFetch, `/api/v1/sysadmin-grading/labs?catalog=${encodeURIComponent(catalog)}`);
+    const kept = labLists.get(catalog);
+    if (kept && Date.now() - kept.at < LAB_LIST_TTL_MS) return kept.rows;
+    const rows = apiJson<SysadminLabSummary[]>(apiFetch, `/api/v1/sysadmin-grading/labs?catalog=${encodeURIComponent(catalog)}`);
+    labLists.set(catalog, { at: Date.now(), rows });
+    rows.catch(() => {
+      if (labLists.get(catalog)?.rows === rows) labLists.delete(catalog);
+    });
+    return rows;
   },
 
   getLab(apiFetch: AuthenticatedFetch, labId: string): Promise<SysadminLabDetail> {
@@ -96,6 +111,11 @@ export const sysadminGradingService = {
   ): Promise<SysadminSubmission[]> {
     const params = new URLSearchParams({ lab_id: labId, limit: String(limit) });
     return apiJson(apiFetch, `/api/v1/sysadmin-grading/submissions?${params.toString()}`);
+  },
+
+  // The student's most recent submissions across every challenge, newest first.
+  listRecentSubmissions(apiFetch: AuthenticatedFetch, limit = 50): Promise<SysadminSubmission[]> {
+    return apiJson(apiFetch, `/api/v1/sysadmin-grading/submissions?limit=${limit}`);
   },
 
   getWorkspace(apiFetch: AuthenticatedFetch): Promise<SysadminWorkspaceSession | null> {

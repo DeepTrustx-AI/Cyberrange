@@ -84,6 +84,11 @@ export default defineConfig({
           if (id.includes('node_modules/lucide-react/')) {
             return 'icons-vendor';
           }
+
+          // three.js — only loaded by the 3D range and the lab illustrations
+          if (id.includes('node_modules/three/')) {
+            return 'three-vendor';
+          }
         },
       },
     },

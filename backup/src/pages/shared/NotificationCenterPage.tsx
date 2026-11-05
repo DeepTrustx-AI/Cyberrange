@@ -5,17 +5,12 @@ import {
   Search,
   CheckCheck,
   Trash2,
-  Filter,
   ExternalLink,
   Clock,
   CheckCircle2,
-  AlertTriangle,
-  Info,
   ShieldAlert,
   ChevronLeft,
-  ChevronRight,
-  RotateCcw
-} from 'lucide-react';
+  ChevronRight} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchNotifications,
@@ -65,7 +60,7 @@ export const NotificationCenterPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    const cleanupWs = setupNotificationWebSocket((newNotif) => {
+    const cleanupWs = setupNotificationWebSocket(() => {
       loadData();
     });
     return () => cleanupWs();
@@ -101,11 +96,11 @@ export const NotificationCenterPage: React.FC = () => {
     switch (priority) {
       case 'CRITICAL':
       case 'HIGH':
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> High Priority</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> High Priority</span>;
       case 'LOW':
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">Low</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">Low</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">Medium</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">Medium</span>;
     }
   };
 
@@ -114,14 +109,14 @@ export const NotificationCenterPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#0052CC]">
+            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-brand-600">
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Notification Center</h1>
+              <h1 className="font-display tracking-tight text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100">Notification Center</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real-time alerts, lab updates, license reminders, and security dispatches.</p>
             </div>
           </div>
@@ -204,7 +199,7 @@ export const NotificationCenterPage: React.FC = () => {
       </div>
 
       {/* Notification List */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs font-medium">
             Loading notifications...
@@ -227,16 +222,16 @@ export const NotificationCenterPage: React.FC = () => {
                     {!item.read && (
                       <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" title="Unread"></span>
                     )}
-                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{item.title}</h4>
+                    <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{item.title}</h4>
                     {getPriorityBadge(item.priority)}
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md uppercase">
+                    <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md uppercase">
                       {item.type}
                     </span>
                   </div>
 
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{item.message}</p>
 
-                  <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                  <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
                     <span className="flex items-center gap-1 font-medium">
                       <Clock className="w-3.5 h-3.5" />
                       {new Date(item.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
@@ -245,7 +240,7 @@ export const NotificationCenterPage: React.FC = () => {
                     {item.action_url && (
                       <button
                         onClick={() => navigate(item.action_url!)}
-                        className="text-[#0052CC] dark:text-blue-400 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                        className="text-brand-600 dark:text-blue-400 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
                       >
                         Open Target <ExternalLink className="w-3 h-3" />
                       </button>

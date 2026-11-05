@@ -2,18 +2,10 @@ import { apiFetch as routedApiFetch, isUnconfiguredOrgName } from '../../lib/api
 import React, { useState, useEffect } from 'react';
 import {
   User as UserIcon,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
-  GraduationCap,
   Building,
   Save,
   Camera,
   Trash2,
-  Activity,
-  Smartphone,
-  Globe,
   Plus,
   Star,
   CheckCircle2,
@@ -27,7 +19,7 @@ const toXY = (angle: number, r: number, cx: number, cy: number) => ({
 });
 
 export const AdminProfilePage: React.FC = () => {
-  const { user, refreshUser, authorization } = useAuth();
+  const { refreshUser, authorization } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -62,9 +54,6 @@ export const AdminProfilePage: React.FC = () => {
     }
   });
 
-  const [stats, setStats] = useState<any>({});
-  const [activityGraph, setActivityGraph] = useState<any>(null);
-  const [statsTab, setStatsTab] = useState<'metrics' | 'labs'>('metrics');
 
   // Real Admin Operational Summary Data
   const [adminSummary, setAdminSummary] = useState<any>(null);
@@ -75,7 +64,6 @@ export const AdminProfilePage: React.FC = () => {
   const [showOrgModal, setShowOrgModal] = useState(false);
 
   // College & Org add form states
-  const [colleges, setColleges] = useState<any[]>([]);
   const [collegeSearch, setCollegeSearch] = useState('');
   const [collegeResults, setCollegeResults] = useState<any[]>([]);
   const [selectedCollege, setSelectedCollege] = useState<any>(null);
@@ -116,18 +104,11 @@ export const AdminProfilePage: React.FC = () => {
         });
       }
 
-      // Fetch radar graph & student-like stats if available for admin
-      const [statsRes, graphRes, affsRes, collegeRes, summaryRes] = await Promise.all([
-        routedApiFetch('/api/v1/user/statistics', { headers: h }),
-        routedApiFetch('/api/v1/user/activity-graph', { headers: h }),
+      const [affsRes, summaryRes] = await Promise.all([
         routedApiFetch('/api/v1/me/affiliations', { headers: h }),
-        routedApiFetch('/api/v1/reporting/colleges'),
         routedApiFetch('/api/v1/admin/dashboard/summary', { headers: h })
       ]);
-      if (statsRes.ok) setStats(await statsRes.json());
-      if (graphRes.ok) setActivityGraph(await graphRes.json());
       if (affsRes.ok) setAffiliations(await affsRes.json());
-      if (collegeRes.ok) setColleges(await collegeRes.json());
       if (summaryRes.ok) setAdminSummary(await summaryRes.json());
     } catch (err) {
       console.error('Failed to fetch admin profile details:', err);
@@ -174,7 +155,7 @@ export const AdminProfilePage: React.FC = () => {
         const err = await res.json();
         setMessage({ type: 'error', text: err.detail || 'Failed to upload photo.' });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error uploading photo.' });
     } finally {
       setSaving(false);
@@ -204,7 +185,7 @@ export const AdminProfilePage: React.FC = () => {
         const err = await res.json();
         setMessage({ type: 'error', text: err.detail || 'Failed to remove photo.' });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error removing photo.' });
     } finally {
       setSaving(false);
@@ -345,7 +326,7 @@ export const AdminProfilePage: React.FC = () => {
   if (loading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center gap-3">
-        <div className="w-8 h-8 border-4 border-[#0052CC] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-semibold">Loading Profile...</p>
       </div>
     );
@@ -402,25 +383,25 @@ export const AdminProfilePage: React.FC = () => {
     });
     return (
       <div className="flex flex-col items-center gap-3">
-        <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
+        <svg className="text-brand-600 dark:text-brand-400" viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
           {gridPts.map((pts: string, li: number) => (
-            <polygon key={li} points={pts} fill="none" stroke="#E2E8F0" strokeWidth="0.8" strokeDasharray="3,3" />
+            <polygon key={li} points={pts} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth="0.8" strokeDasharray="3,3" />
           ))}
           {angles.map((a: number, i: number) => {
             const p = toXY(a, R, cx, cy);
-            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#E2E8F0" strokeWidth="0.8" />;
+            return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="currentColor" strokeOpacity={0.15} strokeWidth="0.8" />;
           })}
-          <polygon points={dataPts.join(' ')} fill="rgba(37,99,235,0.15)" stroke="#2563EB" strokeWidth="2" strokeLinejoin="round" />
+          <polygon points={dataPts.join(' ')} fill="currentColor" fillOpacity={0.15} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           {angles.map((a: number, i: number) => {
             const p = toXY(a, ((radarValues[i] || 0) / 100) * R, cx, cy);
-            return <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#2563EB" stroke="white" strokeWidth="1.5" />;
+            return <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="currentColor" stroke="white" strokeWidth="1.5" />;
           })}
           {angles.map((a: number, i: number) => {
             const lp = toXY(a, R + 18, cx, cy);
             return (
               <g key={i}>
-                <text x={lp.x} y={lp.y - 3} textAnchor="middle" style={{ fontSize: '7.5px', fontWeight: 700, fill: '#64748B' }}>{radarLabels[i]}</text>
-                <text x={lp.x} y={lp.y + 6} textAnchor="middle" style={{ fontSize: '7px', fontWeight: 900, fill: '#2563EB' }}>{radarRaw[radarRawKeys[i] as keyof typeof radarRaw] ?? 0}</text>
+                <text x={lp.x} y={lp.y - 3} textAnchor="middle" style={{ fontSize: '7.5px', fontWeight: 700, fill: '#686B77' }}>{radarLabels[i]}</text>
+                <text x={lp.x} y={lp.y + 6} textAnchor="middle" style={{ fontSize: '7px', fontWeight: 900, fill: 'currentColor' }}>{radarRaw[radarRawKeys[i] as keyof typeof radarRaw] ?? 0}</text>
               </g>
             );
           })}
@@ -432,14 +413,14 @@ export const AdminProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Banner */}
-      <div className="relative bg-gradient-to-r from-blue-900 via-[#2563EB] to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="relative bg-gradient-to-r from-blue-900 via-brand-600 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
           <Building className="w-80 h-80 text-white" />
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="relative group">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#10B981] text-white flex items-center justify-center font-bold text-2xl shadow-lg border-4 border-white/20 overflow-hidden">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-2xl shadow-lg border-4 border-white/20 overflow-hidden">
                 {profileData.basic_info.avatar ? (
                   <img src={profileData.basic_info.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -450,7 +431,7 @@ export const AdminProfilePage: React.FC = () => {
               {editing && (
                 <>
                   {/* Camera upload hidden input wrapper label */}
-                  <label className="absolute bottom-0 right-0 p-1.5 bg-[#2563EB] hover:bg-blue-600 text-white rounded-full shadow-md border-2 border-white transition-colors cursor-pointer inline-flex items-center justify-center">
+                  <label className="absolute bottom-0 right-0 p-1.5 bg-brand-600 hover:bg-blue-600 text-white rounded-full shadow-md border-2 border-white transition-colors cursor-pointer inline-flex items-center justify-center">
                     <Camera className="w-3.5 h-3.5" />
                     <input
                       type="file"
@@ -475,8 +456,8 @@ export const AdminProfilePage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-white tracking-tight">{name}</h1>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-emerald-300 border border-white/10 uppercase tracking-wider">
+                <h1 className="text-2xl font-bold text-white tracking-tight">{name}</h1>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-emerald-300 border border-white/10">
                   ADMIN
                 </span>
               </div>
@@ -502,9 +483,9 @@ export const AdminProfilePage: React.FC = () => {
 
         {/* Left Column Profile Details Card */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-6">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <UserIcon className="w-4.5 h-4.5 text-blue-600" /> Profile Details
               </h2>
               {editing ? (
@@ -514,14 +495,14 @@ export const AdminProfilePage: React.FC = () => {
                       setEditing(false);
                       fetchProfile();
                     }}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold text-slate-600 transition-colors"
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="px-3 py-1.5 bg-blue-600 border border-blue-700 rounded-xl text-[11px] font-bold text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-1"
+                    className="px-3 py-1.5 bg-blue-600 border border-blue-700 rounded-full text-xs font-bold text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-1"
                   >
                     <Save className="w-3.5 h-3.5" />
                     <span>{saving ? 'Saving...' : 'Save'}</span>
@@ -530,7 +511,7 @@ export const AdminProfilePage: React.FC = () => {
               ) : (
                 <button
                   onClick={() => setEditing(true)}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold text-[#2563EB] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 transition-colors inline-flex items-center gap-1 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" /> Edit Profile
                 </button>
@@ -540,7 +521,7 @@ export const AdminProfilePage: React.FC = () => {
             {/* Basic Info fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Full Name</label>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Full Name</label>
                 <input
                   type="text"
                   disabled={!editing}
@@ -550,7 +531,7 @@ export const AdminProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Designation</label>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Designation</label>
                 <input
                   type="text"
                   disabled={!editing}
@@ -560,7 +541,7 @@ export const AdminProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Phone Number</label>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Phone Number</label>
                 <input
                   type="text"
                   disabled={!editing}
@@ -570,7 +551,7 @@ export const AdminProfilePage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">GST/Tax ID</label>
+                <label className="text-xs font-bold text-slate-400 block mb-1">GST/Tax ID</label>
                 <input
                   type="text"
                   disabled={!editing}
@@ -593,8 +574,8 @@ export const AdminProfilePage: React.FC = () => {
                 this section originally warned about. */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-5 space-y-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">🏢 Organization Details</h3>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500">🏢 Organization Details</h3>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${
                   isOrgVerified || isUnblockedElsewhere
                     ? 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-900'
                     : 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-900'
@@ -604,18 +585,18 @@ export const AdminProfilePage: React.FC = () => {
               </div>
               {orgStatus === 'PENDING' && (
                 isUnblockedElsewhere ? (
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-2">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-lg px-3 py-2">
                     Your account is already active through your verified college affiliation below. These organization details are optional.
                   </p>
                 ) : (
-                  <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2">
+                  <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2">
                     A system admin will review and verify your organization. Some administrative actions stay disabled until then.
                   </p>
                 )
               )}
               <div className="grid grid-cols-1 gap-4 text-xs">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Institution Name</label>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Institution Name</label>
                   <input
                     type="text"
                     disabled={!editing}
@@ -631,11 +612,11 @@ export const AdminProfilePage: React.FC = () => {
             {/* Organizations & Colleges Affiliation Section */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-5 space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">🎓 College Affiliations</h3>
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500">🎓 College Affiliations</h3>
                 {editing && (
                   <button
                     onClick={() => setShowCollegeModal(true)}
-                    className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" /> Add College
                   </button>
@@ -645,9 +626,9 @@ export const AdminProfilePage: React.FC = () => {
               {affiliations.filter(a => a.affiliation_type === 'college').map((aff) => (
                 <div key={aff.id} className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
                   <div>
-                    <span className="font-extrabold text-slate-800 dark:text-slate-200 block">🏛 {aff.college_name}</span>
-                    <span className="text-[10px] text-slate-400 block mt-1">Code: {aff.college_code || '--'}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-2">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 block">🏛 {aff.college_name}</span>
+                    <span className="text-xs text-slate-400 block mt-1">Code: {aff.college_code || '--'}</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-2">
                       VERIFIED
                     </span>
                   </div>
@@ -656,7 +637,7 @@ export const AdminProfilePage: React.FC = () => {
                       {!aff.is_primary && (
                         <button
                           onClick={() => promoteAffiliation(aff.id)}
-                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 inline-flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Set Primary
                         </button>
@@ -675,11 +656,11 @@ export const AdminProfilePage: React.FC = () => {
 
             <div className="border-t border-slate-100 dark:border-slate-800 pt-5 space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">🏢 Organization Affiliations</h3>
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500">🏢 Organization Affiliations</h3>
                 {editing && (
                   <button
                     onClick={() => setShowOrgModal(true)}
-                    className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 transition-colors inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" /> Add Organization
                   </button>
@@ -693,8 +674,8 @@ export const AdminProfilePage: React.FC = () => {
                 return (
                   <div key={aff.id} className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl flex items-center justify-between text-xs">
                     <div>
-                      <span className="font-extrabold text-slate-800 dark:text-slate-200 block">🏢 {aff.organization_name}</span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold border mt-2 ${
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 block">🏢 {aff.organization_name}</span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border mt-2 ${
                         isApproved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         isRejected ? 'bg-rose-50 text-rose-700 border-rose-200' :
                         'bg-amber-50 text-amber-700 border-amber-200'
@@ -707,7 +688,7 @@ export const AdminProfilePage: React.FC = () => {
                         {!aff.is_primary && (
                           <button
                             onClick={() => promoteAffiliation(aff.id)}
-                            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-600 inline-flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 inline-flex items-center gap-1 cursor-pointer"
                           >
                             <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Set Primary
                           </button>
@@ -729,31 +710,31 @@ export const AdminProfilePage: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm space-y-6">
 
             {/* KPI metrics row */}
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Purchased Labs</span>
-                <span className="text-lg font-black text-slate-800 dark:text-slate-100 block mt-0.5">{purchasedCount}</span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Purchased Labs</span>
+                <span className="text-lg font-bold text-slate-800 dark:text-slate-100 block mt-0.5">{purchasedCount}</span>
               </div>
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Student Count</span>
-                <span className="text-lg font-black text-slate-800 dark:text-slate-100 block mt-0.5">{studentsCount}</span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Student Count</span>
+                <span className="text-lg font-bold text-slate-800 dark:text-slate-100 block mt-0.5">{studentsCount}</span>
               </div>
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Assigned Labs</span>
-                <span className="text-lg font-black text-slate-800 dark:text-slate-100 block mt-0.5">{assignedCount}</span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Assigned Labs</span>
+                <span className="text-lg font-bold text-slate-800 dark:text-slate-100 block mt-0.5">{assignedCount}</span>
               </div>
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Active Groups</span>
-                <span className="text-lg font-black text-slate-800 dark:text-slate-100 block mt-0.5">{activeGroups}</span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Active Groups</span>
+                <span className="text-lg font-bold text-slate-800 dark:text-slate-100 block mt-0.5">{activeGroups}</span>
               </div>
             </div>
 
             {/* Spiderweb chart */}
             <div className="border-t border-slate-100 pt-5 space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Activity Radar</h4>
+              <h4 className="text-xs font-bold text-slate-400 text-center">Activity Radar</h4>
               <RadarChart />
             </div>
 
@@ -765,8 +746,8 @@ export const AdminProfilePage: React.FC = () => {
       {/* College Selection Modal */}
       {showCollegeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
-            <h3 className="font-bold text-sm text-[#0F172A]">🏫 Add College Affiliation</h3>
+          <div className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-sm text-slate-900">🏫 Add College Affiliation</h3>
             <div className="relative">
               <input
                 type="text"
@@ -782,10 +763,10 @@ export const AdminProfilePage: React.FC = () => {
                   <button
                     key={c.id}
                     onClick={() => setSelectedCollege(c)}
-                    className={`w-full text-left p-2.5 text-xs hover:bg-slate-50 flex items-center justify-between ${selectedCollege?.id === c.id ? 'bg-blue-50 font-bold text-[#2563EB]' : ''}`}
+                    className={`w-full text-left p-2.5 text-xs hover:bg-slate-50 flex items-center justify-between ${selectedCollege?.id === c.id ? 'bg-blue-50 font-bold text-brand-600' : ''}`}
                   >
                     <span>{c.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">{c.code}</span>
+                    <span className="text-xs text-slate-400 font-mono">{c.code}</span>
                   </button>
                 ))}
               </div>
@@ -801,10 +782,10 @@ export const AdminProfilePage: React.FC = () => {
       {/* Organization Add Modal */}
       {showOrgModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
-            <h3 className="font-bold text-sm text-[#0F172A]">🏢 Add Organization Affiliation</h3>
+          <div className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
+            <h3 className="font-bold text-sm text-slate-900">🏢 Add Organization Affiliation</h3>
             <div>
-              <label className="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Organization Name</label>
+              <label className="text-xs font-bold text-slate-400 block mb-1 uppercase">Organization Name</label>
               <input
                 type="text"
                 placeholder="Enter organization or company name..."

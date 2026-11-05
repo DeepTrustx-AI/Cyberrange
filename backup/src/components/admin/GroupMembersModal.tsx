@@ -1,7 +1,7 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import type { UserGroup, PlatformUser } from '../../types/admin';
-import { X, Trash2, Search, AlertCircle, ChevronLeft, ChevronRight, User, Plus } from 'lucide-react';
+import { X, Trash2, Search, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface GroupMembersModalProps {
   group: UserGroup | null;
@@ -277,10 +277,10 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Header info */}
             <div className="mb-4">
-              <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full border border-blue-100 uppercase tracking-wider">
+              <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full border border-blue-100">
                 Cohort Roster ({members.length} Students)
               </span>
-              <h2 className="text-xl font-extrabold text-slate-900 mt-1">Student List</h2>
+              <h2 className="text-xl font-semibold text-slate-900 mt-1">Student List</h2>
               <p className="text-xs text-slate-500">Manage students in this cohort</p>
             </div>
 
@@ -299,7 +299,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               <button
                 onClick={handleBulkRemoveMembers}
                 disabled={checkedMemberIds.length === 0 || actionLoading}
-                className="px-3.5 py-1.5 bg-white text-rose-600 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 rounded-lg font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3.5 py-1.5 bg-white text-rose-600 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 rounded-lg font-bold text-xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Remove Selected ({checkedMemberIds.length})</span>
@@ -341,14 +341,14 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                           className="rounded border-slate-300 cursor-pointer"
                         />
                         <div>
-                          <p className="font-extrabold text-slate-900 text-[13px]">{m.fullName || m.email}</p>
-                          <p className="text-[10px] text-slate-500 font-bold mt-0.5">
+                          <p className="font-semibold text-slate-900 text-[13px]">{m.fullName || m.email}</p>
+                          <p className="text-xs text-slate-500 font-bold mt-0.5">
                             {m.rollNumber || 'No Roll'} • {m.department || 'No Dept'} • {m.year || 'III Year'}
                           </p>
                         </div>
                       </div>
 
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[9px] uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs">
                         Active
                       </span>
                     </div>
@@ -366,7 +366,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
               <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 opacity-50">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[11px] font-black">
+              <button className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold">
                 1
               </button>
               <button disabled className="p-1 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 opacity-50">
@@ -393,7 +393,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900">Add Student</h2>
+                <h2 className="text-xl font-semibold text-slate-900">Add Student</h2>
                 <p className="text-xs text-slate-500">Add a new student to this cohort</p>
               </div>
               <button
@@ -405,7 +405,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
             </div>
 
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-[11px] font-bold mb-4 flex items-center gap-1.5">
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-bold mb-4 flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4" /> {errorMsg}
               </div>
             )}
@@ -440,11 +440,11 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                   <span>Select All</span>
                 </label>
 
-                <span className="text-[10px] text-slate-400 font-bold">{checkedAvailableIds.length} Selected</span>
+                <span className="text-xs text-slate-400 font-bold">{checkedAvailableIds.length} Selected</span>
               </div>
 
               {/* Scrollable list of available students with check boxes and Drag support */}
-              <div className="flex-1 overflow-y-auto border border-slate-200 rounded-2xl bg-white divide-y p-2 space-y-1">
+              <div className="flex-1 overflow-y-auto ring-1 ring-slate-200/70 rounded-3xl bg-white divide-y p-2 space-y-1">
                 {filteredAvailable.length === 0 ? (
                   <p className="text-slate-400 text-center py-12 font-medium">No available students found</p>
                 ) : (
@@ -469,11 +469,11 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
                           className="rounded border-slate-300 mt-0.5 scale-90"
                         />
                         <div className="flex-1 overflow-hidden">
-                          <p className="font-extrabold text-slate-800 text-[12px] truncate">{s.fullName || s.email}</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-0.5 truncate">
+                          <p className="font-semibold text-slate-800 text-[12px] truncate">{s.fullName || s.email}</p>
+                          <p className="text-xs text-slate-400 font-bold mt-0.5 truncate">
                             {s.rollNumber || 'No Roll'} • {s.department || 'No Dept'} • {s.year ? `${s.year} Year` : 'III Year'}
                           </p>
-                          <p className="text-[9px] text-slate-400 font-medium truncate mt-0.5">{s.email}</p>
+                          <p className="text-xs text-slate-400 font-medium truncate mt-0.5">{s.email}</p>
                         </div>
                       </div>
                     );
@@ -489,7 +489,7 @@ export const GroupMembersModal: React.FC<GroupMembersModalProps> = ({
             <button
               disabled={checkedAvailableIds.length === 0 || actionLoading}
               onClick={handleBulkAddStudents}
-              className="w-full py-3 bg-[#0052CC] hover:bg-blue-600 disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full py-3 bg-brand-600 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               {actionLoading ? 'Adding...' : `+ Add Selected Student to Cohort (${checkedAvailableIds.length})`}
             </button>

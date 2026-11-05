@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   User as UserIcon,
   Mail,
-  Phone,
   Calendar,
-  MapPin,
   GraduationCap,
   Briefcase,
   Award,
@@ -16,23 +14,19 @@ import {
   ShieldCheck,
   Check,
   Edit3,
-  Save,
   Camera,
   Trash2,
   Activity,
   Smartphone,
   Globe,
-  Monitor,
   Plus,
   Search,
-  Building,
-  Building2,
   Star
 } from 'lucide-react';
 import { useAuth } from '../../context';
 
 export const ProfilePage: React.FC = () => {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -41,17 +35,10 @@ export const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<any>({});
   const [stats, setStats] = useState<any>({});
   const [security, setSecurity] = useState<any>({});
-  const [colleges, setColleges] = useState<any[]>([]);
   const [affiliations, setAffiliations] = useState<any[]>([]);
   const [completedLabs, setCompletedLabs] = useState<any[]>([]);
   const [activityGraph, setActivityGraph] = useState<any>(null);
   const [statsTab, setStatsTab] = useState<'metrics' | 'labs'>('metrics');
-
-  // Phone OTP verification state
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [otpMsg, setOtpMsg] = useState('');
 
   // Modals state
   const [showCollegeModal, setShowCollegeModal] = useState(false);
@@ -200,59 +187,7 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSendPhoneOtp = async () => {
-    if (!formData.phone.trim()) {
-      alert('Please enter a phone number first.');
-      return;
-    }
-    const token = localStorage.getItem('token');
-    try {
-      const res = await routedApiFetch('/api/v1/phone/send-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ phone: formData.phone })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setOtpSent(true);
-        setOtpMsg(data.message || 'Simulated OTP: 123456 has been sent.');
-      } else {
-        alert('Failed to send OTP.');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
-  const handleVerifyPhoneOtp = async () => {
-    if (!otpCode.trim()) return;
-    const token = localStorage.getItem('token');
-    try {
-      const res = await routedApiFetch('/api/v1/phone/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ phone: formData.phone, otp: otpCode })
-      });
-      if (res.ok) {
-        setPhoneVerified(true);
-        setOtpSent(false);
-        setOtpCode('');
-        alert('Phone verified and saved to database successfully!');
-        fetchProfileData();
-      } else {
-        const err = await res.json();
-        alert(err.detail || 'Invalid OTP code.');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -285,11 +220,10 @@ export const ProfilePage: React.FC = () => {
     if (!token) return;
 
     try {
-      const [profileRes, statsRes, securityRes, collegeRes, labsRes, graphRes] = await Promise.all([
+      const [profileRes, statsRes, securityRes, labsRes, graphRes] = await Promise.all([
         routedApiFetch('/api/v1/user/profile', { headers: { Authorization: `Bearer ${token}` } }),
         routedApiFetch('/api/v1/user/statistics', { headers: { Authorization: `Bearer ${token}` } }),
         routedApiFetch('/api/v1/user/security', { headers: { Authorization: `Bearer ${token}` } }),
-        routedApiFetch('/api/v1/reporting/colleges'),
         routedApiFetch('/api/v1/user/completed-labs', { headers: { Authorization: `Bearer ${token}` } }),
         routedApiFetch('/api/v1/user/activity-graph', { headers: { Authorization: `Bearer ${token}` } })
       ]);
@@ -297,7 +231,6 @@ export const ProfilePage: React.FC = () => {
       if (profileRes.ok) {
         const pData = await profileRes.json();
         setProfile(pData);
-        setPhoneVerified(pData.phone_verified || false);
         setFormData({
           name: pData.name || '',
           phone: pData.phone || '',
@@ -331,10 +264,6 @@ export const ProfilePage: React.FC = () => {
 
       if (securityRes.ok) {
         setSecurity(await securityRes.json());
-      }
-
-      if (collegeRes.ok) {
-        setColleges(await collegeRes.json());
       }
 
       if (labsRes.ok) {
@@ -387,7 +316,7 @@ export const ProfilePage: React.FC = () => {
         const err = await res.json();
         setMessage({ type: 'error', text: err.detail || 'Failed to upload photo.' });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error uploading photo.' });
     } finally {
       setSaving(false);
@@ -414,7 +343,7 @@ export const ProfilePage: React.FC = () => {
         const err = await res.json();
         setMessage({ type: 'error', text: err.detail || 'Failed to remove photo.' });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error removing photo.' });
     } finally {
       setSaving(false);
@@ -458,7 +387,7 @@ export const ProfilePage: React.FC = () => {
         const err = await res.json();
         setMessage({ type: 'error', text: err.detail || 'Failed to update profile.' });
       }
-    } catch (err) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error saving profile.' });
     } finally {
       setSaving(false);
@@ -468,7 +397,7 @@ export const ProfilePage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-[500px] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -476,16 +405,13 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* Header Banner */}
-      <div className="relative bg-gradient-to-r from-blue-900 via-[#2563EB] to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-md overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-          <ShieldCheck className="w-80 h-80" />
-        </div>
+      <div className="range-wash relative overflow-hidden rounded-[2rem] p-6 text-slate-900 ring-1 ring-slate-900/5 sm:p-10 dark:text-white dark:ring-white/5">
 
         <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6">
           {/* Avatar & Upload Controls */}
           <div className="flex flex-col items-center gap-2">
             <div className="relative group">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#10B981] text-white flex items-center justify-center font-black text-3xl shadow-lg border-4 border-white/20 overflow-hidden ring-4 ring-white/10">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-brand-600 text-white flex items-center justify-center font-display font-bold text-3xl shadow-xl overflow-hidden ring-4 ring-white dark:ring-slate-900">
                 {profile.profile_photo ? (
                   <img src={profile.profile_photo} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -493,7 +419,7 @@ export const ProfilePage: React.FC = () => {
                 )}
               </div>
               {/* Camera upload button — always visible */}
-              <label className="absolute bottom-0 right-0 p-2 bg-[#2563EB] text-white rounded-full shadow-md cursor-pointer hover:bg-blue-600 transition-all">
+              <label className="absolute bottom-0 right-0 p-2 bg-brand-600 text-white rounded-full shadow-md cursor-pointer hover:bg-blue-600 transition-all">
                 <Camera className="w-4 h-4" />
                 <input
                   type="file"
@@ -519,16 +445,16 @@ export const ProfilePage: React.FC = () => {
 
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{profile.name || 'Alex Operator'}</h1>
-              <span className="px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/20">
-                {profile.account_type || 'STUDENT'}
+              <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">{profile.name || 'Alex Operator'}</h1>
+              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-medium capitalize text-slate-700 ring-1 ring-slate-900/5 dark:bg-slate-900/60 dark:text-slate-300 dark:ring-white/10">
+                {(profile.account_type || 'student').toLowerCase()}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-blue-100 font-medium flex items-center justify-center sm:justify-start gap-2">
-              <Mail className="w-4 h-4" /> {profile.email} (Read-Only)
+            <p className="text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center sm:justify-start gap-2">
+              <Mail className="w-4 h-4" /> {profile.email}
             </p>
             {profile.college_name && (
-              <p className="text-xs text-blue-200 flex items-center justify-center sm:justify-start gap-1.5 font-semibold">
+              <p className="text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center sm:justify-start gap-1.5">
                 <GraduationCap className="w-4 h-4" /> {profile.college_name}
               </p>
             )}
@@ -548,15 +474,15 @@ export const ProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* SECTION 1: PROFILE DETAILS */}
-          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] p-6 shadow-xs transition-colors space-y-6">
-            <div className="flex justify-between items-center border-b border-[#E2E8F0] dark:border-[#334155] pb-4">
-              <h2 className="text-base font-bold text-[#0F172A] dark:text-white flex items-center gap-2">
-                <UserIcon className="w-5 h-5 text-[#2563EB]" /> Profile Details
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-6 shadow-sm transition-colors space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserIcon className="w-5 h-5 text-brand-600" /> Profile Details
               </h2>
               {!editing && (
                 <button
                   onClick={() => setEditing(true)}
-                  className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold text-[#2563EB] dark:text-blue-400 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-brand-600 dark:text-blue-400 transition-colors inline-flex items-center gap-1 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" /> Edit Profile
                 </button>
@@ -567,20 +493,20 @@ export const ProfilePage: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-6 text-xs">
                 {/* 👤 Personal Details */}
                 <div className="space-y-4">
-                  <h3 className="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">👤 Personal Details</h3>
+                  <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500">👤 Personal Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Full Name</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Full Name</label>
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Mobile Phone</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Mobile Phone</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -588,27 +514,27 @@ export const ProfilePage: React.FC = () => {
                           value={formData.phone}
                           onChange={handleChange}
                           placeholder="+91 9876543210"
-                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Date of Birth</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Date of Birth</label>
                       <input
                         type="date"
                         name="dob"
                         value={formData.dob}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Gender</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Gender</label>
                       <select
                         name="gender"
                         value={formData.gender}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       >
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -616,18 +542,18 @@ export const ProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Country</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Country</label>
                       <input
                         type="text"
                         name="country"
                         value={formData.country}
                         onChange={handleChange}
                         placeholder="India"
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">City / State</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">City / State</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -635,7 +561,7 @@ export const ProfilePage: React.FC = () => {
                           value={formData.city}
                           onChange={handleChange}
                           placeholder="City"
-                          className="w-1/2 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                          className="w-1/2 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                         />
                         <input
                           type="text"
@@ -643,7 +569,7 @@ export const ProfilePage: React.FC = () => {
                           value={formData.state}
                           onChange={handleChange}
                           placeholder="State"
-                          className="w-1/2 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                          className="w-1/2 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                         />
                       </div>
                     </div>
@@ -651,84 +577,84 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 {/* 🎓 Education Details */}
-                <div className="pt-6 border-t border-[#E2E8F0] dark:border-[#334155] space-y-4">
-                  <h3 className="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">🎓 Education Details</h3>
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                  <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500">🎓 Education Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Department</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Department</label>
                       <input
                         type="text"
                         name="department"
                         value={formData.department}
                         onChange={handleChange}
                         placeholder="CSE / IT"
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">College Roll Number</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">College Roll Number</label>
                       <input
                         type="text"
                         name="roll_number"
                         value={formData.roll_number}
                         onChange={handleChange}
                         placeholder="21CS104"
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Academic Year</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Academic Year</label>
                       <input
                         type="number"
                         name="year"
                         value={formData.year}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Semester</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Semester</label>
                       <input
                         type="number"
                         name="semester"
                         value={formData.semester}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* 🏢 Organization Details */}
-                <div className="pt-6 border-t border-[#E2E8F0] dark:border-[#334155] space-y-4">
-                  <h3 className="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">🏢 Organization Details</h3>
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                  <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500">🏢 Organization Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="font-bold text-[#64748B] dark:text-[#CBD5E1] block mb-1">Designation</label>
+                      <label className="font-bold text-slate-500 dark:text-slate-300 block mb-1">Designation</label>
                       <input
                         type="text"
                         name="designation"
                         value={formData.designation}
                         onChange={handleChange}
                         placeholder="Research Intern"
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-[#0F172A] dark:text-white font-semibold focus:outline-none focus:border-[#2563EB]"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-brand-600"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#334155] flex justify-end gap-3">
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
-                    className="px-4 py-2 border border-[#E2E8F0] dark:border-slate-700 rounded-lg font-bold text-[#64748B] dark:text-[#CBD5E1] hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2 bg-[#2563EB] text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    className="px-5 py-2 bg-brand-600 text-white rounded-full font-bold hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -739,32 +665,32 @@ export const ProfilePage: React.FC = () => {
                 {/* Read-only view: Subsection A */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Mobile Phone</span>
-                    <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">{profile.phone || '--'}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Mobile Phone</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">{profile.phone || '--'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Date of Birth</span>
-                    <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">{profile.dob || '--'}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Date of Birth</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">{profile.dob || '--'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Gender</span>
-                    <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">{profile.gender || '--'}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Gender</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">{profile.gender || '--'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Location</span>
-                    <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Location</span>
+                    <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">
                       {[profile.city, profile.state, profile.country].filter(Boolean).join(', ') || '--'}
                     </span>
                   </div>
                 </div>
 
                 {/* Read-only view: Subsection B */}
-                <div className="pt-6 border-t border-[#E2E8F0] dark:border-[#334155]">
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">🎓 Education</h3>
+                    <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5">🎓 Education</h3>
                     <button
                       onClick={() => setShowCollegeModal(true)}
-                      className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" /> Add College
                     </button>
@@ -773,30 +699,30 @@ export const ProfilePage: React.FC = () => {
                   {affiliations.filter(a => a.affiliation_type === 'college' && a.is_primary).map((aff) => (
                     <div key={aff.id} className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 mb-4 relative">
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Primary College</span>
-                        <span className="text-[#0F172A] dark:text-white font-extrabold text-sm mt-1 flex items-center gap-1.5">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Primary College</span>
+                        <span className="text-slate-900 dark:text-white font-semibold text-sm mt-1 flex items-center gap-1.5">
                           🏛 {aff.college_name}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">College Code</span>
-                        <span className="text-[#0F172A] dark:text-white font-mono font-bold text-sm mt-1 block">{aff.college_code || '--'}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">College Code</span>
+                        <span className="text-slate-900 dark:text-white font-mono font-bold text-sm mt-1 block">{aff.college_code || '--'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Department</span>
-                        <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">{profile.department || '--'}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Department</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">{profile.department || '--'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Year & Semester</span>
-                        <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">Year {profile.year || 1} (Semester {profile.semester || 1})</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Year & Semester</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">Year {profile.year || 1} (Semester {profile.semester || 1})</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">College Roll Number</span>
-                        <span className="text-[#0F172A] dark:text-white font-mono font-bold text-sm mt-1 block">{profile.roll_number || '--'}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">College Roll Number</span>
+                        <span className="text-slate-900 dark:text-white font-mono font-bold text-sm mt-1 block">{profile.roll_number || '--'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Verification Status</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border mt-1.5 ${
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Verification Status</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border mt-1.5 ${
                           aff.status === 'VERIFIED' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
                         }`}>
                           {aff.status || 'VERIFIED'}
@@ -808,17 +734,17 @@ export const ProfilePage: React.FC = () => {
                   {/* Secondary Colleges List */}
                   {affiliations.filter(a => a.affiliation_type === 'college' && !a.is_primary).length > 0 && (
                     <div className="mt-3 space-y-2">
-                      <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px] mb-2">Additional Colleges</span>
+                      <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs mb-2">Additional Colleges</span>
                       {affiliations.filter(a => a.affiliation_type === 'college' && !a.is_primary).map((aff) => (
                         <div key={aff.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                           <div>
-                            <span className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1">🏛 {aff.college_name}</span>
-                            <span className="text-[10px] text-slate-400 mt-0.5 block">Secondary Affiliation</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">🏛 {aff.college_name}</span>
+                            <span className="text-xs text-slate-400 mt-0.5 block">Secondary Affiliation</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => promoteAffiliation(aff.id)}
-                              className="px-2 py-1 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-300 transition-all inline-flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-all inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Set Primary
                             </button>
@@ -836,12 +762,12 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 {/* Read-only view: Subsection C */}
-                <div className="pt-6 border-t border-[#E2E8F0] dark:border-[#334155]">
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-extrabold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">🏢 Organization</h3>
+                    <h3 className="font-semibold text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5">🏢 Organization</h3>
                     <button
                       onClick={() => setShowOrgModal(true)}
-                      className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" /> Add Organization
                     </button>
@@ -850,22 +776,22 @@ export const ProfilePage: React.FC = () => {
                   {affiliations.filter(a => a.affiliation_type === 'organization' && a.is_primary).map((aff) => (
                     <div key={aff.id} className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 mb-4 relative">
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Primary Organization</span>
-                        <span className="text-[#0F172A] dark:text-white font-extrabold text-sm mt-1 flex items-center gap-1.5">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Primary Organization</span>
+                        <span className="text-slate-900 dark:text-white font-semibold text-sm mt-1 flex items-center gap-1.5">
                           🏢 {aff.organization_name}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Designation</span>
-                        <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">{profile.designation || '--'}</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Designation</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">{profile.designation || '--'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Joined Date</span>
-                        <span className="text-[#0F172A] dark:text-white font-bold text-sm mt-1 block">2026-08-04</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Joined Date</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-sm mt-1 block">2026-08-04</span>
                       </div>
                       <div>
-                        <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">Verification Status</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border mt-1.5 ${
+                        <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs">Verification Status</span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border mt-1.5 ${
                           aff.status === 'VERIFIED' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'
                         }`}>
                           {aff.status || 'VERIFIED'}
@@ -877,17 +803,17 @@ export const ProfilePage: React.FC = () => {
                   {/* Secondary Organizations List */}
                   {affiliations.filter(a => a.affiliation_type === 'organization' && !a.is_primary).length > 0 && (
                     <div className="mt-3 space-y-2">
-                      <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px] mb-2">Additional Organizations</span>
+                      <span className="text-slate-400 dark:text-slate-500 font-bold block text-xs mb-2">Additional Organizations</span>
                       {affiliations.filter(a => a.affiliation_type === 'organization' && !a.is_primary).map((aff) => (
                         <div key={aff.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                           <div>
-                            <span className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1">🏢 {aff.organization_name}</span>
-                            <span className="text-[10px] text-slate-400 mt-0.5 block">Secondary Affiliation</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">🏢 {aff.organization_name}</span>
+                            <span className="text-xs text-slate-400 mt-0.5 block">Secondary Affiliation</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => promoteAffiliation(aff.id)}
-                              className="px-2 py-1 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-300 transition-all inline-flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-all inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Set Primary
                             </button>
@@ -910,23 +836,23 @@ export const ProfilePage: React.FC = () => {
 
         {/* Right Column: Activity & Completed Labs */}
         <div id="statistics" className="space-y-6">
-          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-[#E2E8F0] dark:border-[#334155] shadow-xs transition-colors overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm transition-colors overflow-hidden">
 
             {/* Tab Header */}
-            <div className="flex border-b border-[#E2E8F0] dark:border-[#334155]">
+            <div className="flex border-b border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setStatsTab('metrics')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-all cursor-pointer ${statsTab === 'metrics' ? 'text-[#2563EB] border-b-2 border-[#2563EB] bg-blue-50/50 dark:bg-blue-950/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-all cursor-pointer ${statsTab === 'metrics' ? 'text-brand-600 border-b-2 border-brand-600 bg-blue-50/50 dark:bg-blue-950/20' : 'text-brand-800 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 <Activity className="w-3.5 h-3.5" /> Activity Graph
               </button>
               <button
                 onClick={() => setStatsTab('labs')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-all cursor-pointer ${statsTab === 'labs' ? 'text-[#2563EB] border-b-2 border-[#2563EB] bg-blue-50/50 dark:bg-blue-950/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-all cursor-pointer ${statsTab === 'labs' ? 'text-brand-600 border-b-2 border-brand-600 bg-blue-50/50 dark:bg-blue-950/20' : 'text-brand-800 hover:text-slate-700 dark:hover:text-slate-300'}`}
               >
                 <Trophy className="w-3.5 h-3.5" /> Completed Labs
                 {completedLabs.length > 0 && (
-                  <span className="bg-[#2563EB] text-white text-[9px] font-black rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  <span className="bg-brand-600 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
                     {completedLabs.length}
                   </span>
                 )}
@@ -940,17 +866,17 @@ export const ProfilePage: React.FC = () => {
                 {/* Key Metrics Row */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'Total Score', value: `${stats.total_score || 0} pts`, color: 'text-[#2563EB]', bg: 'bg-blue-50 dark:bg-blue-950/50', icon: <Trophy className="w-3.5 h-3.5" /> },
+                    { label: 'Total Score', value: `${stats.total_score || 0} pts`, color: 'text-brand-600', bg: 'bg-blue-50 dark:bg-blue-950/50', icon: <Trophy className="w-3.5 h-3.5" /> },
                     { label: 'Global Rank', value: `#${stats.global_rank || 1}`, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/50', icon: <Zap className="w-3.5 h-3.5" /> },
                     { label: 'Modules Done', value: `${stats.modules_completed || 0}`, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/50', icon: <Award className="w-3.5 h-3.5" /> },
                     { label: 'Training Hrs', value: `${stats.training_hours || 0} h`, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/50', icon: <Clock className="w-3.5 h-3.5" /> },
                     { label: 'Active Days', value: `${stats.current_streak_days || 0}`, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/50', icon: <Flame className="w-3.5 h-3.5" /> },
-                    { label: 'Challenges', value: `${stats.challenges_solved || 0}`, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/50', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+                    { label: 'Challenges', value: `${stats.challenges_solved || 0}`, color: 'text-brand-600', bg: 'bg-brand-50 dark:bg-brand-950/50', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
                   ].map((m) => (
                     <div key={m.label} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex flex-col gap-1">
                       <div className={`w-7 h-7 rounded-lg ${m.bg} ${m.color} flex items-center justify-center`}>{m.icon}</div>
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">{m.label}</span>
-                      <span className={`text-sm font-black ${m.color}`}>{m.value}</span>
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-0.5">{m.label}</span>
+                      <span className={`text-sm font-bold ${m.color}`}>{m.value}</span>
                     </div>
                   ))}
                 </div>
@@ -958,7 +884,7 @@ export const ProfilePage: React.FC = () => {
                 {/* Spider Web Chart */}
                 {activityGraph && (
                   <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">Activity Radar</h3>
+                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4">Activity Radar</h3>
                     <div className="flex justify-center">
                       {(() => {
                         const labels = activityGraph.labels as string[];
@@ -999,7 +925,7 @@ export const ProfilePage: React.FC = () => {
                         const rawKeys = ['modules', 'flags', 'hours', 'score', 'active_days'];
 
                         return (
-                          <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
+                          <svg className="text-brand-600 dark:text-brand-400" viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
                             {/* Grid rings */}
                             {gridPolygons.map((pts, li) => (
                               <polygon
@@ -1030,8 +956,8 @@ export const ProfilePage: React.FC = () => {
                             {/* Data area */}
                             <polygon
                               points={dataPoints.join(' ')}
-                              fill="rgba(37,99,235,0.18)"
-                              stroke="#2563EB"
+                              fill="currentColor" fillOpacity={0.18}
+                              stroke="currentColor"
                               strokeWidth="2"
                               strokeLinejoin="round"
                             />
@@ -1045,7 +971,7 @@ export const ProfilePage: React.FC = () => {
                                   cx={p.x}
                                   cy={p.y}
                                   r="4"
-                                  fill="#2563EB"
+                                  fill="currentColor"
                                   stroke="white"
                                   strokeWidth="1.5"
                                 />
@@ -1063,7 +989,7 @@ export const ProfilePage: React.FC = () => {
                                     y={lp.y - 5}
                                     textAnchor="middle"
                                     className="fill-slate-600 dark:fill-slate-300"
-                                    style={{ fontSize: '9px', fontWeight: 700, fill: 'var(--radar-label, #64748B)' }}
+                                    style={{ fontSize: '9px', fontWeight: 700, fill: 'var(--ink-muted)' }}
                                   >
                                     {labels[i]}
                                   </text>
@@ -1071,7 +997,7 @@ export const ProfilePage: React.FC = () => {
                                     x={lp.x}
                                     y={lp.y + 7}
                                     textAnchor="middle"
-                                    style={{ fontSize: '8px', fontWeight: 900, fill: '#2563EB' }}
+                                    style={{ fontSize: '8px', fontWeight: 900, fill: 'currentColor' }}
                                   >
                                     {rawVal}
                                   </text>
@@ -1086,18 +1012,18 @@ export const ProfilePage: React.FC = () => {
                 )}
 
                 {/* Session Metadata */}
-                <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#334155] space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between text-[#64748B] dark:text-[#CBD5E1]">
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-300">
                     <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-blue-500" /> Current IP</span>
-                    <span className="font-mono font-bold text-[#0F172A] dark:text-white">{security.current_ip || '127.0.0.1'}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">{security.current_ip || '127.0.0.1'}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[#64748B] dark:text-[#CBD5E1]">
-                    <span className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-purple-500" /> Browser</span>
-                    <span className="font-semibold text-[#0F172A] dark:text-white">{security.current_user_agent?.split(' ')[0] || 'Web Browser'}</span>
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-brand-500" /> Browser</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{security.current_user_agent?.split(' ')[0] || 'Web Browser'}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[#64748B] dark:text-[#CBD5E1]">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-300">
                     <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-emerald-500" /> Account Created</span>
-                    <span className="font-semibold text-[#0F172A] dark:text-white">{stats.created_at || profile.created_at?.split(' ')[0] || '--'}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{stats.created_at || profile.created_at?.split(' ')[0] || '--'}</span>
                   </div>
                 </div>
               </div>
@@ -1110,11 +1036,11 @@ export const ProfilePage: React.FC = () => {
                   <div className="text-center py-12 space-y-2">
                     <div className="text-4xl">🔬</div>
                     <p className="text-sm font-bold text-slate-400 dark:text-slate-500">No completed labs yet</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-600">Complete lab modules to see them here</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-600">Complete lab modules to see them here</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
                       {completedLabs.length} Lab{completedLabs.length !== 1 ? 's' : ''} Completed
                     </p>
                     {completedLabs.map((lab, idx) => {
@@ -1123,22 +1049,22 @@ export const ProfilePage: React.FC = () => {
                         lab.difficulty === 'MEDIUM' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60' :
                         'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60';
                       return (
-                        <div key={idx} className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-start gap-3 hover:border-[#2563EB]/30 transition-colors">
+                        <div key={idx} className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-start gap-3 hover:border-brand-600/30 transition-colors">
                           <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm flex-shrink-0">
                             🧪
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-xs text-[#0F172A] dark:text-white truncate">{lab.name}</p>
+                            <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{lab.name}</p>
                             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${diffColor}`}>
+                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded border ${diffColor}`}>
                                 {lab.difficulty}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-semibold">{lab.category}</span>
+                              <span className="text-xs text-slate-400 font-semibold">{lab.category}</span>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="text-xs font-black text-[#2563EB]">+{lab.score} pts</p>
-                            <p className="text-[9px] text-slate-400 mt-0.5">{lab.completed_at || '--'}</p>
+                            <p className="text-xs font-bold text-brand-600">+{lab.score} pts</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{lab.completed_at || '--'}</p>
                           </div>
                         </div>
                       );
@@ -1156,10 +1082,10 @@ export const ProfilePage: React.FC = () => {
       {/* College Modal */}
       {showCollegeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-visible shadow-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 max-w-lg w-full overflow-visible shadow-2xl p-6 space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
-                <GraduationCap className="w-4 h-4 text-[#2563EB]" /> Add Secondary College
+                <GraduationCap className="w-4 h-4 text-brand-600" /> Add Secondary College
               </h3>
               <button onClick={() => { setShowCollegeModal(false); setCollegeSearch(''); setSelectedCollege(null); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">×</button>
             </div>
@@ -1173,7 +1099,7 @@ export const ProfilePage: React.FC = () => {
                     value={collegeSearch}
                     onChange={(e) => setCollegeSearch(e.target.value)}
                     placeholder="Type college name to search (e.g. ssm, iit)..."
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                   />
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 </div>
@@ -1192,8 +1118,8 @@ export const ProfilePage: React.FC = () => {
                       >
                         <span className="text-base mt-0.5">🏛</span>
                         <div>
-                          <div className="font-extrabold text-xs text-slate-800 dark:text-slate-200">{col.name}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                          <div className="font-semibold text-xs text-slate-800 dark:text-slate-200">{col.name}</div>
+                          <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
                             <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-500">{col.code}</span>
                             <span>{col.city || ''}, {col.state || ''}</span>
                           </div>
@@ -1206,7 +1132,7 @@ export const ProfilePage: React.FC = () => {
 
               {selectedCollege && (
                 <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl p-4 space-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  <div className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-[9px]">Preview Selected College</div>
+                  <div className="text-slate-400 dark:text-slate-500 font-bold text-xs">Preview Selected College</div>
                   <div className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
                     <span>🏛</span> {selectedCollege.name}
                   </div>
@@ -1228,7 +1154,7 @@ export const ProfilePage: React.FC = () => {
                 type="button"
                 onClick={handleAddCollegeSubmit}
                 disabled={!selectedCollege}
-                className="px-4 py-2 bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+                className="px-4 py-2 bg-brand-600 hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold rounded-full shadow-xs transition-colors"
               >
                 Confirm Add
               </button>
@@ -1240,10 +1166,10 @@ export const ProfilePage: React.FC = () => {
       {/* Org Modal */}
       {showOrgModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full overflow-visible shadow-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 max-w-lg w-full overflow-visible shadow-2xl p-6 space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Briefcase className="w-4 h-4 text-[#2563EB]" /> Add Secondary Organization
+                <Briefcase className="w-4 h-4 text-brand-600" /> Add Secondary Organization
               </h3>
               <button onClick={() => { setShowOrgModal(false); setTypedOrgName(''); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">×</button>
             </div>
@@ -1257,11 +1183,11 @@ export const ProfilePage: React.FC = () => {
                   value={typedOrgName}
                   onChange={(e) => setTypedOrgName(e.target.value)}
                   placeholder="Enter organization name..."
-                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                 />
               </div>
 
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 text-[11px] font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 text-xs font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
                 ⚠️ Verification status will be set to PENDING. You can continue using the platform while verification is pending.
               </div>
 
@@ -1276,7 +1202,7 @@ export const ProfilePage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!typedOrgName.trim()}
-                  className="px-4 py-2 bg-[#2563EB] hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+                  className="px-4 py-2 bg-brand-600 hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold rounded-full shadow-xs transition-colors"
                 >
                   Confirm Add
                 </button>

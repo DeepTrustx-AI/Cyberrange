@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { feedbackEvents, type FeedbackTone } from '../lib/feedback';
 
@@ -29,7 +29,11 @@ export function FeedbackSurface() {
       setToasts((current) => [...current.slice(-3), toast]);
       window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== toast.id)), 6000);
     };
-    const onConfirmation = (event: Event) => setConfirmation((event as CustomEvent<Confirmation>).detail);
+    // requestConfirmation() sends the title, button label and tone inside `options`.
+    const onConfirmation = (event: Event) => {
+      const { message, options, resolve } = (event as CustomEvent<{ message: string; options?: Omit<Confirmation, 'message' | 'resolve'>; resolve: Confirmation['resolve'] }>).detail;
+      setConfirmation({ message, ...options, resolve });
+    };
 
     window.alert = (message?: unknown) => {
       window.dispatchEvent(new CustomEvent(feedbackEvents.ALERT_EVENT, {
@@ -50,6 +54,26 @@ export function FeedbackSurface() {
     setConfirmation(null);
   };
 
+  // Keyboard use: Cancel takes focus when a confirmation opens, Escape cancels, and
+  // focus goes back to whatever opened it.
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!confirmation) return;
+    const opener = document.activeElement as HTMLElement | null;
+    cancelRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      confirmation.resolve(false);
+      setConfirmation(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      opener?.focus?.();
+    };
+  }, [confirmation]);
+
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] mx-auto flex w-full max-w-md flex-col gap-2 px-4" aria-live="polite">
@@ -67,7 +91,7 @@ export function FeedbackSurface() {
           <h2 id="confirmation-title" className="text-lg font-bold text-slate-900 dark:text-white">{confirmation.title || 'Confirm action'}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{confirmation.message}</p>
           <div className="mt-6 flex justify-end gap-3">
-            <button onClick={() => dismissConfirmation(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
+            <button ref={cancelRef} onClick={() => dismissConfirmation(false)} className="rounded-lg px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</button>
             <button onClick={() => dismissConfirmation(true)} className={`rounded-lg px-4 py-2 text-sm font-bold text-white ${confirmation.destructive ? 'bg-rose-600 hover:bg-rose-700' : 'bg-blue-600 hover:bg-blue-700'}`}>{confirmation.confirmLabel || 'Continue'}</button>
           </div>
         </div>

@@ -61,15 +61,15 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-100 text-[#0052CC]">
+            <div className="p-2 rounded-xl bg-blue-100 text-brand-600">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900">
+              <h2 className="text-base font-semibold text-slate-900">
                 {isEditMode ? 'Edit Student Details' : 'Add New Student'}
               </h2>
               <p className="text-xs text-slate-500">Name and email are required; academic details are optional</p>
@@ -94,7 +94,7 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Sarah Connor"
-              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
             {errors.fullName && <p className="text-rose-500 mt-1">{errors.fullName}</p>}
           </div>
@@ -107,7 +107,7 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. sarah@cyberrange.io"
-              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
             {errors.email && <p className="text-rose-500 mt-1">{errors.email}</p>}
           </div>
@@ -157,12 +157,12 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
               value={rollNumber}
               onChange={(e) => setRollNumber(e.target.value)}
               placeholder="e.g. 22BCS015"
-              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+              className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
           </div>
 
           {!isEditMode && (
-            <p className="text-[11px] text-slate-400 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+            <p className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-lg p-2.5">
               A unique temporary password will be generated securely and emailed directly to the student.
             </p>
           )}
@@ -178,7 +178,7 @@ export const UserAddModal: React.FC<UserAddModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#0052CC] hover:bg-blue-700 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5"
+              className="px-5 py-2 rounded-full bg-brand-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-xs inline-flex items-center gap-1.5"
             >
               <Save className="w-4 h-4" />
               {isEditMode ? 'Update Student' : 'Create Student'}

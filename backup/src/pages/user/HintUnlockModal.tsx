@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState } from 'react';
-import { HelpCircle, AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import type { CtfHint } from '../../types/ctf';
 
 interface HintUnlockModalProps {
@@ -59,7 +59,7 @@ export const HintUnlockModal: React.FC<HintUnlockModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800 shadow-2xl animate-in zoom-in-95 duration-150 relative">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-2xl animate-in zoom-in-95 duration-150 relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
@@ -76,7 +76,7 @@ export const HintUnlockModal: React.FC<HintUnlockModalProps> = ({
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Unlock Challenge Hint?</h3>
             <p className="text-xs text-slate-400 leading-normal max-w-sm">
               Unlocking this hint will permanently reduce your potential payout for this challenge by{' '}
-              <span className="font-extrabold text-rose-500">{hint.cost_percent ?? 0}%</span>. This action is irreversible.
+              <span className="font-semibold text-rose-500">{hint.cost_percent ?? 0}%</span>. This action is irreversible.
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export const HintUnlockModal: React.FC<HintUnlockModalProps> = ({
             <button
               onClick={handleUnlock}
               disabled={loading}
-              className="flex-1 text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2.5 rounded-xl transition-colors shadow-md shadow-amber-500/20"
+              className="flex-1 text-xs font-bold bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white py-2.5 rounded-full transition-colors shadow-sm"
             >
               {loading ? 'Unlocking...' : 'Confirm Unlock'}
             </button>

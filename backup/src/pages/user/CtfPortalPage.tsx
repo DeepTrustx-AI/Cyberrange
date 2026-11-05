@@ -1,14 +1,15 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState } from 'react';
 import { UserLayout } from '../../components/user/UserLayout';
-import type { CtfEvent, CtfTeam } from '../../types/ctf';
+import type { CtfEvent } from '../../types/ctf';
 import { useNavigate } from 'react-router-dom';
+import { LabArtImage } from '../../components/art/LabArtImage';
 import {
   Trophy,
   Clock,
   ArrowRight,
-  Award,
-  Sparkles,
+  Flag,
+  Target,
   AlertCircle
 } from 'lucide-react';
 
@@ -17,22 +18,6 @@ export const CtfPortalPage: React.FC = () => {
   const [events, setEvents] = useState<CtfEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [myTeam, setMyTeam] = useState<CtfTeam | null>({
-    id: 'team-1',
-    name: 'Team ZeroDay',
-    inviteCode: 'ZD8824',
-    captainName: 'Operator One (You)',
-    members: ['Operator One (You)', 'Alex Security', 'Elena Cyber'],
-    totalPoints: 1280,
-    rank: 3,
-    solves: ['chal-1', 'chal-3'],
-  });
-
-  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [teamTab, setTeamTab] = useState<'create' | 'join'>('create');
-  const [newTeamName, setNewTeamName] = useState('');
-  const [joinCode, setJoinCode] = useState('');
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -55,40 +40,6 @@ export const CtfPortalPage: React.FC = () => {
     fetchEvents();
   }, []);
 
-  const handleCreateTeam = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTeamName) return;
-    const created: CtfTeam = {
-      id: `team-${Date.now()}`,
-      name: newTeamName,
-      inviteCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      captainName: 'Operator One (You)',
-      members: ['Operator One (You)'],
-      totalPoints: 0,
-      rank: 12,
-      solves: [],
-    };
-    setMyTeam(created);
-    setIsTeamModalOpen(false);
-  };
-
-  const handleJoinTeam = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!joinCode) return;
-    const joined: CtfTeam = {
-      id: `team-joined`,
-      name: `Squad Alpha (${joinCode})`,
-      inviteCode: joinCode,
-      captainName: 'Leader Alpha',
-      members: ['Leader Alpha', 'Operator One (You)'],
-      totalPoints: 450,
-      rank: 7,
-      solves: ['chal-1'],
-    };
-    setMyTeam(joined);
-    setIsTeamModalOpen(false);
-  };
-
   const formatDateTime = (iso: string) => {
     return new Date(iso).toLocaleString(undefined, {
       dateStyle: 'medium',
@@ -96,279 +47,159 @@ export const CtfPortalPage: React.FC = () => {
     });
   };
 
+  const panel = 'rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-900 dark:ring-slate-800';
+  const pillPrimary =
+    'inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition-colors hover:bg-brand-700';
+  const pillSecondary =
+    'inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
   return (
     <UserLayout>
-      <div className="space-y-8 animate-in fade-in duration-200">
-
-        {/* Portal Hero */}
-        <div className="bg-slate-900 text-white rounded-3xl p-8 border border-slate-800 shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -z-10" />
-          <div className="max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/25 px-3 py-1 rounded-full text-xs font-bold text-indigo-400">
-              <Sparkles className="w-3.5 h-3.5" />
-              Capture The Flag Platform
-            </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              CTF Competitions
+      <div className="space-y-6">
+        <section className="range-wash relative overflow-hidden rounded-[2rem] ring-1 ring-slate-900/5 dark:ring-white/5">
+          <div className="relative z-10 max-w-xl p-6 sm:p-10">
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl dark:text-white">
+              Capture the flag.
             </h1>
+            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
+              Cryptography, web exploitation and network reconnaissance challenges with live scoring and a public
+              scoreboard. Ask your admin to get your college enrolled.
+            </p>
           </div>
-        </div>
+          <div className="pointer-events-none relative -mt-4 flex justify-center pb-6 lg:absolute lg:inset-y-6 lg:right-10 lg:mt-0 lg:items-center lg:pb-0">
+            <LabArtImage kind="flag" className="h-52 w-72 lg:h-full lg:max-h-60 lg:w-[22rem]" />
+          </div>
+        </section>
 
         {error && (
-          <div className="flex items-center gap-2 text-rose-500 text-sm bg-rose-500/10 p-3.5 border border-rose-500/20 rounded-xl">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300" role="alert">
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* Main Tournament Stream */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-indigo-500" />
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">Available Tournaments</h2>
-            </div>
-
-            {/* Promo banner — team CTF events */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/20 relative overflow-hidden">
-              <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-100">New — Team CTF Events</span>
-              </div>
-              <h3 className="text-lg font-extrabold mb-1">Squad up for the next Capture The Flag</h3>
-              <p className="text-sm text-indigo-100">
-                Cryptography, Web Exploitation & Network Reconnaissance — teams of 4, live scoring, leaderboard bragging rights. Ask your admin to get your college enrolled.
-              </p>
-            </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <section className="space-y-4">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-900 dark:text-white">
+              <Trophy className="h-5 w-5 text-slate-400" /> Tournaments
+            </h2>
 
             {loading ? (
-              <div className="text-center py-12 text-slate-400 font-semibold">
-                Loading CTF Tournaments...
+              <div className="space-y-3">
+                {[0, 1, 2].map((i) => <div key={i} className="skeleton h-32 rounded-3xl" />)}
               </div>
-            ) : events.length === 0 ? (
-              <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm">
-                No active or upcoming tournaments scheduled. Check back later!
+            ) : events.length === 0 && !error ? (
+              <div className="flex flex-col items-center rounded-3xl border border-dashed border-slate-300 px-6 py-14 text-center dark:border-slate-700">
+                <Clock className="h-7 w-7 text-slate-400" />
+                <p className="mt-3 font-display text-lg font-semibold text-slate-900 dark:text-white">No tournaments scheduled</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">New events will show up here as soon as they're announced.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {events.map((event) => {
+              <div className="space-y-3">
+                {events.map((event, index) => {
                   const isLive = event.status === 'active';
                   const isUpcoming = event.status === 'scheduled';
                   const isConcluded = event.status === 'completed';
 
                   return (
-                    <div
+                    <article
                       key={event.id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-md transition-shadow"
+                      className={`rise-in flex flex-col gap-5 p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg md:flex-row md:items-center md:justify-between ${panel}`}
+                      style={{ animationDelay: `${Math.min(index, 6) * 50}ms` }}
                     >
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-extrabold text-slate-800 dark:text-slate-100">{event.title}</h3>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
                           {isLive && (
-                            <span className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/35 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                              Live
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              </span>
+                              Live now
                             </span>
                           )}
                           {isUpcoming && (
-                            <span className="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/35 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                              Scheduled
-                            </span>
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">Scheduled</span>
                           )}
                           {isConcluded && (
-                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                              Concluded
-                            </span>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Finished</span>
                           )}
-                        </div>
-                        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                          {event.description || 'No description provided.'}
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-1">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                            <Clock className="h-3.5 w-3.5" />
                             {formatDateTime(event.start_time ?? '')}
                           </span>
                         </div>
+                        <h3 className="mt-3 font-display text-lg font-bold text-slate-900 dark:text-white">{event.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                          {event.description || 'No description yet.'}
+                        </p>
                       </div>
 
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {isLive && (
-                          <button
-                            onClick={() => navigate(`/ctf/${event.id}/challenges`)}
-                            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-500/25"
-                          >
-                            Enter Arena
-                            <ArrowRight className="w-4 h-4" />
+                          <button onClick={() => navigate(`/ctf/${event.id}/challenges`)} className={pillPrimary}>
+                            Enter arena <ArrowRight className="h-4 w-4" />
                           </button>
                         )}
                         {isConcluded && (
-                          <button
-                            onClick={() => navigate(`/ctf/${event.id}/scoreboard`)}
-                            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs px-4 py-2.5 rounded-xl transition-colors border border-slate-200 dark:border-slate-700"
-                          >
-                            Scoreboard
+                          <button onClick={() => navigate(`/ctf/${event.id}/scoreboard`)} className={pillSecondary}>
+                            <Trophy className="h-4 w-4" /> Scoreboard
                           </button>
                         )}
                         {isUpcoming && (
-                          <button
-                            disabled
-                            className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700"
-                          >
-                            Starting Soon
-                          </button>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-5 py-2.5 text-sm font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                            Opens soon
+                          </span>
                         )}
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Team / Profile sidebar */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-indigo-500" />
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">My Team Details</h2>
-            </div>
+          <aside className="space-y-4">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-900 dark:text-white">
+              <Target className="h-5 w-5 text-slate-400" /> Tournaments at a glance
+            </h2>
 
-            {myTeam ? (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                <div className="border-b border-slate-100 dark:border-slate-800/80 pb-3">
-                  <h3 className="font-extrabold text-slate-800 dark:text-slate-100 text-base">{myTeam.name}</h3>
-                  <div className="flex justify-between items-center mt-2 text-xs">
-                    <span className="font-medium text-slate-400">Invite Code:</span>
-                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                      {myTeam.inviteCode}
+            <div className={`p-6 ${panel}`}>
+              <dl className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Live', value: events.filter((e) => e.status === 'active').length },
+                  { label: 'Upcoming', value: events.filter((e) => e.status === 'scheduled').length },
+                  { label: 'Finished', value: events.filter((e) => e.status === 'completed').length },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-2xl bg-slate-50 p-3.5 text-center dark:bg-slate-800/50">
+                    <dt className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</dt>
+                    <dd className="mt-1 font-display text-2xl font-bold tabular text-slate-900 dark:text-white">{loading ? '–' : stat.value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <h3 className="mt-6 text-sm font-medium text-slate-700 dark:text-slate-300">How it works</h3>
+              <ol className="mt-3 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                {[
+                  'Enter a live event and pick any challenge.',
+                  'Find the flag and submit it. Correct flags score points straight away.',
+                  'Your rank updates live on the event scoreboard.',
+                ].map((step, i) => (
+                  <li key={step} className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold tabular text-brand-800 dark:bg-brand-500/15 dark:text-brand-200">
+                      {i + 1}
                     </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-slate-400">Leaderboard Rank:</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">#{myTeam.rank}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-slate-400">Total Points:</span>
-                    <span className="font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">{myTeam.totalPoints} pts</span>
-                  </div>
-                </div>
-
-                {/* Team Members */}
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                  <h4 className="text-xs font-bold text-slate-500 mb-2">Team Operators</h4>
-                  <div className="space-y-1.5">
-                    {myTeam.members.map((member, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-xs">
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">{member}</span>
-                        {member.includes('You') && (
-                          <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/35 px-1.5 py-0.5 rounded">
-                            Operator
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm text-center space-y-4">
-                <p className="text-xs text-slate-400">
-                  CTFs are played in squads. Join an existing team or create a new team banner.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setTeamTab('join');
-                      setIsTeamModalOpen(true);
-                    }}
-                    className="flex-1 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 py-2 rounded-xl transition-colors"
-                  >
-                    Join Team
-                  </button>
-                  <button
-                    onClick={() => {
-                      setTeamTab('create');
-                      setIsTeamModalOpen(true);
-                    }}
-                    className="flex-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl transition-colors shadow-md shadow-indigo-500/20"
-                  >
-                    Create Team
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
+                    <span className="pt-0.5">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-5 flex items-center gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                <Flag className="h-3.5 w-3.5" /> Events are played individually.
+              </p>
+            </div>
+          </aside>
         </div>
-
       </div>
 
-      {/* Team Modal */}
-      {isTeamModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-800 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-800/80">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                {teamTab === 'create' ? 'Create a Team' : 'Join a Team'}
-              </h3>
-              <button
-                onClick={() => setIsTeamModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-semibold"
-              >
-                Cancel
-              </button>
-            </div>
-
-            {teamTab === 'create' ? (
-              <form onSubmit={handleCreateTeam} className="space-y-4 pt-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500">Team Name</label>
-                  <input
-                    type="text"
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="e.g. ZeroDay Hunters"
-                    className="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl transition-colors shadow-md"
-                >
-                  Create Team Banner
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleJoinTeam} className="space-y-4 pt-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500">Enter Team Invite Code</label>
-                  <input
-                    type="text"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value)}
-                    placeholder="e.g. ZD8824"
-                    className="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl transition-colors shadow-md"
-                >
-                  Request Squad Entry
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </UserLayout>
   );
 };

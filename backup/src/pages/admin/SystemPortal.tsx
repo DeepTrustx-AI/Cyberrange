@@ -1,20 +1,18 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import { requestConfirmation } from '../../lib/feedback';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context';
 import {
    ShieldCheck,
    Key,
    Lock,
-   Database,
    Activity,
    Server,
    Search,
    FileText,
    Users,
    Building2,
-   CreditCard,
    AlertTriangle,
    ChevronLeft,
    ChevronRight,
@@ -51,13 +49,12 @@ const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: '#e11d48', // rose-600
   HIGH: '#f97316',      // orange-500
   MEDIUM: '#eab308',    // yellow-500
-  LOW: '#94a3b8',        // slate-400
+  LOW: '#838690',        // slate-400
 };
 
 const isSystemAdmin = (user: { role?: string } | null) => ['SYSTEM_ADMIN', 'SUPER_ADMIN'].includes((user?.role || '').toUpperCase());
 
 export const SystemPortal: React.FC = () => {
-  const navigate = useNavigate();
   // A system admin already signed in (the sign-in pages send them here) does not sign in again.
   const signedInAsSystemAdmin = isSystemAdmin(useAuth().user);
 
@@ -76,9 +73,8 @@ export const SystemPortal: React.FC = () => {
   // System Dashboard & Viewer State
   const [searchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as any) || 'dashboard';
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'colleges' | 'orgs' | 'students' | 'audit_logs' | 'db_viewer' | 'ctf'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'colleges' | 'orgs' | 'students' | 'db_viewer' | 'ctf'>(initialTab);
   const [dashboardData, setDashboardData] = useState<any>(null);
-  const [dashLoading, setDashLoading] = useState(false);
 
   // College State
   const [colleges, setColleges] = useState<any[]>([]);
@@ -102,16 +98,11 @@ export const SystemPortal: React.FC = () => {
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
   const [formLabId, setFormLabId] = useState('');
   const [formLabTitle, setFormLabTitle] = useState('');
-  const [formHours, setFormHours] = useState<number>(9999);
-  const [formLabLevel, setFormLabLevel] = useState<'beginner' | 'intermediate' | 'advanced' | 'custom'>('beginner');
   const [formPricePerHour, setFormPricePerHour] = useState<number>(100);
   const [formHoursAllocated, setFormHoursAllocated] = useState<number>(40);
   const [formAssignTarget, setFormAssignTarget] = useState<'org' | 'student' | 'both'>('org');
-  const [formStudentId, setFormStudentId] = useState<string>('');
-  const [formOrgId, setFormOrgId] = useState<string>('');
   const [allLabs, setAllLabs] = useState<any[]>([]);
   const [allocatedLabs, setAllocatedLabs] = useState<any[]>([]);
-  const [allocatedLabsLoading, setAllocatedLabsLoading] = useState(false);
 
   // Student list & Analytics State
   const [students, setStudents] = useState<any[]>([]);
@@ -129,16 +120,6 @@ export const SystemPortal: React.FC = () => {
   const [dbSearch, setDbSearch] = useState('');
   const [dbPage, setDbPage] = useState(1);
 
-  // Audit Logs State
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [auditSearch, setAuditSearch] = useState('');
-  const [auditPage, setAuditPage] = useState(1);
-  const [totalAuditLogs, setTotalAuditLogs] = useState(0);
-
-  // New Labs pricing and catalog views
-  const [labSubTab, setLabSubTab] = useState<'pending' | 'active'>('pending');
-  const [labPrices, setLabPrices] = useState<Record<string, number>>({});
   const [labsTabMode, setLabsTabMode] = useState<'catalog' | 'arrivals' | 'assigned'>('catalog');
 
   // CTF catalog state
@@ -172,7 +153,6 @@ export const SystemPortal: React.FC = () => {
 
   // Fetch Dashboard Data
   const fetchDashboard = async () => {
-    setDashLoading(true);
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch('/api/v1/system/dashboard', {
@@ -187,8 +167,6 @@ export const SystemPortal: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load system dashboard:', err);
-    } finally {
-      setDashLoading(false);
     }
   };
 
@@ -231,27 +209,6 @@ export const SystemPortal: React.FC = () => {
     }
   };
 
-  // Fetch Audit Logs Data
-  const fetchAuditLogs = async (page: number = 1, search: string = '') => {
-    setAuditLoading(true);
-    const token = localStorage.getItem('token');
-    try {
-      const url = `/api/v1/system/audit-logs?page=${page}&limit=10${search ? `&search=${encodeURIComponent(search)}` : ''}`;
-      const res = await routedApiFetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAuditLogs(data.audit_logs || []);
-        setTotalAuditLogs(data.total || 0);
-      }
-    } catch (err) {
-      console.error('Failed to load audit logs:', err);
-    } finally {
-      setAuditLoading(false);
-    }
-  };
-
   // Fetch Database Viewer Data
   const fetchTableData = async (table: string, page: number = 1, search: string = '') => {
     setDbLoading(true);
@@ -282,13 +239,6 @@ export const SystemPortal: React.FC = () => {
         const data = await res.json();
         const labsArr = data.labs || [];
         setAllLabs(labsArr);
-
-        // Populate labPrices map
-        const initialPrices: Record<string, number> = {};
-        labsArr.forEach((l: any) => {
-          initialPrices[l.id] = l.price_per_hour || 100.0;
-        });
-        setLabPrices(initialPrices);
       }
     } catch (err) {
       console.error('Failed to load system labs:', err);
@@ -390,7 +340,6 @@ export const SystemPortal: React.FC = () => {
   };
 
   const fetchAllocatedLabs = async () => {
-    setAllocatedLabsLoading(true);
     const token = localStorage.getItem('token');
     try {
       const res = await routedApiFetch('/api/v1/system/database-viewer?table_name=purchased_labs&limit=100', {
@@ -402,8 +351,6 @@ export const SystemPortal: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load allocated labs:', err);
-    } finally {
-      setAllocatedLabsLoading(false);
     }
   };
 
@@ -439,7 +386,7 @@ export const SystemPortal: React.FC = () => {
     });
     const breakdown = order
       .filter((sev) => counts[sev])
-      .map((sev) => ({ name: sev, value: counts[sev], color: SEVERITY_COLORS[sev] || '#94a3b8' }));
+      .map((sev) => ({ name: sev, value: counts[sev], color: SEVERITY_COLORS[sev] || '#838690' }));
     // Fallback slice so the ring never renders blank when the platform is quiet.
     return breakdown.length > 0
       ? breakdown
@@ -506,27 +453,6 @@ export const SystemPortal: React.FC = () => {
     }
   };
 
-  const handleSaveLabPrice = async (labId: string, price: number) => {
-    const token = localStorage.getItem('token');
-    try {
-      const res = await routedApiFetch(`/api/v1/system/labs/${labId}/update-price`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ price_per_hour: price })
-      });
-      if (res.ok) {
-        alert("Hourly price updated successfully!");
-        fetchLabs();
-      } else {
-        alert("Failed to update pricing.");
-      }
-    } catch (err) {
-      console.error('Failed to update lab pricing:', err);
-    }
-  };
 
   const handleDeleteLab = async (labId: string) => {
     if (!await requestConfirmation('This lab will be permanently deleted and cannot be recovered.', { title: 'Delete this lab?', confirmLabel: 'Delete lab', destructive: true })) return;
@@ -632,8 +558,6 @@ export const SystemPortal: React.FC = () => {
         fetchDashboard(); // Orgs list is loaded from dashboard counters.organizations
       } else if (activeTab === 'students') {
         fetchStudents(studentPage, studentSearch);
-      } else if (activeTab === 'audit_logs') {
-        fetchAuditLogs(auditPage, auditSearch);
       } else if (activeTab === 'db_viewer') {
         fetchTableData(selectedTable, dbPage, dbSearch);
       } else if (activeTab === 'labs' as any) {
@@ -648,7 +572,7 @@ export const SystemPortal: React.FC = () => {
         fetchAllocatedCtfs();
       }
     }
-  }, [step, activeTab, selectedTable, dbPage, studentPage, auditPage]);
+  }, [step, activeTab, selectedTable, dbPage, studentPage]);
 
   // Handler 1: Security Key Submit
   const handleVerifyKey = async (e: React.FormEvent) => {
@@ -670,7 +594,7 @@ export const SystemPortal: React.FC = () => {
       } else {
         setKeyError(data.detail || 'Invalid Security Key');
       }
-    } catch (err) {
+    } catch {
       setKeyError('Verification service unavailable. Please check backend connection.');
     } finally {
       setKeyLoading(false);
@@ -706,7 +630,7 @@ export const SystemPortal: React.FC = () => {
       } else {
         setLoginError(data.detail || 'Invalid credentials.');
       }
-    } catch (err) {
+    } catch {
       setLoginError('Authentication failed. Please verify server status.');
     } finally {
       setLoginLoading(false);
@@ -954,14 +878,14 @@ export const SystemPortal: React.FC = () => {
   // STEP 1: Security Key Verification UI (Light Theme)
   if (step === 'key') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-100 text-slate-800 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
           <div className="text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-[#0052CC] flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-brand-600 flex items-center justify-center mx-auto shadow-sm">
               <ShieldCheck className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">System Security Gate</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">System Security Gate</h1>
               <p className="text-xs text-slate-500 mt-1">Enter authorized System Admin Security Key to proceed.</p>
             </div>
           </div>
@@ -975,7 +899,7 @@ export const SystemPortal: React.FC = () => {
 
           <form onSubmit={handleVerifyKey} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-600 mb-2">
                 System Security Key
               </label>
               <div className="relative">
@@ -994,7 +918,7 @@ export const SystemPortal: React.FC = () => {
             <button
               type="submit"
               disabled={keyLoading}
-              className="w-full py-3.5 bg-[#0052CC] hover:bg-blue-600 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 bg-brand-600 hover:bg-blue-600 text-white font-semibold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {keyLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -1013,17 +937,17 @@ export const SystemPortal: React.FC = () => {
   // STEP 2: System Admin Login UI (Light Theme)
   if (step === 'login') {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-100 text-slate-800 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
           <div className="text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center mx-auto shadow-sm">
               <Lock className="w-8 h-8" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 inline-block mb-2">
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 inline-block mb-2">
                 ✓ Security Key Verified
               </span>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">System Admin Authentication</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">System Admin Authentication</h1>
               <p className="text-xs text-slate-500 mt-1">Authenticate with your SYSTEM_ADMIN credentials.</p>
             </div>
           </div>
@@ -1037,7 +961,7 @@ export const SystemPortal: React.FC = () => {
 
           <form onSubmit={handleSystemLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-600 mb-2">
                 System Admin Email
               </label>
               <input
@@ -1046,12 +970,12 @@ export const SystemPortal: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="sysadmin@cyberrange.in"
                 required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-600 mb-2">
                 Password
               </label>
               <input
@@ -1060,7 +984,7 @@ export const SystemPortal: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
               />
             </div>
 
@@ -1077,7 +1001,7 @@ export const SystemPortal: React.FC = () => {
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loginLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -1101,21 +1025,21 @@ export const SystemPortal: React.FC = () => {
   const platformSpeed = dashboardData?.platform_speed || { avg_response_ms: 0, requests_tracked: 0, slow_endpoint_count: 0 };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
       {/* Top System Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center font-bold">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-black tracking-tight text-slate-900">System Admin Portal</h1>
-              <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full">
+              <h1 className="text-base font-bold tracking-tight text-slate-900">System Admin Portal</h1>
+              <span className="text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full">
                 SYSTEM_ADMIN
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">PostgreSQL (AWS RDS) Governance & Database Viewer</p>
+            <p className="text-xs text-slate-500">PostgreSQL (AWS RDS) Governance & Database Viewer</p>
           </div>
         </div>
 
@@ -1125,7 +1049,6 @@ export const SystemPortal: React.FC = () => {
               if (activeTab === 'dashboard') fetchDashboard();
               else if (activeTab === 'colleges') fetchColleges();
               else if (activeTab === 'students') fetchStudents(studentPage, studentSearch);
-              else if (activeTab === 'audit_logs') fetchAuditLogs(auditPage, auditSearch);
               else if (activeTab === 'db_viewer') fetchTableData(selectedTable, dbPage, dbSearch);
               else if (activeTab === 'labs' as any) { fetchAllocatedLabs(); fetchLabs(); }
               else if (activeTab === 'security_telemetry' as any) fetchSecurityAlerts();
@@ -1164,11 +1087,10 @@ export const SystemPortal: React.FC = () => {
                 setActiveTab(tab.id as any);
                 setDbPage(1);
                 setStudentPage(1);
-                setAuditPage(1);
               }}
               className={`px-4 py-3.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id
-                  ? 'border-purple-600 text-purple-600 bg-purple-50/30'
+                  ? 'border-brand-600 text-brand-600 bg-brand-50/30'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -1188,85 +1110,85 @@ export const SystemPortal: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
                 { title: 'Total Orgs', val: counters.total_organizations, color: 'text-slate-900', bg: 'bg-white' },
-                { title: 'Total Admins', val: counters.total_admins, color: 'text-purple-600', bg: 'bg-white' },
+                { title: 'Total Admins', val: counters.total_admins, color: 'text-brand-600', bg: 'bg-white' },
                 { title: 'Total Students', val: counters.total_users, color: 'text-blue-600', bg: 'bg-white' },
                 { title: 'Groups Count', val: counters.total_groups, color: 'text-amber-600', bg: 'bg-white' },
                 { title: 'Active Containers', val: counters.total_running_containers, color: 'text-emerald-600', bg: 'bg-white' },
                 { title: 'Total Revenue', val: `₹${(counters.total_revenue || 0).toLocaleString()}`, color: 'text-slate-900', bg: 'bg-white' }
               ].map((c, i) => (
                 <div key={i} className={`${c.bg} p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-1`}>
-                  <span className="text-[11px] font-bold text-slate-500">{c.title}</span>
-                  <p className={`text-2xl font-black ${c.color}`}>{c.val ?? 0}</p>
+                  <span className="text-xs font-bold text-slate-500">{c.title}</span>
+                  <p className={`text-2xl font-bold ${c.color}`}>{c.val ?? 0}</p>
                 </div>
               ))}
             </div>
 
             {/* Live User Activity + Platform Usage Speed */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="lg:col-span-2 bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                     <Activity className="w-5 h-5 text-blue-600" /> Live User Activity
                   </h3>
                   <span className="text-xs text-slate-500">Distinct active users / hour — last 24h</span>
                 </div>
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer className="text-brand-600 dark:text-brand-400" width="100%" height={220}>
                   <AreaChart data={liveUserActivity} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                     <defs>
                       <linearGradient id="liveUserFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563EB" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="#2563EB" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="currentColor" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="currentColor" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#EEF2F7" vertical={false} />
-                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} interval={2} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} width={28} />
+                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#838690' }} axisLine={false} tickLine={false} interval={2} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#838690' }} axisLine={false} tickLine={false} width={28} />
                     <Tooltip
-                      contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid #E2E8F0' }}
+                      contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid var(--line)' }}
                       labelFormatter={(label) => `Hour: ${label}`}
                       formatter={(value) => [value as number, 'Active users']}
                     />
-                    <Area type="monotone" dataKey="active_users" stroke="#2563EB" strokeWidth={2} fill="url(#liveUserFill)" />
+                    <Area type="monotone" dataKey="active_users" stroke="currentColor" strokeWidth={2} fill="url(#liveUserFill)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                     <Server className="w-5 h-5 text-emerald-600" /> Platform Usage Speed
                   </h3>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[11px] font-bold text-slate-500 block mb-1">Avg. API Response Time</span>
-                    <p className={`text-3xl font-black ${platformSpeed.avg_response_ms > 200 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                    <span className="text-xs font-bold text-slate-500 block mb-1">Avg. API Response Time</span>
+                    <p className={`text-3xl font-bold ${platformSpeed.avg_response_ms > 200 ? 'text-amber-600' : 'text-emerald-600'}`}>
                       {platformSpeed.avg_response_ms}
                       <span className="text-sm font-bold text-slate-400 ml-1">ms</span>
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-500 block">Requests Tracked</span>
-                      <p className="text-lg font-extrabold text-slate-800">{platformSpeed.requests_tracked.toLocaleString()}</p>
+                      <span className="text-xs font-bold text-slate-500 block">Requests Tracked</span>
+                      <p className="text-lg font-semibold text-slate-800">{platformSpeed.requests_tracked.toLocaleString()}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-500 block">Slow Endpoints</span>
-                      <p className={`text-lg font-extrabold ${platformSpeed.slow_endpoint_count > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+                      <span className="text-xs font-bold text-slate-500 block">Slow Endpoints</span>
+                      <p className={`text-lg font-semibold ${platformSpeed.slow_endpoint_count > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
                         {platformSpeed.slow_endpoint_count}
                       </p>
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400 pt-1">Live since last backend restart — resets on deploy.</p>
+                  <p className="text-xs text-slate-400 pt-1">Live since last backend restart — resets on deploy.</p>
                 </div>
               </div>
             </div>
 
             {/* Quick Audit Logs Preview */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-purple-600" /> Recent Events Audit Trail
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-brand-600" /> Recent Events Audit Trail
                 </h3>
                 <span className="text-xs text-slate-500">Live PostgreSQL Events</span>
               </div>
@@ -1287,11 +1209,11 @@ export const SystemPortal: React.FC = () => {
                       <tr key={log.id} className="hover:bg-slate-50/60">
                         <td className="p-3 text-slate-500 font-mono">{log.timestamp}</td>
                         <td className="p-3 font-semibold text-slate-900">{log.action}</td>
-                        <td className="p-3 text-purple-600 font-medium">{log.entity}</td>
+                        <td className="p-3 text-brand-600 font-medium">{log.entity}</td>
                         <td className="p-3 text-blue-600">{log.performed_by}</td>
                         <td className="p-3 text-slate-500 font-mono">{log.ip_address}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                          <span className={`px-2 py-0.5 rounded-md font-bold text-xs ${
                             log.status === 'SUCCESS' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
                           }`}>
                             {log.status}
@@ -1308,17 +1230,17 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB 2: Colleges Management */}
         {activeTab === 'colleges' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-purple-600" /> Platform Registered Colleges
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-brand-600" /> Platform Registered Colleges
                 </h3>
                 <p className="text-xs text-slate-500">Configure and manually add eligible college affiliations</p>
               </div>
               <button
                 onClick={() => setIsCollegeModalOpen(true)}
-                className="px-4 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                className="px-4 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs rounded-full flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
               >
                 <Plus className="w-4 h-4" /> Add College
               </button>
@@ -1329,20 +1251,20 @@ export const SystemPortal: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {colleges.map(c => (
-                  <div key={c.id} className="p-5 border border-slate-200 rounded-2xl bg-white space-y-3 shadow-xs hover:border-purple-300 transition-colors">
+                  <div key={c.id} className="p-5 ring-1 ring-slate-200/70 rounded-3xl bg-white space-y-3 shadow-sm hover:border-brand-300 transition-colors">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-extrabold text-slate-900 text-sm">{c.name}</h4>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">CODE: {c.code || 'N/A'}</span>
+                        <h4 className="font-semibold text-slate-900 text-sm">{c.name}</h4>
+                        <span className="text-xs font-bold text-slate-500">CODE: {c.code || 'N/A'}</span>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {c.status}
                       </span>
                     </div>
                     <div className="text-xs text-slate-600 space-y-1 pt-1 border-t border-slate-100">
                       <p><strong>Location:</strong> {c.city || 'N/A'}, {c.state || 'N/A'}</p>
                       <p><strong>Email:</strong> {c.email || 'N/A'}</p>
-                      <p><strong>Website:</strong> <a href={c.website || '#'} target="_blank" className="text-[#0052CC] hover:underline font-medium">{c.website || 'N/A'}</a></p>
+                      <p><strong>Website:</strong> <a href={c.website || '#'} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline font-medium">{c.website || 'N/A'}</a></p>
                     </div>
                   </div>
                 ))}
@@ -1353,15 +1275,15 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB 3: Organizations & Governance */}
         {activeTab === 'orgs' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-purple-600" /> Organizations & Affiliations Governance
+              <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-brand-600" /> Organizations & Affiliations Governance
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">Verify administrator profiles, manage manual hourly allocations, and monitor license limits</p>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+            <div className="overflow-x-auto ring-1 ring-slate-200/70 rounded-3xl shadow-sm bg-white">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                   <tr>
@@ -1380,7 +1302,7 @@ export const SystemPortal: React.FC = () => {
                       <td className="p-4 text-slate-500 font-mono">{org.created_at}</td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-3">
-                          <span className="bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded-full border border-purple-200">
+                          <span className="bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded-full border border-brand-200">
                             {org.total_users || 0} Members
                           </span>
                           <span className="bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-full border border-blue-200">
@@ -1392,7 +1314,7 @@ export const SystemPortal: React.FC = () => {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleToggleVerifyOrg(org.id, org.is_verified)}
-                            className={`px-3 py-1.5 rounded-lg font-bold text-[11px] cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer ${
                               org.is_verified
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
@@ -1402,7 +1324,7 @@ export const SystemPortal: React.FC = () => {
                           </button>
                           <button
                             onClick={() => openOrgPurchases(org)}
-                            className="px-3 py-1.5 bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-[11px] rounded-lg cursor-pointer transition-colors shadow-xs"
+                            className="px-3 py-1.5 bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs rounded-full cursor-pointer transition-colors shadow-xs"
                           >
                             Purchases
                           </button>
@@ -1425,9 +1347,9 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB: Security Telemetry Alerts */}
         {activeTab === 'security_telemetry' as any && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+              <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-rose-600" /> Platform Security Alerts & Threat Intelligence
               </h3>
               <p className="text-xs text-slate-500">Live monitoring of security logs (DDoS attacks, brute force, role violations)</p>
@@ -1436,13 +1358,13 @@ export const SystemPortal: React.FC = () => {
             {!securityLoading && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* SOC Ring — severity breakdown + blocked/active status */}
-                <div className="lg:col-span-1 border border-slate-200 rounded-2xl p-5 shadow-xs bg-white">
-                  <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mb-1">
+                <div className="lg:col-span-1 ring-1 ring-slate-200/70 rounded-3xl p-5 shadow-sm bg-white">
+                  <h4 className="text-xs font-semibold text-slate-800 flex items-center gap-1.5 mb-1">
                     <RadarIcon className="w-4 h-4 text-rose-600" /> SOC Threat Ring
                   </h4>
-                  <p className="text-[11px] text-slate-500 mb-3">Malicious activity by severity</p>
+                  <p className="text-xs text-slate-500 mb-3">Malicious activity by severity</p>
                   <div className="relative h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer className="text-brand-600 dark:text-brand-400" width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={severityBreakdown}
@@ -1458,26 +1380,26 @@ export const SystemPortal: React.FC = () => {
                           ))}
                         </Pie>
                         <Tooltip
-                          contentStyle={{ borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 11, fontWeight: 600 }}
+                          contentStyle={{ borderRadius: 12, border: '1px solid var(--line)', fontSize: 11, fontWeight: 600 }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-2xl font-black text-slate-800">{blockedStats.total}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total Events</span>
+                      <span className="text-2xl font-bold text-slate-800">{blockedStats.total}</span>
+                      <span className="text-xs font-bold text-slate-400">Total Events</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
                       <CheckCircle2 className="w-3.5 h-3.5" /> {blockedStats.blocked} Blocked
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-600">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600">
                       <AlertTriangle className="w-3.5 h-3.5" /> {blockedStats.active} Active
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {blockedStats.total === 0 ? (
-                      <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                      <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         No threats detected
                       </span>
@@ -1485,7 +1407,7 @@ export const SystemPortal: React.FC = () => {
                       severityBreakdown.map((s) => (
                         <span
                           key={s.name}
-                          className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
                           style={{ backgroundColor: `${s.color}1A`, color: s.color }}
                         >
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.color }} />
@@ -1497,30 +1419,30 @@ export const SystemPortal: React.FC = () => {
                 </div>
 
                 {/* Timeline — attack/vuln activity over the last 24h, stacked by severity */}
-                <div className="lg:col-span-2 border border-slate-200 rounded-2xl p-5 shadow-xs bg-white">
-                  <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mb-1">
+                <div className="lg:col-span-2 ring-1 ring-slate-200/70 rounded-3xl p-5 shadow-sm bg-white">
+                  <h4 className="text-xs font-semibold text-slate-800 flex items-center gap-1.5 mb-1">
                     <Clock className="w-4 h-4 text-rose-600" /> 24h Threat Timeline
                   </h4>
-                  <p className="text-[11px] text-slate-500 mb-3">Detected attack &amp; vulnerability activity, blocked status by hour</p>
+                  <p className="text-xs text-slate-500 mb-3">Detected attack &amp; vulnerability activity, blocked status by hour</p>
                   <div className="h-[220px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer className="text-brand-600 dark:text-brand-400" width="100%" height="100%">
                       <BarChart data={alertTimeline} barGap={0} barCategoryGap={2}>
                         <CartesianGrid vertical={false} stroke="#F1F5F9" />
                         <XAxis
                           dataKey="hour"
-                          tick={{ fill: '#94A3B8', fontSize: 9, fontWeight: 700 }}
-                          axisLine={{ stroke: '#E2E8F0' }}
+                          tick={{ fill: '#838690', fontSize: 9, fontWeight: 700 }}
+                          axisLine={{ stroke: 'currentColor', strokeOpacity: 0.15 }}
                           tickLine={false}
                           interval={2}
                         />
                         <YAxis
                           allowDecimals={false}
-                          tick={{ fill: '#94A3B8', fontSize: 9, fontWeight: 700 }}
+                          tick={{ fill: '#838690', fontSize: 9, fontWeight: 700 }}
                           axisLine={false}
                           tickLine={false}
                         />
                         <Tooltip
-                          contentStyle={{ borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 11, fontWeight: 600 }}
+                          contentStyle={{ borderRadius: 12, border: '1px solid var(--line)', fontSize: 11, fontWeight: 600 }}
                         />
                         <Bar dataKey="CRITICAL" stackId="sev" fill={SEVERITY_COLORS.CRITICAL} radius={[0, 0, 0, 0]} />
                         <Bar dataKey="HIGH" stackId="sev" fill={SEVERITY_COLORS.HIGH} />
@@ -1538,7 +1460,7 @@ export const SystemPortal: React.FC = () => {
             ) : securityAlerts.length === 0 ? (
               <div className="text-center py-12 text-slate-500 font-medium">No unresolved security anomalies detected on the platform.</div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+              <div className="overflow-x-auto ring-1 ring-slate-200/70 rounded-3xl shadow-sm bg-white">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                     <tr>
@@ -1556,7 +1478,7 @@ export const SystemPortal: React.FC = () => {
                         <td className="p-4 text-slate-500 font-mono">{alert.timestamp}</td>
                         <td className="p-4 font-bold text-slate-900">{alert.alert_type}</td>
                         <td className="p-4 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                             alert.severity === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
                             alert.severity === 'HIGH' ? 'bg-orange-100 text-orange-900' : 'bg-yellow-100 text-yellow-800'
                           }`}>
@@ -1572,7 +1494,7 @@ export const SystemPortal: React.FC = () => {
                           {alert.status === 'UNRESOLVED' ? (
                             <button
                               onClick={() => handleResolveAlert(alert.id)}
-                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] rounded-lg cursor-pointer"
+                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg cursor-pointer"
                             >
                               Resolve
                             </button>
@@ -1591,11 +1513,11 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB: Combined Labs View */}
         {activeTab === 'labs' as any && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-purple-600" /> Platform Labs Management
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-brand-600" /> Platform Labs Management
                 </h3>
                 <p className="text-xs text-slate-500">Manage virtual lab catalogs, approve auto-synced filesystem configurations, and allocate student hours</p>
               </div>
@@ -1605,7 +1527,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('catalog')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                      labsTabMode === 'catalog' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Labs ({allLabs.filter((l: any) => {
@@ -1619,7 +1541,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('arrivals')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                      labsTabMode === 'arrivals' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     New Arrivals ({allLabs.filter((l: any) => l.status === 'PENDING_REVIEW' || l.status === 'PENDING').length})
@@ -1628,7 +1550,7 @@ export const SystemPortal: React.FC = () => {
                     type="button"
                     onClick={() => setLabsTabMode('assigned')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      labsTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                      labsTabMode === 'assigned' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                     }`}
                   >
                     Assigned Labs ({allocatedLabs.length})
@@ -1643,13 +1565,13 @@ export const SystemPortal: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {allLabs.filter((l: any) => l.status === 'PENDING_REVIEW' || l.status === 'PENDING').map((l: any) => (
-                    <div key={l.id} className="p-5 border border-slate-200 rounded-2xl bg-white space-y-3 shadow-xs hover:border-purple-300 transition-colors">
+                    <div key={l.id} className="p-5 ring-1 ring-slate-200/70 rounded-3xl bg-white space-y-3 shadow-sm hover:border-brand-300 transition-colors">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-extrabold text-slate-900 text-sm">{l.name}</h4>
-                          <span className="text-[10px] font-mono text-purple-700">ID: {l.id}</span>
+                          <h4 className="font-semibold text-slate-900 text-sm">{l.name}</h4>
+                          <span className="text-xs font-mono text-brand-700">ID: {l.id}</span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           {l.status}
                         </span>
                       </div>
@@ -1692,14 +1614,14 @@ export const SystemPortal: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {activeCatalogLabs.map((l: any) => (
-                    <div key={l.id} className="p-5 border border-slate-200 rounded-2xl bg-white space-y-3 shadow-xs hover:border-purple-300 transition-colors flex flex-col justify-between">
+                    <div key={l.id} className="p-5 ring-1 ring-slate-200/70 rounded-3xl bg-white space-y-3 shadow-sm hover:border-brand-300 transition-colors flex flex-col justify-between">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h4 className="font-extrabold text-slate-900 text-sm">{l.name}</h4>
-                            <span className="text-[10px] font-mono text-purple-700">ID: {l.id}</span>
+                            <h4 className="font-semibold text-slate-900 text-sm">{l.name}</h4>
+                            <span className="text-xs font-mono text-brand-700">ID: {l.id}</span>
                           </div>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                             {l.status}
                           </span>
                         </div>
@@ -1717,11 +1639,10 @@ export const SystemPortal: React.FC = () => {
                               setFormLabId(l.id);
                               setFormLabTitle(l.name);
                               setFormPricePerHour(l.price_inr || 14999.0);
-                              setFormLabLevel('custom');
                               setFormAssignTarget('student');
                               setIsAssignModalOpen(true);
                             }}
-                            className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-1"
+                            className="flex-1 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-1"
                           >
                             <Plus className="w-3.5 h-3.5" /> Allocate Lab
 
@@ -1749,7 +1670,7 @@ export const SystemPortal: React.FC = () => {
               allocatedLabs.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 font-medium">No assigned labs currently active.</div>
               ) : (
-                <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+                <div className="overflow-x-auto ring-1 ring-slate-200/70 rounded-3xl shadow-sm bg-white">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                       <tr>
@@ -1768,26 +1689,26 @@ export const SystemPortal: React.FC = () => {
                               const scope = al.assigned_to || (al.organization_id ? 'admin' : al.user_id ? 'student' : 'both');
                               if (scope === 'student') {
                                 return (
-                                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 uppercase">
+                                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 uppercase">
                                     Student
                                   </span>
                                 );
                               } else if (scope === 'admin' || scope === 'org') {
                                 return (
-                                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">
                                     Admin
                                   </span>
                                 );
                               } else {
                                 return (
-                                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                                  <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
                                     Both
                                   </span>
                                 );
                               }
                             })()}
                           </td>
-                          <td className="p-4 text-center font-mono font-black text-slate-950">
+                          <td className="p-4 text-center font-mono font-bold text-slate-950">
                             ₹{(al.fixed_rate ?? al.price_per_hour ?? 0).toLocaleString()}
                           </td>
                           <td className="p-4 text-center">
@@ -1798,7 +1719,7 @@ export const SystemPortal: React.FC = () => {
                                   setNewFixedRate(al.fixed_rate ?? al.price_per_hour ?? 0);
                                   setIsEditPriceModalOpen(true);
                                 }}
-                                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg border border-purple-200 cursor-pointer transition-colors"
+                                className="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-lg border border-brand-200 cursor-pointer transition-colors"
                               >
                                 Edit
                               </button>
@@ -1808,7 +1729,7 @@ export const SystemPortal: React.FC = () => {
                                   setRemoveTargetType(al.assigned_to || (al.organization_id ? 'admin' : 'student'));
                                   setIsRemoveModalOpen(true);
                                 }}
-                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] rounded-lg border border-rose-200 cursor-pointer transition-colors"
+                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-lg border border-rose-200 cursor-pointer transition-colors"
                               >
                                 Revoke
                               </button>
@@ -1828,11 +1749,11 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB: CTF Catalog */}
         {activeTab === 'ctf' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <Flag className="w-5 h-5 text-purple-600" /> Platform CTF Management
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Flag className="w-5 h-5 text-brand-600" /> Platform CTF Management
                 </h3>
                 <p className="text-xs text-slate-500">
                   Auto-synced from the <code className="bg-slate-100 px-1.5 py-0.5 rounded">ctf/</code> folder in the background — drop a folder with <code className="bg-slate-100 px-1.5 py-0.5 rounded">event.json</code> in it and it appears here automatically.
@@ -1843,7 +1764,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('catalog')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'catalog' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                    ctfTabMode === 'catalog' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   CTF ({ctfEvents.length})
@@ -1852,7 +1773,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('arrivals')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'arrivals' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                    ctfTabMode === 'arrivals' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   New Arrivals ({ctfEvents.filter((c: any) => c.status === 'scheduled').length})
@@ -1861,7 +1782,7 @@ export const SystemPortal: React.FC = () => {
                   type="button"
                   onClick={() => setCtfTabMode('assigned')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    ctfTabMode === 'assigned' ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
+                    ctfTabMode === 'assigned' ? 'bg-white text-brand-700 shadow-xs' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   Assigned ({allocatedCtfs.length})
@@ -1878,7 +1799,7 @@ export const SystemPortal: React.FC = () => {
                   <p className="text-xs font-bold text-slate-400">No CTF allocations yet. Use "Allocate CTF" on a card above.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+                <div className="overflow-x-auto ring-1 ring-slate-200/70 rounded-3xl shadow-sm bg-white">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                       <tr>
@@ -1895,12 +1816,12 @@ export const SystemPortal: React.FC = () => {
                       {allocatedCtfs.map((c: any) => (
                         <tr key={c.id} className="hover:bg-slate-50/60">
                           <td className="p-4 font-bold text-slate-900">{c.ctf_title}</td>
-                          <td className="p-4 font-mono text-[11px]">{c.license_key}</td>
+                          <td className="p-4 font-mono text-xs">{c.license_key}</td>
                           <td className="p-4 text-center capitalize">{c.assigned_to || 'both'}</td>
                           <td className="p-4 text-center">{c.assigned_team_slots} / {c.total_team_slots}</td>
                           <td className="p-4 text-center">₹{Number(c.fixed_rate || 0).toLocaleString('en-IN')}</td>
                           <td className="p-4">
-                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="px-2.5 py-1 rounded-lg text-xs font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                               {c.status}
                             </span>
                           </td>
@@ -1936,14 +1857,14 @@ export const SystemPortal: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {visibleEvents.map((c: any) => (
-                    <div key={c.id} className="p-5 border border-slate-200 rounded-2xl bg-white space-y-3 shadow-xs hover:border-purple-300 transition-colors flex flex-col justify-between">
+                    <div key={c.id} className="p-5 ring-1 ring-slate-200/70 rounded-3xl bg-white space-y-3 shadow-sm hover:border-brand-300 transition-colors flex flex-col justify-between">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between">
                           <div>
-                            <h4 className="font-extrabold text-slate-900 text-sm">{c.title}</h4>
-                            <span className="text-[10px] font-mono text-purple-700">ID: {c.id}</span>
+                            <h4 className="font-semibold text-slate-900 text-sm">{c.title}</h4>
+                            <span className="text-xs font-mono text-brand-700">ID: {c.id}</span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full border uppercase ${
                             c.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                             c.status === 'completed' ? 'bg-slate-100 text-slate-600 border-slate-200' :
                             'bg-blue-50 text-blue-700 border-blue-200'
@@ -1966,7 +1887,7 @@ export const SystemPortal: React.FC = () => {
                             setFormCtfAssignTarget('student');
                             setIsCtfAssignModalOpen(true);
                           }}
-                          className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-1"
+                          className="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" /> Allocate CTF
                         </button>
@@ -1982,11 +1903,11 @@ export const SystemPortal: React.FC = () => {
 
         {/* TAB 4: Students Roster & Analytics */}
         {activeTab === 'students' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-purple-600" /> Platform Students Roster
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-brand-600" /> Platform Students Roster
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Monitor user roles, status, and click View Analytics for real-time progress detail</p>
               </div>
@@ -1998,7 +1919,7 @@ export const SystemPortal: React.FC = () => {
                   onChange={(e) => setStudentSearch(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && fetchStudents(1, studentSearch)}
                   placeholder="Search students..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-purple-500"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-500"
                 />
               </div>
             </div>
@@ -2006,7 +1927,7 @@ export const SystemPortal: React.FC = () => {
             {studentsLoading ? (
               <div className="text-center py-12 text-slate-500">Querying platform students...</div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+              <div className="overflow-x-auto ring-1 ring-slate-200/70 rounded-3xl shadow-sm bg-white">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                     <tr>
@@ -2023,14 +1944,14 @@ export const SystemPortal: React.FC = () => {
                       <tr key={s.id} className="hover:bg-slate-50/60">
                         <td className="p-4">
                           <p className="font-bold text-slate-900">{s.name || 'N/A'}</p>
-                          <span className="text-[10px] text-slate-500 font-mono">{s.email}</span>
+                          <span className="text-xs text-slate-500 font-mono">{s.email}</span>
                         </td>
                         <td className="p-4 text-slate-600 font-semibold">{s.organization || 'Independent'}</td>
-                        <td className="p-4"><span className="text-[10px] bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">{s.role}</span></td>
+                        <td className="p-4"><span className="text-xs bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold uppercase">{s.role}</span></td>
                         <td className="p-4 text-slate-500 font-mono">{s.created_at}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            s.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                            s.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}>
                             {s.is_active ? 'Active' : 'Suspended'}
                           </span>
@@ -2039,7 +1960,7 @@ export const SystemPortal: React.FC = () => {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => openStudentAnalytics(s.id)}
-                              className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg border border-purple-200 cursor-pointer inline-flex items-center gap-1"
+                              className="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-lg border border-brand-200 cursor-pointer inline-flex items-center gap-1"
                             >
                               <Eye className="w-3.5 h-3.5" /> View Analytics
                             </button>
@@ -2083,11 +2004,11 @@ export const SystemPortal: React.FC = () => {
         )}
         {/* TAB 5: Audit Telemetry & DB Viewer */}
         {activeTab === 'db_viewer' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+          <div className="bg-white rounded-3xl ring-1 ring-slate-200/70 p-6 shadow-sm space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-purple-600" /> Audit Telemetry
+                <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-brand-600" /> Audit Telemetry
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Direct inspection of ORM model tables, logs, and database schemas. Read-only mode.
@@ -2103,7 +2024,7 @@ export const SystemPortal: React.FC = () => {
                     setSelectedTable(e.target.value);
                     setDbPage(1);
                   }}
-                  className="bg-slate-50 border border-slate-200 text-purple-700 text-xs font-bold font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-purple-500"
+                  className="bg-slate-50 border border-slate-200 text-brand-700 text-xs font-bold font-mono px-3 py-2 rounded-xl focus:outline-none focus:border-brand-500"
                 >
                   <option value="users">users</option>
                   <option value="organizations">organizations</option>
@@ -2129,19 +2050,19 @@ export const SystemPortal: React.FC = () => {
                   onChange={(e) => setDbSearch(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && fetchTableData(selectedTable, 1, dbSearch)}
                   placeholder={`Search ${selectedTable} table records...`}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-500"
+                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500"
                 />
               </div>
 
               <div className="text-xs text-slate-500 font-mono">
-                Total Rows: <span className="font-bold text-purple-600">{dbData?.total || 0}</span> | Page {dbPage} of {dbData?.pages || 1}
+                Total Rows: <span className="font-bold text-brand-600">{dbData?.total || 0}</span> | Page {dbPage} of {dbData?.pages || 1}
               </div>
             </div>
 
             {/* ORM Records Table */}
             <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200 font-mono">
+                <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 font-mono">
                   <tr>
                     {(dbData?.columns || []).map((col: string) => (
                       <th key={col} className="p-3 border-r border-slate-200 whitespace-nowrap">
@@ -2154,14 +2075,14 @@ export const SystemPortal: React.FC = () => {
                   {dbLoading ? (
                     <tr>
                       <td colSpan={dbData?.columns?.length || 1} className="py-12 text-center text-slate-500">
-                        <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                         Querying PostgreSQL table via SQLAlchemy ORM...
                       </td>
                     </tr>
                   ) : !dbData?.rows || dbData.rows.length === 0 ? (
                     <tr>
                       <td colSpan={dbData?.columns?.length || 1} className="py-12 text-center text-slate-500 font-sans">
-                        No database records found in table <span className="font-mono text-purple-700">{selectedTable}</span>.
+                        No database records found in table <span className="font-mono text-brand-700">{selectedTable}</span>.
                       </td>
                     </tr>
                   ) : (
@@ -2208,9 +2129,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 1: Add College Modal */}
       {isCollegeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleCreateCollege} className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleCreateCollege} className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Add New College Affiliation</h2>
+              <h2 className="text-base font-semibold text-slate-900">Add New College Affiliation</h2>
               <button type="button" onClick={() => setIsCollegeModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2282,7 +2203,7 @@ export const SystemPortal: React.FC = () => {
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
               <button type="button" onClick={() => setIsCollegeModalOpen(false)} className="px-4 py-2 border rounded-xl font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl cursor-pointer">Save College</button>
+              <button type="submit" className="px-4 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full cursor-pointer">Save College</button>
             </div>
           </form>
         </div>
@@ -2291,9 +2212,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 2: Organization Purchase History Modal */}
       {isPurchaseModalOpen && selectedOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-lg w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">{selectedOrg.name} — Order History</h2>
+              <h2 className="text-base font-semibold text-slate-900">{selectedOrg.name} — Order History</h2>
               <button type="button" onClick={() => setIsPurchaseModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 max-h-[300px] overflow-y-auto space-y-3 text-xs">
@@ -2306,11 +2227,11 @@ export const SystemPortal: React.FC = () => {
                   <div key={p.id} className="p-3 border border-slate-200 rounded-xl flex items-center justify-between bg-slate-50">
                     <div>
                       <p className="font-bold text-slate-900">{p.order_number}</p>
-                      <span className="text-[10px] text-slate-500 font-mono">{p.created_at}</span>
+                      <span className="text-xs text-slate-500 font-mono">{p.created_at}</span>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-slate-900">₹{p.grand_total.toLocaleString()}</p>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{p.status}</span>
+                      <p className="font-bold text-slate-900">₹{p.grand_total.toLocaleString()}</p>
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{p.status}</span>
                     </div>
                   </div>
                 ))
@@ -2326,9 +2247,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 3: Manual Lab Allocation */}
       {isAssignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleAssignLab} className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleAssignLab} className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Manually Allocate Lab</h2>
+              <h2 className="text-base font-semibold text-slate-900">Manually Allocate Lab</h2>
               <button type="button" onClick={() => setIsAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2365,7 +2286,7 @@ export const SystemPortal: React.FC = () => {
                   onChange={(e) => setFormPricePerHour(Number(e.target.value))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Set to 0 for a free lab.</p>
+                <p className="text-xs text-slate-400 mt-1">Set to 0 for a free lab.</p>
               </div>
 
               <div>
@@ -2377,13 +2298,13 @@ export const SystemPortal: React.FC = () => {
                   onChange={(e) => setFormHoursAllocated(Number(e.target.value))}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Total lab hours available to the organization/students before renewal.</p>
+                <p className="text-xs text-slate-400 mt-1">Total lab hours available to the organization/students before renewal.</p>
               </div>
 
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
               <button type="button" onClick={() => setIsAssignModalOpen(false)} className="px-4 py-2 border rounded-xl font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl cursor-pointer">Allocate Lab & Save</button>
+              <button type="submit" className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-full cursor-pointer">Allocate Lab & Save</button>
             </div>
           </form>
         </div>
@@ -2392,9 +2313,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 3b: Manual CTF Allocation */}
       {isCtfAssignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleAssignCtf} className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleAssignCtf} className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Manually Allocate CTF</h2>
+              <h2 className="text-base font-semibold text-slate-900">Manually Allocate CTF</h2>
               <button type="button" onClick={() => setIsCtfAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2432,11 +2353,11 @@ export const SystemPortal: React.FC = () => {
                 />
               </div>
 
-              <p className="text-[11px] text-slate-400">Allocates 10 team slots (4 members each, 40 participants max) for this CTF event.</p>
+              <p className="text-xs text-slate-400">Allocates 10 team slots (4 members each, 40 participants max) for this CTF event.</p>
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
               <button type="button" onClick={() => setIsCtfAssignModalOpen(false)} className="px-4 py-2 border rounded-xl font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl cursor-pointer">Allocate CTF & Save</button>
+              <button type="submit" className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl cursor-pointer">Allocate CTF & Save</button>
             </div>
           </form>
         </div>
@@ -2445,9 +2366,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 4: Manual Lab Revocation */}
       {isRevokeModalOpen && selectedOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleRevokeLab} className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleRevokeLab} className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Manually Revoke Lab Assignment</h2>
+              <h2 className="text-base font-semibold text-slate-900">Manually Revoke Lab Assignment</h2>
               <button type="button" onClick={() => setIsRevokeModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2474,9 +2395,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 5: Student Analytics Detailed Modal */}
       {isStudentModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Student Analytics & Lab Progress</h2>
+              <h2 className="text-base font-semibold text-slate-900">Student Analytics & Lab Progress</h2>
               <button type="button" onClick={() => setIsStudentModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2485,26 +2406,26 @@ export const SystemPortal: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   <div className="p-4 border border-slate-200 rounded-2xl bg-slate-50 space-y-2">
-                    <p className="text-sm font-extrabold text-slate-950">{selectedStudentAnalytics.name}</p>
-                    <p className="text-[11px] text-slate-500 font-mono">{selectedStudentAnalytics.email}</p>
+                    <p className="text-sm font-semibold text-slate-950">{selectedStudentAnalytics.name}</p>
+                    <p className="text-xs text-slate-500 font-mono">{selectedStudentAnalytics.email}</p>
                     <div className="grid grid-cols-3 gap-2 pt-2 text-center">
                       <div className="bg-white p-2 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-500 font-bold">Finished Labs</span>
-                        <p className="text-lg font-black text-purple-600">{selectedStudentAnalytics.completed_labs_count}</p>
+                        <span className="text-xs text-slate-500 font-bold">Finished Labs</span>
+                        <p className="text-lg font-bold text-brand-600">{selectedStudentAnalytics.completed_labs_count}</p>
                       </div>
                       <div className="bg-white p-2 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-500 font-bold">Avg Score</span>
-                        <p className="text-lg font-black text-[#0052CC]">{selectedStudentAnalytics.average_score}%</p>
+                        <span className="text-xs text-slate-500 font-bold">Avg Score</span>
+                        <p className="text-lg font-bold text-brand-600">{selectedStudentAnalytics.average_score}%</p>
                       </div>
                       <div className="bg-white p-2 rounded-xl border border-slate-200">
-                        <span className="text-[10px] text-slate-500 font-bold">Active Hours</span>
-                        <p className="text-lg font-black text-amber-600">{selectedStudentAnalytics.total_active_hours} hrs</p>
+                        <span className="text-xs text-slate-500 font-bold">Active Hours</span>
+                        <p className="text-lg font-bold text-amber-600">{selectedStudentAnalytics.total_active_hours} hrs</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-extrabold text-slate-900 mb-2">Detailed Progress</h4>
+                    <h4 className="font-semibold text-slate-900 mb-2">Detailed Progress</h4>
                     <div className="max-h-[150px] overflow-y-auto space-y-2">
                       {selectedStudentAnalytics.labs.length === 0 ? (
                         <p className="text-center py-4 text-slate-500">No lab attempts made yet.</p>
@@ -2513,13 +2434,13 @@ export const SystemPortal: React.FC = () => {
                           <div key={i} className="p-2.5 border border-slate-200 rounded-xl flex items-center justify-between bg-white">
                             <div>
                               <p className="font-bold text-slate-900">{l.lab_id}</p>
-                              <span className="text-[10px] text-slate-500">{l.completed_at || 'In Progress'}</span>
+                              <span className="text-xs text-slate-500">{l.completed_at || 'In Progress'}</span>
                             </div>
                             <div className="text-right">
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                                 l.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                               }`}>{l.status}</span>
-                              <p className="text-xs font-black text-slate-900 mt-1">{l.score} pts</p>
+                              <p className="text-xs font-bold text-slate-900 mt-1">{l.score} pts</p>
                             </div>
                           </div>
                         ))
@@ -2538,9 +2459,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 5: Revoke / Remove Lab Modal */}
       {isRemoveModalOpen && selectedLabForRemoval && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleRemoveLabAction} className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleRemoveLabAction} className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Remove / Revoke Lab Allocation</h2>
+              <h2 className="text-base font-semibold text-slate-900">Remove / Revoke Lab Allocation</h2>
               <button type="button" onClick={() => setIsRemoveModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2572,9 +2493,9 @@ export const SystemPortal: React.FC = () => {
       {/* MODAL 6: Edit Assigned Lab Fixed Rate Modal */}
       {isEditPriceModalOpen && editingAllocatedLab && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <form onSubmit={handleSaveFixedRate} className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
+          <form onSubmit={handleSaveFixedRate} className="bg-white rounded-3xl max-w-md w-full ring-1 ring-slate-200/70 shadow-xl overflow-hidden animate-in fade-in zoom-in-95">
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="text-base font-extrabold text-slate-900">Edit Lab Fixed Rate</h2>
+              <h2 className="text-base font-semibold text-slate-900">Edit Lab Fixed Rate</h2>
               <button type="button" onClick={() => setIsEditPriceModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold">X</button>
             </div>
             <div className="p-6 space-y-4 text-xs">
@@ -2596,7 +2517,7 @@ export const SystemPortal: React.FC = () => {
             </div>
             <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
               <button type="button" onClick={() => setIsEditPriceModalOpen(false)} className="px-4 py-2 border rounded-xl font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl cursor-pointer">Save Rate</button>
+              <button type="submit" className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl cursor-pointer">Save Rate</button>
             </div>
           </form>
         </div>

@@ -2,7 +2,7 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { AlertCircle, Calendar, Save, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Save, ArrowLeft } from 'lucide-react';
 
 export const CTFFormPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
@@ -127,10 +127,10 @@ export const CTFFormPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
               {isEdit ? 'Edit CTF Event' : 'Schedule New CTF Event'}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
               Set schedules and rules for the Jeopardy tournament
             </p>
           </div>
@@ -143,7 +143,7 @@ export const CTFFormPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 space-y-6 shadow-sm">
 
           {/* Title */}
           <div className="space-y-1">
@@ -227,7 +227,7 @@ export const CTFFormPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2 rounded-xl transition-all shadow-md disabled:opacity-50"
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2 rounded-full transition-all shadow-md disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {loading ? 'Saving...' : 'Save Event'}

@@ -2,16 +2,11 @@ import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Folder,
   User as UserIcon,
-  Search,
-  Filter,
   Download,
   BarChart2,
   ChevronRight,
-  ArrowLeft,
-  X
-} from 'lucide-react';
+  ArrowLeft} from 'lucide-react';
 import { downloadAuthenticatedFile } from '../../utils/exportUtils';
 import { formatUtcIsoLocal } from '../../utils/assignmentTime';
 import {
@@ -71,7 +66,7 @@ export const MonitoringAnalytics: React.FC = () => {
         const studentsData = await sRes.json();
         setStudents(studentsData);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('Failed to load analytics catalogs.');
     } finally {
       setLoading(false);
@@ -102,7 +97,7 @@ export const MonitoringAnalytics: React.FC = () => {
         setErrorMsg('No analytics available.');
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('No analytics available.');
       setLoading(false);
     }
@@ -121,7 +116,7 @@ export const MonitoringAnalytics: React.FC = () => {
       } else {
         setErrorMsg('No analytics available.');
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('No analytics available.');
     } finally {
       setLoading(false);
@@ -142,7 +137,7 @@ export const MonitoringAnalytics: React.FC = () => {
       } else {
         setErrorMsg('No analytics available.');
       }
-    } catch (err) {
+    } catch {
       setErrorMsg('No analytics available.');
     } finally {
       setLoading(false);
@@ -273,7 +268,7 @@ export const MonitoringAnalytics: React.FC = () => {
               setGroupDetails(null);
             }
           }}
-          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 font-extrabold cursor-pointer border px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-fit"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 font-semibold cursor-pointer border px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 w-fit"
         >
           <ArrowLeft className="w-4 h-4" /> Go Back
         </button>
@@ -313,7 +308,7 @@ export const MonitoringAnalytics: React.FC = () => {
           {/* GROUP ANALYTICS INITIAL VIEW */}
           {analyticsTab === 'group' && !selectedGroupId && !selectedStudentId && !selectedLabId && (
             <div className="space-y-4">
-              <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-300">Active Group Analytics</h2>
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Active Group Analytics</h2>
               {groups.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 font-medium border border-dashed rounded-2xl">
                   No active group analytics available.
@@ -324,10 +319,10 @@ export const MonitoringAnalytics: React.FC = () => {
                     <div
                       key={g.id}
                       onClick={() => loadGroupDetails(g.id)}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
+                      className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
                     >
                       <div className="space-y-1">
-                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{g.name}</h4>
+                        <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{g.name}</h4>
                         <p className="text-slate-500 font-semibold">{g.memberCount} Students • {g.activeLabsCount} Active Labs</p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-slate-400" />
@@ -341,49 +336,49 @@ export const MonitoringAnalytics: React.FC = () => {
           {/* GROUP DRILL DOWN DETAILS VIEW */}
           {selectedGroupId && !selectedLabId && groupDetails && (
             <div className="space-y-6">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
-                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">{groupDetails.name}</h2>
+              <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 space-y-4">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{groupDetails.name}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Members</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Members</span>
                     <strong className="text-sm text-slate-800 dark:text-white">{groupDetails.member_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Assigned Labs</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Assigned Labs</span>
                     <strong className="text-sm text-slate-800 dark:text-white">{groupDetails.assigned_labs_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Completion</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Completion</span>
                     <strong className="text-sm text-emerald-600">{groupDetails.overall_completion}%</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Automatic %</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Avg Automatic %</span>
                     <strong className="text-sm text-blue-700 dark:text-blue-400">
                       {groupDetails.overall_average_score_percent == null ? '—' : `${groupDetails.overall_average_score_percent}%`}
                     </strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Time</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Avg Time</span>
                     <strong className="text-sm text-slate-800 dark:text-white">{groupDetails.average_time}</strong>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h3 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">Assigned Labs</h3>
+                <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Assigned Labs</h3>
                 <div className="space-y-3">
                   {groupDetails.labs.map((l: any) => (
                     <div
                       key={l.assignment_id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                     >
                       <div className="space-y-1">
-                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{l.lab_title}</h4>
+                        <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{l.lab_title}</h4>
                         <p className="text-slate-500 font-semibold">{l.status} • {l.student_count} Students</p>
                       </div>
                       <button
                         onClick={() => loadLabAnalytics(l.assignment_id, l.lab_id)}
-                        className="px-4 py-2 bg-[#0052CC] hover:bg-blue-600 text-white font-bold rounded-xl flex items-center gap-1 cursor-pointer"
+                        className="px-4 py-2 bg-brand-600 hover:bg-blue-600 text-white font-bold rounded-full flex items-center gap-1 cursor-pointer"
                       >
                         <BarChart2 className="w-4 h-4" /> View Analytics
                       </button>
@@ -397,12 +392,12 @@ export const MonitoringAnalytics: React.FC = () => {
           {/* LAB ANALYTICS MEMBER DETAILS TABLE VIEW */}
           {selectedLabId && selectedAssignmentId && labAnalytics && !selectedStudentId && (
             <div className="space-y-6">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
+              <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-base font-black text-slate-900 dark:text-slate-100">{labAnalytics.lab_title}</h2>
+                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{labAnalytics.lab_title}</h2>
                     <p className="text-slate-500 font-semibold mt-1">
-                      Assigned: {formatUtcIsoLocal(labAnalytics.assignment_date)} ➔ Due: {formatUtcIsoLocal(labAnalytics.due_date)}
+                      Assigned: {formatUtcIsoLocal(labAnalytics.assignment_date)} → Due: {formatUtcIsoLocal(labAnalytics.due_date)}
                     </p>
                   </div>
                   <button
@@ -415,40 +410,40 @@ export const MonitoringAnalytics: React.FC = () => {
 
                 <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Started</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Started</span>
                     <strong className="text-sm text-slate-800 dark:text-white">{labAnalytics.started_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Completed</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Completed</span>
                     <strong className="text-sm text-emerald-600">{labAnalytics.completed_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Not Started</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Not Started</span>
                     <strong className="text-sm text-slate-500">{labAnalytics.not_started_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Failed</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Failed</span>
                     <strong className="text-sm text-rose-500">{labAnalytics.failed_count}</strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Automatic %</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Avg Automatic %</span>
                     <strong className="text-sm text-slate-800 dark:text-white">
                       {labAnalytics.average_score_percent == null ? '—' : `${labAnalytics.average_score_percent}%`}
                     </strong>
                   </div>
                   <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Completion %</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase block">Completion %</span>
                     <strong className="text-sm text-emerald-600">{labAnalytics.completion_percentage}%</strong>
                   </div>
                 </div>
               </div>
 
               {/* Members Table */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+              <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase">
+                      <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-400">
                         <th className="p-4">Student Name</th>
                         <th className="p-4">Department</th>
                         <th className="p-4">Year</th>
@@ -463,7 +458,7 @@ export const MonitoringAnalytics: React.FC = () => {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {labAnalytics.members?.map((m: any) => (
                         <tr key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                          <td className="p-4 font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <td className="p-4 font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500">
                               {m.fullName?.charAt(0) || 'S'}
                             </div>
@@ -472,9 +467,9 @@ export const MonitoringAnalytics: React.FC = () => {
                           <td className="p-4 font-semibold text-slate-500">{m.department}</td>
                           <td className="p-4 font-semibold text-slate-500">{m.year}</td>
                           <td className="p-4">
-                            <span className={`inline-block px-2 py-0.5 rounded-full font-bold border text-[9px] ${
+                            <span className={`inline-block px-2 py-0.5 rounded-full font-bold border text-xs ${
                               m.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40' :
-                              m.status === 'Running' ? 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40' :
+                              m.status === 'Running' ? 'bg-blue-50 text-brand-600 border-blue-200 dark:bg-blue-950/40' :
                               m.status === 'Failed' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40' :
                               'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800'
                             }`}>
@@ -507,7 +502,7 @@ export const MonitoringAnalytics: React.FC = () => {
           {/* INDIVIDUAL STUDENT ANALYTICS SELECTION TAB */}
           {analyticsTab === 'individual' && !selectedStudentId && !selectedLabId && (
             <div className="space-y-4">
-              <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-300">Active Student Analytics</h2>
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Active Student Analytics</h2>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <input
                   type="text"
@@ -548,16 +543,16 @@ export const MonitoringAnalytics: React.FC = () => {
                     <div
                       key={s.id}
                       onClick={() => loadStudentBreakdown(s.id, s.lab_id, s.active_assignment_id)}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
+                      className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 text-[#0052CC] flex items-center justify-center font-bold">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-950/40 text-brand-600 flex items-center justify-center font-bold">
                           <UserIcon className="w-4 h-4" />
                         </div>
                         <div>
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{s.fullName}</h4>
+                          <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{s.fullName}</h4>
                           <p className="text-slate-500 font-semibold">{s.department} • {s.year}</p>
-                          <p className="text-[#0052CC] font-bold text-[9px] mt-1">{s.lab_id?.replace('-', ' ').title()}</p>
+                          <p className="text-brand-600 font-bold text-xs mt-1 capitalize">{s.lab_id?.replace(/-/g, ' ') ?? ''}</p>
                         </div>
                       </div>
                       <ChevronRight className="w-5 h-5 text-slate-400" />
@@ -574,10 +569,10 @@ export const MonitoringAnalytics: React.FC = () => {
 
               {/* Left Column: Metadata and Module breakdowns */}
               <div className="lg:col-span-8 space-y-6">
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
+                <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-base font-black text-slate-900 dark:text-slate-100">
+                      <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
                         {studentBreakdown.student?.fullName}
                       </h2>
                       <p className="text-slate-500 font-semibold mt-1">
@@ -594,44 +589,44 @@ export const MonitoringAnalytics: React.FC = () => {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Raw Points</span>
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Raw Points</span>
                       <strong className="text-sm text-slate-800 dark:text-white">
                         {studentBreakdown.score_earned} / {studentBreakdown.score_possible ?? '—'}
                       </strong>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Automatic %</span>
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Automatic %</span>
                       <strong className="text-sm text-blue-700 dark:text-blue-400">
                         {studentBreakdown.score_percent == null ? '—' : `${studentBreakdown.score_percent}%`}
                       </strong>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Completion %</span>
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Completion %</span>
                       <strong className="text-sm text-emerald-600">{studentBreakdown.completion_percentage}%</strong>
                     </div>
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Time Taken</span>
+                      <span className="text-xs text-slate-400 font-bold uppercase block">Time Taken</span>
                       <strong className="text-sm text-slate-800 dark:text-white">{studentBreakdown.total_time_taken}</strong>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">Modules Performance Breakdown</h3>
+                  <h3 className="font-semibold text-sm text-slate-700 dark:text-slate-300">Modules Performance Breakdown</h3>
                   <div className="space-y-3">
                     {studentBreakdown.modules?.map((m: any) => (
                       <div
                         key={m.module_id}
-                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex items-center justify-between gap-4"
+                        className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-5 flex items-center justify-between gap-4"
                       >
                         <div className="space-y-1">
-                          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{m.name}</h4>
+                          <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">{m.name}</h4>
                           <p className="text-slate-500 font-semibold">{m.attempts} • Time: {m.time_taken}</p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className={`inline-block px-2 py-0.5 rounded-full font-bold border text-[9px] ${
+                          <span className={`inline-block px-2 py-0.5 rounded-full font-bold border text-xs ${
                             m.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40' :
-                            m.status === 'RUNNING' ? 'bg-blue-50 text-[#0052CC] border-blue-200 dark:bg-blue-950/40' :
+                            m.status === 'RUNNING' ? 'bg-blue-50 text-brand-600 border-blue-200 dark:bg-blue-950/40' :
                             'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800'
                           }`}>
                             {m.status}
@@ -649,25 +644,25 @@ export const MonitoringAnalytics: React.FC = () => {
               </div>
 
               {/* Right Column: Visual Radar Spider Skill Analytics */}
-              <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 pb-3 border-b border-slate-100 dark:border-slate-800">
                     Skill Vectors Radar Matrix
                   </h3>
                   <div className="w-full h-64 mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer className="text-brand-600 dark:text-brand-400" width="100%" height="100%">
                       <RadarChart cx="50%" cy="50%" outerRadius="80%" data={studentBreakdown.spider_chart}>
-                        <PolarGrid stroke="#E2E8F0" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#94A3B8', fontSize: 8, fontWeight: 700 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94A3B8', fontSize: 8 }} />
-                        <Radar name="Student" dataKey="score" stroke="#0052CC" fill="#3B82F6" fillOpacity={0.4} />
+                        <PolarGrid stroke="currentColor" strokeOpacity={0.15} />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#838690', fontSize: 8, fontWeight: 700 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#838690', fontSize: 8 }} />
+                        <Radar name="Student" dataKey="score" stroke="currentColor" fill="#F2A47A" fillOpacity={0.4} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mt-4">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Instructor Review</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase block mb-1">Instructor Review</span>
                   <p className="text-slate-700 leading-relaxed font-semibold">
                     The radar display outlines student proficiency based on cumulative validation checkouts computed dynamically across active modules.
                   </p>

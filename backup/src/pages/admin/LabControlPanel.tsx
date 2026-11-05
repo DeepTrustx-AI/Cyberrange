@@ -9,9 +9,7 @@ import {
   Users,
   Clock,
   Cpu,
-  RotateCcw,
-  RotateCw
-} from 'lucide-react';
+  RotateCcw} from 'lucide-react';
 
 interface LabInstanceControl {
   id: string;
@@ -26,18 +24,13 @@ interface LabInstanceControl {
 
 export const LabControlPanel: React.FC = () => {
   const [instances, setInstances] = useState<LabInstanceControl[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       try {
-        const [sessRes, invRes] = await Promise.all([
-          routedApiFetch('/api/v1/admin/sessions', { headers }),
-          routedApiFetch('/api/v1/admin/inventory', { headers })
-        ]);
+        const sessRes = await routedApiFetch('/api/v1/admin/sessions', { headers });
 
         if (sessRes.ok) {
           const data = await sessRes.json();
@@ -55,17 +48,8 @@ export const LabControlPanel: React.FC = () => {
             setInstances(mapped);
           }
         }
-
-        if (invRes.ok) {
-          const invData = await invRes.json();
-          if (invData && invData.labs) {
-            setInventory(invData.labs);
-          }
-        }
       } catch (err) {
-        console.error("Failed to fetch sessions/inventory:", err);
-      } finally {
-        setLoading(false);
+        console.error("Failed to fetch sessions:", err);
       }
     };
     fetchData();
@@ -139,13 +123,12 @@ export const LabControlPanel: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:items-end">
         <div>
           <div className="flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-[#0052CC] dark:text-blue-400" />
-            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Lab Environment Control Panel</h1>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">Lab Environment Control Panel</h1>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="mt-2 max-w-2xl text-[15px] text-slate-500 dark:text-slate-400">
             Real-time management of active Docker container labs, virtual instances, and resource allocation.
           </p>
         </div>
@@ -169,7 +152,7 @@ export const LabControlPanel: React.FC = () => {
         ) : (
           instances.map((inst) => {
           const statusBadgeStyles = {
-            running: 'bg-emerald-50 dark:bg-emerald-950/40 text-[#28A745] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+            running: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
             paused: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
             idle: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
             stopped: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800',
@@ -178,20 +161,20 @@ export const LabControlPanel: React.FC = () => {
           return (
             <div
               key={inst.id}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               {/* Lab Metadata */}
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-[11px] font-bold border px-2.5 py-0.5 rounded-full capitalize flex items-center gap-1.5 ${
+                    className={`text-xs font-bold border px-2.5 py-0.5 rounded-full capitalize flex items-center gap-1.5 ${
                       statusBadgeStyles[inst.status]
                     }`}
                   >
                     <span
                       className={`w-2 h-2 rounded-full ${
                         inst.status === 'running'
-                          ? 'bg-[#28A745] animate-pulse'
+                          ? 'bg-emerald-600 animate-pulse'
                           : inst.status === 'paused'
                           ? 'bg-amber-500'
                           : 'bg-slate-400'
@@ -204,7 +187,7 @@ export const LabControlPanel: React.FC = () => {
                   </span>
                 </div>
 
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">{inst.labTitle}</h3>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{inst.labTitle}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   Allocated Cohort: <span className="text-slate-800 dark:text-slate-200 font-bold">{inst.allocatedGroup}</span>
                 </p>
@@ -214,21 +197,21 @@ export const LabControlPanel: React.FC = () => {
               <div className="flex items-center gap-6 text-xs border-y md:border-y-0 border-slate-100 dark:border-slate-800 py-3 md:py-0">
                 <div>
                   <span className="text-slate-400 dark:text-slate-400 font-medium block">Active Users</span>
-                  <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5 text-[#0052CC] dark:text-blue-400" /> {inst.activeUserCount}
+                  <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5 text-brand-600 dark:text-blue-400" /> {inst.activeUserCount}
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-400 dark:text-slate-400 font-medium block">CPU Utilization</span>
-                  <span className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1">
-                    <Cpu className="w-3.5 h-3.5 text-[#6F42C1] dark:text-purple-400" /> {inst.cpuLoadPercent}%
+                  <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-1">
+                    <Cpu className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" /> {inst.cpuLoadPercent}%
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-400 dark:text-slate-400 font-medium block">Container Uptime</span>
-                  <span className="font-extrabold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" /> {inst.uptimeHours}
                   </span>
                 </div>
@@ -239,9 +222,9 @@ export const LabControlPanel: React.FC = () => {
                 {inst.status !== 'running' && (
                   <button
                     onClick={() => handleActionClick(inst.id, inst.labTitle, 'start')}
-                    className="px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-[#28A745] dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Play className="w-3.5 h-3.5 fill-[#28A745] dark:fill-emerald-400" /> Start Lab
+                    <Play className="w-3.5 h-3.5 fill-emerald-600 dark:fill-emerald-400" /> Start Lab
                   </button>
                 )}
 
@@ -271,13 +254,13 @@ export const LabControlPanel: React.FC = () => {
       {/* Confirmation Dialog Modal */}
       {confirmDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
-            <div className="w-12 h-12 rounded-2xl bg-blue-100 text-[#0052CC] flex items-center justify-center mx-auto">
+          <div className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100 text-brand-600 flex items-center justify-center mx-auto">
               <Sliders className="w-6 h-6" />
             </div>
 
             <div>
-              <h3 className="text-base font-extrabold text-slate-900 capitalize">
+              <h3 className="text-base font-semibold text-slate-900 capitalize">
                 Confirm {confirmDialog.targetAction} Action
               </h3>
               <p className="text-xs text-slate-500 mt-1">
@@ -297,7 +280,7 @@ export const LabControlPanel: React.FC = () => {
               </button>
               <button
                 onClick={handleExecuteAction}
-                className="py-2 px-3 rounded-xl bg-[#0052CC] hover:bg-blue-700 text-white font-bold text-xs shadow-xs"
+                className="py-2 px-3 rounded-full bg-brand-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs"
               >
                 Confirm Action
               </button>
@@ -315,7 +298,7 @@ export const LabControlPanel: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-slate-900">Emergency Stop All Instances</h3>
+              <h3 className="text-lg font-bold text-slate-900">Emergency Stop All Instances</h3>
               <p className="text-xs text-slate-500 mt-1">
                 This will immediately terminate all active lab containers and disconnect active users across all cohorts.
               </p>

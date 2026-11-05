@@ -90,7 +90,7 @@ export const CloudSecurityLabPage: React.FC = () => {
         setCredentials(credsData.credentials || null);
         setConsoleUrl(credsData.console_url || '');
       }
-    } catch (err) {
+    } catch {
       setContentError('Course content unavailable. Please reload.');
     } finally {
       setLoading(false);
@@ -217,7 +217,7 @@ export const CloudSecurityLabPage: React.FC = () => {
             >
               ← Back to Catalog
             </button>
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <h1 className="font-display tracking-tight text-2xl font-bold text-white flex items-center gap-2">
               <span>☁️</span> CloudCorp AWS Security Odyssey
             </h1>
           </div>
@@ -233,7 +233,7 @@ export const CloudSecurityLabPage: React.FC = () => {
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
         {/* Quest Map Navigation */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-sm">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+          <h2 className="text-xs font-semibold text-slate-400 mb-3">
             Quest Level Progression
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
@@ -273,7 +273,7 @@ export const CloudSecurityLabPage: React.FC = () => {
         <section className="rounded-xl border border-blue-900/40 bg-gradient-to-r from-blue-950/30 to-slate-900 p-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-400 mb-1">
                 <span>🔐</span> Active Temporary AWS STS Session
               </div>
               <p className="text-sm text-slate-300">
@@ -314,7 +314,7 @@ export const CloudSecurityLabPage: React.FC = () => {
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
-                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-blue-400">
                     LEVEL {currentModule.level} BRIEFING
                   </span>
                   <h3 className="text-xl font-bold text-white mt-1">{currentModule.title}</h3>
@@ -325,14 +325,14 @@ export const CloudSecurityLabPage: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <h4 className="text-xs font-bold text-slate-400 mb-2">
                   Scenario Objective
                 </h4>
                 <p className="text-sm leading-relaxed text-slate-300">{currentModule.objective}</p>
               </div>
 
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <h4 className="text-xs font-bold text-slate-400 mb-2">
                   Target AWS Services
                 </h4>
                 <div className="flex flex-wrap gap-2">

@@ -1,70 +1,35 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldAlert, ArrowLeft, Home, Search } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Mascot } from '../../components/mascot/Mascot';
+import { AmbientBackground } from '../../components/ui/AmbientBackground';
 
+// A missing page: the mascot scratches its head, and two ways back. "Home" goes
+// to the root, which sends students and admins to their own dashboards.
 export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#2D3436] flex flex-col items-center justify-center p-6 text-center">
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 max-w-lg w-full shadow-lg space-y-6 animate-in fade-in zoom-in-95">
-        {/* Visual 404 Badge & Icon */}
-        <div className="relative inline-block">
-          <div className="w-24 h-24 rounded-3xl bg-amber-50 text-[#FFA500] border border-amber-100 flex items-center justify-center mx-auto shadow-xs">
-            <ShieldAlert className="w-12 h-12 text-[#FFA500]" />
-          </div>
-          <span className="absolute -bottom-2 -right-2 text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full shadow-xs">
-            404
-          </span>
-        </div>
-
-        <div>
-          <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
-            HTTP 404 — Access Route Unresolved
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Target Page Not Found
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
-            The path or security challenge route you requested does not exist or may have been relocated.
-          </p>
-        </div>
-
-        {/* Valid Navigation Options Box */}
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-xs text-left">
-          <span className="font-bold text-slate-700 block border-b border-slate-200 pb-1.5">
-            Suggested Operational Routes:
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-semibold">
-            <Link
-              to="/admin/dashboard"
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 hover:text-[#0052CC] hover:border-blue-300 transition-colors flex items-center gap-2"
-            >
-              <Home className="w-4 h-4 text-[#0052CC]" /> Admin Dashboard
-            </Link>
-            <Link
-              to="/admin/labs"
-              className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 hover:text-[#0052CC] hover:border-blue-300 transition-colors flex items-center gap-2"
-            >
-              <Search className="w-4 h-4 text-[#6F42C1]" /> Lab Marketplace
-            </Link>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+    <div className="isolate grid min-h-screen place-items-center bg-slate-100 p-6 text-center text-slate-900 dark:bg-slate-950 dark:text-white">
+      <AmbientBackground />
+      <div className="rise-in flex max-w-md flex-col items-center">
+        <Mascot pose="think" size={136} interactive />
+        <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">This page wandered off</h1>
+        <p className="mt-3 text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
+          Error 404: the link may be old, or the page has moved. Let's get you back to your labs.
+        </p>
+        <div className="mt-7 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => navigate(-1)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition-colors inline-flex items-center justify-center gap-2"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-white dark:text-slate-200 dark:ring-slate-800 dark:hover:bg-slate-900"
           >
-            <ArrowLeft className="w-4 h-4" /> Go Back Previous Page
+            <ArrowLeft className="h-4 w-4" /> Go back
           </button>
-
           <Link
-            to="/admin/dashboard"
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0052CC] hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-2"
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 dark:bg-brand-500 dark:text-slate-950"
           >
-            <Home className="w-4 h-4" /> Return to Main Hub
+            Take me home
           </Link>
         </div>
       </div>

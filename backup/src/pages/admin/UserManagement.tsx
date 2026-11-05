@@ -22,12 +22,10 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-import { getRoleDisplayName } from '../../utils/roleMapping';
 
 export const UserManagement: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<PlatformUser[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSearch = searchParams.get('search') || searchParams.get('q') || '';
@@ -73,8 +71,6 @@ export const UserManagement: React.FC = () => {
       }
     } catch (err) {
       console.error('Error fetching users/groups:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -393,7 +389,7 @@ export const UserManagement: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
       {/* ───────────────────────── LEFT 60% — Student Management ───────────────────────── */}
       <div className="lg:col-span-3 space-y-6">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 shadow-sm space-y-3">
           {/* Row 1: Import / Add buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <button
@@ -407,7 +403,7 @@ export const UserManagement: React.FC = () => {
                 setUserToEdit(null);
                 setIsAddModalOpen(true);
               }}
-              className="flex-1 px-4 py-2 rounded-xl bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 px-4 py-2 rounded-full bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" /> Add Student
             </button>
@@ -422,7 +418,7 @@ export const UserManagement: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search by Name, Roll Number, Dept — or S.No e.g. 1-4,7,9-12"
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
               />
             </div>
             <select
@@ -456,7 +452,7 @@ export const UserManagement: React.FC = () => {
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
               Showing <strong className="text-slate-900 dark:text-slate-100">{filteredUsers.length}</strong> enrolled students
               {selectedForDelete.size > 0 && (
-                <span className="ml-2 text-[#0052CC] dark:text-blue-400">({selectedForDelete.size} selected)</span>
+                <span className="ml-2 text-brand-600 dark:text-blue-400">({selectedForDelete.size} selected)</span>
               )}
             </span>
             <button
@@ -471,10 +467,10 @@ export const UserManagement: React.FC = () => {
         </div>
 
         {/* Compact Student List — scrollable, no pagination */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-auto max-h-[560px]">
             <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 z-10 bg-slate-100/95 dark:bg-slate-800/95 backdrop-blur-sm text-slate-600 dark:text-slate-300 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+              <thead className="sticky top-0 z-10 bg-slate-100/95 dark:bg-slate-800/95 backdrop-blur-sm text-slate-600 dark:text-slate-300 text-xs font-semibold border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="p-3 w-8 text-center">#</th>
                   <th className="p-3">Name</th>
@@ -505,11 +501,11 @@ export const UserManagement: React.FC = () => {
                         <td className="p-3">
                           <div className="flex items-center gap-2">
                             {checked ? (
-                              <div className="w-7 h-7 rounded-full bg-[#0052CC] text-white flex items-center justify-center flex-shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center flex-shrink-0">
                                 <CheckCircle2 className="w-4 h-4" />
                               </div>
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-[#0052CC] text-white flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
+                              <div className="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
                                 {u.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                               </div>
                             )}
@@ -529,7 +525,7 @@ export const UserManagement: React.FC = () => {
                           <Link
                             to={`/admin/student-management/student/${u.id}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="px-2.5 py-1 rounded-lg bg-[#0052CC] hover:bg-blue-600 text-white font-bold text-[11px] shadow-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-full bg-brand-600 hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
                             View
                           </Link>
@@ -546,13 +542,13 @@ export const UserManagement: React.FC = () => {
 
       {/* ───────────────────────── RIGHT 40% — Groups Panel ───────────────────────── */}
       <div className="lg:col-span-2 space-y-4">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 shadow-sm space-y-3">
           <button
             onClick={() => {
               setGroupToEdit(null);
               setIsGroupModalOpen(true);
             }}
-            className="w-full px-4 py-2.5 rounded-xl bg-[#FFA500] hover:bg-amber-500 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full px-4 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Create Group
           </button>
@@ -564,7 +560,7 @@ export const UserManagement: React.FC = () => {
               value={groupSearch}
               onChange={(e) => setGroupSearch(e.target.value)}
               placeholder="Search groups..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC]/20"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
           </div>
         </div>
@@ -574,19 +570,19 @@ export const UserManagement: React.FC = () => {
             <div className="py-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
               <UsersRound className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">No Groups Yet</h3>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Create a group to get started.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Create a group to get started.</p>
             </div>
           ) : (
             filteredGroups.map((g) => (
               <div
                 key={g.id}
                 onClick={() => navigate(`/admin/groups/${g.id}`)}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs hover:shadow-md transition-all cursor-pointer"
+                className="bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200/70 dark:ring-slate-800 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">{g.name}</h3>
-                    <span className="text-[11px] font-bold bg-blue-50 dark:bg-blue-950/50 text-[#0052CC] dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1.5">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{g.name}</h3>
+                    <span className="text-xs font-bold bg-blue-50 dark:bg-blue-950/50 text-brand-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-2 py-0.5 rounded-full inline-flex items-center gap-1 mt-1.5">
                       <Users className="w-3 h-3" /> {g.memberCount}/{g.maxSize || 40} students
                     </span>
                   </div>
@@ -597,7 +593,7 @@ export const UserManagement: React.FC = () => {
                         setGroupToEdit(g);
                         setIsGroupModalOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-[#0052CC] hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                       title="Edit Group"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -615,11 +611,11 @@ export const UserManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                   <span className="text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> {g.createdDate}
                   </span>
-                  <span className="text-[#0052CC] dark:text-blue-400 font-bold inline-flex items-center gap-1">
+                  <span className="text-brand-600 dark:text-blue-400 font-bold inline-flex items-center gap-1">
                     Open <ArrowRight className="w-3 h-3" />
                   </span>
                 </div>
@@ -655,12 +651,12 @@ export const UserManagement: React.FC = () => {
       {/* Bulk Student Deletion Confirmation Dialog */}
       {bulkDeleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Remove Selected Students?</h3>
+              <h3 className="text-base font-semibold text-slate-900">Remove Selected Students?</h3>
               <p className="text-xs text-slate-500 mt-1">
                 Are you sure you want to delete <span className="font-bold text-slate-800">{selectedForDelete.size}</span> selected student(s)? This action will revoke access and archive lab progress.
               </p>
@@ -687,12 +683,12 @@ export const UserManagement: React.FC = () => {
       {/* Group Deletion Confirmation Dialog */}
       {groupToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-sm w-full border border-slate-200 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-3xl max-w-sm w-full ring-1 ring-slate-200/70 p-6 shadow-xl text-center space-y-4 animate-in fade-in zoom-in-95">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-slate-900">Delete Training Group?</h3>
+              <h3 className="text-base font-semibold text-slate-900">Delete Training Group?</h3>
               <p className="text-xs text-slate-500 mt-1">
                 Are you sure you want to delete <span className="font-bold text-slate-800">{groupToDelete.name}</span>?
               </p>

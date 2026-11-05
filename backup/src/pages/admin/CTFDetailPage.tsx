@@ -14,10 +14,8 @@ import {
   EyeOff,
   Trash2,
   Edit3,
-  Users,
   Trophy,
   Activity,
-  AlertCircle,
   FileText,
 } from 'lucide-react';
 
@@ -28,7 +26,6 @@ export const CTFDetailPage: React.FC = () => {
   const [ctf, setCtf] = useState<CtfEvent | null>(null);
   const [challenges, setChallenges] = useState<CtfChallenge[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Challenge Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,7 +33,6 @@ export const CTFDetailPage: React.FC = () => {
 
   const fetchCtfDetails = async () => {
     setLoading(true);
-    setError(null);
     try {
       const token = localStorage.getItem('token');
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -52,8 +48,8 @@ export const CTFDetailPage: React.FC = () => {
       if (!chRes.ok) throw new Error('Failed to load challenges.');
       const chData = await chRes.json();
       setChallenges(chData);
-    } catch (err: any) {
-      setError(err.message || 'Error occurred while loading data.');
+    } catch (err) {
+      console.error('Failed to load CTF details:', err);
     } finally {
       setLoading(false);
     }
@@ -159,13 +155,13 @@ export const CTFDetailPage: React.FC = () => {
   const getStatusBadge = (status: CtfEvent['status']) => {
     switch (status) {
       case 'active':
-        return <span className="text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border border-emerald-100 dark:border-emerald-900/35">Live</span>;
+        return <span className="text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md font-bold text-xs border border-emerald-100 dark:border-emerald-900/35">Live</span>;
       case 'completed':
-        return <span className="text-slate-500 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border border-slate-200 dark:border-slate-700">Concluded</span>;
+        return <span className="text-slate-500 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-md font-bold text-xs border border-slate-200 dark:border-slate-700">Concluded</span>;
       case 'paused':
-        return <span className="text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border border-amber-100 dark:border-amber-900/35">Paused</span>;
+        return <span className="text-amber-500 bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded-md font-bold text-xs border border-amber-100 dark:border-amber-900/35">Paused</span>;
       default:
-        return <span className="text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-[10px] border border-indigo-100 dark:border-indigo-900/35">Scheduled</span>;
+        return <span className="text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 px-2 py-0.5 rounded-md font-bold text-xs border border-indigo-100 dark:border-indigo-900/35">Scheduled</span>;
     }
   };
 
@@ -201,7 +197,7 @@ export const CTFDetailPage: React.FC = () => {
         </div>
 
         {/* Info Banner */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{ctf.title}</h2>
@@ -245,7 +241,7 @@ export const CTFDetailPage: React.FC = () => {
           </div>
           <button
             onClick={openAddModal}
-            className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/25"
+            className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 py-2 rounded-full transition-all shadow-md shadow-indigo-500/25"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Challenge
@@ -253,7 +249,7 @@ export const CTFDetailPage: React.FC = () => {
         </div>
 
         {challenges.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl shadow-sm">
             <Trophy className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
             <h4 className="text-sm font-bold text-slate-600 dark:text-slate-400">No Challenges Configured</h4>
             <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
@@ -261,17 +257,17 @@ export const CTFDetailPage: React.FC = () => {
             </p>
             <button
               onClick={openAddModal}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-xl mt-4 transition-all shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-full mt-4 transition-all shadow-sm"
             >
               Add Challenge
             </button>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                     <th className="px-6 py-4">Title / Target Target</th>
                     <th className="px-6 py-4">Category</th>
                     <th className="px-6 py-4">Scoring Mode</th>
@@ -287,13 +283,13 @@ export const CTFDetailPage: React.FC = () => {
                       <td className="px-6 py-4 max-w-xs">
                         <span className="font-bold text-slate-800 dark:text-slate-200">{ch.title}</span>
                         {ch.connection_string && (
-                          <span className="text-[10px] text-slate-400 font-mono block mt-1">
+                          <span className="text-xs text-slate-400 font-mono block mt-1">
                             {ch.connection_string}
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                        <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold px-2 py-0.5 rounded text-xs uppercase">
                           {ch.category || 'Web'}
                         </span>
                       </td>
@@ -313,7 +309,7 @@ export const CTFDetailPage: React.FC = () => {
                           onClick={() => handleToggleVisibility(ch.id)}
                           className={`flex items-center gap-1 text-xs font-semibold p-1.5 rounded-lg border transition-colors ${
                             ch.is_hidden
-                              ? 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600'
+                              ? 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-700'
                               : 'bg-indigo-50/50 text-indigo-600 border-indigo-100 hover:bg-indigo-100/50'
                           }`}
                         >

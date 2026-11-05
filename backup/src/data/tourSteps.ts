@@ -69,12 +69,12 @@ export const studentTourSteps: TourStep[] = [
   },
   {
     icon: ClipboardList,
-    title: 'Assignments',
-    description: 'Labs assigned to you by your instructor appear here, with deadlines and progress.',
+    title: 'My work',
+    description: 'Everything your teachers set appears here, most urgent first, with deadlines and progress.'
   },
   {
     icon: Trophy,
-    title: 'CTF Competitions',
+    title: 'Competitions',
     description: 'Join live Capture-The-Flag events and compete on the scoreboard.',
   },
   {

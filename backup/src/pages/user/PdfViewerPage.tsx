@@ -189,7 +189,7 @@ export const PdfViewerPage: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Materials
         </button>
-        <h1 className="text-xs sm:text-sm font-extrabold text-white truncate max-w-md">
+        <h1 className="font-display tracking-tight text-xs sm:text-sm font-semibold text-white truncate max-w-md">
           {material.title}
         </h1>
         <div className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export const PdfViewerPage: React.FC = () => {
           >
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-[11px] font-bold text-slate-500">{Math.round(scale * 100)}%</span>
+          <span className="text-xs font-bold text-slate-500">{Math.round(scale * 100)}%</span>
           <button
             onClick={() => setScale((s) => Math.min(2.5, s + 0.1))}
             className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200"

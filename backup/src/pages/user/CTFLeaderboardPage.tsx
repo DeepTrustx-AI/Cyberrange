@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { UserLayout } from '../../components/user/UserLayout';
 import type { CtfEvent, CtfScoreboardEntry } from '../../types/ctf';
 import { useCTFWebSocket } from '../../hooks/useCTFWebSocket';
-import { ArrowLeft, Trophy, RefreshCw, Activity, Award, Star } from 'lucide-react';
+import { ArrowLeft, Trophy, RefreshCw } from 'lucide-react';
 
 export const CTFLeaderboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,7 +91,7 @@ export const CTFLeaderboardPage: React.FC = () => {
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-xs font-bold">
               <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
               {connected ? 'Live Sync Active' : 'Offline'}
             </span>
@@ -106,7 +106,7 @@ export const CTFLeaderboardPage: React.FC = () => {
 
         {/* scoreboard header info */}
         {ctf && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl p-6 shadow-sm flex items-center justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-indigo-500" />
@@ -115,10 +115,16 @@ export const CTFLeaderboardPage: React.FC = () => {
               <p className="text-xs text-slate-400">Live rankings for {ctf.title}</p>
             </div>
             {ctf.is_frozen && (
-              <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 px-3 py-1 rounded-full text-xs font-bold">
                 Scoreboard Frozen ❄️
               </span>
             )}
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300" role="alert">
+            {error}
           </div>
         )}
 
@@ -127,15 +133,15 @@ export const CTFLeaderboardPage: React.FC = () => {
             Retrieving Live Standings...
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-slate-400 text-xs font-semibold">
+          <div className="text-center py-16 bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl shadow-sm text-slate-400 text-xs font-semibold">
             No submissions recorded. Be the first to capture a flag!
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-200/70 dark:ring-slate-800 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 bg-slate-50/50 dark:bg-slate-950/20">
                     <th className="px-6 py-4 w-20 text-center">Rank</th>
                     <th className="px-6 py-4">Participant Squad</th>
                     <th className="px-6 py-4 w-32 text-center">Solved Targets</th>
@@ -176,14 +182,14 @@ export const CTFLeaderboardPage: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <span>{entry.participant_name}</span>
                             {isSelf && (
-                              <span className="text-[9px] font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              <span className="text-xs font-bold bg-indigo-600 text-white px-1.5 py-0.5 rounded">
                                 You
                               </span>
                             )}
                             {entry.first_blood_challenges && entry.first_blood_challenges.length > 0 && (
                               <span
                                 title={`${entry.first_blood_challenges.length} First Blood(s)`}
-                                className="inline-flex items-center text-rose-500 text-[11px]"
+                                className="inline-flex items-center text-rose-500 text-xs"
                               >
                                 🩸
                               </span>
@@ -193,7 +199,7 @@ export const CTFLeaderboardPage: React.FC = () => {
                         <td className="px-6 py-4 text-center font-mono font-bold text-slate-600 dark:text-slate-400">
                           {entry.solve_count}
                         </td>
-                        <td className="px-6 py-4 text-center font-mono font-black text-indigo-600 dark:text-indigo-400 text-sm">
+                        <td className="px-6 py-4 text-center font-mono font-bold text-indigo-600 dark:text-indigo-400 text-sm">
                           {entry.total_points}
                         </td>
                       </tr>

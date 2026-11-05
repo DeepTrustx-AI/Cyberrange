@@ -1,6 +1,6 @@
 import { apiFetch as routedApiFetch } from '../../lib/api';
 import React, { useState } from 'react';
-import type { CsvImportUserRow, PlatformUser } from '../../types/admin';
+import type { PlatformUser } from '../../types/admin';
 import { X, FileSpreadsheet, UploadCloud, Download, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { notify } from '../../lib/feedback';
 
@@ -92,15 +92,15 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full ring-1 ring-slate-200/70 dark:ring-slate-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-[#6F42C1] dark:text-purple-300">
+            <div className="p-2 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 Bulk Import Users
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">Batch provision multiple user accounts simultaneously</p>
@@ -122,7 +122,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             <div className="space-y-4">
               {/* Guidelines Info Alert */}
               <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 rounded-2xl text-xs space-y-2">
-                <span className="font-extrabold text-blue-800 dark:text-blue-300 block">Import file guidelines</span>
+                <span className="font-semibold text-blue-800 dark:text-blue-300 block">Import file guidelines</span>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   Upload an XLSX or UTF-8 CSV file. Full Name and Email are required; Department / Year and Roll Number are optional for workshop attendees. Account passwords will be auto-generated and emailed directly to each user.
                 </p>
@@ -145,14 +145,14 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                 </div>
               </div>
 
-              <label className="border-2 border-dashed border-slate-300 hover:border-[#0052CC] bg-slate-50/50 hover:bg-blue-50/40 rounded-2xl p-8 text-center block cursor-pointer transition-all group">
+              <label className="border-2 border-dashed border-slate-300 hover:border-brand-600 bg-slate-50/50 hover:bg-blue-50/40 rounded-2xl p-8 text-center block cursor-pointer transition-all group">
                 <input
                   type="file"
                   accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 text-[#0052CC] flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-blue-100 text-brand-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                   <UploadCloud className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-800">
@@ -173,7 +173,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
                 <span className="text-slate-600 font-medium">Need the standard XLSX import template?</span>
                 <button
                   onClick={handleDownloadTemplate}
-                  className="text-[#0052CC] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+                  className="text-brand-600 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
                 >
                   <Download className="w-3.5 h-3.5" /> Download XLSX Template
                 </button>
@@ -184,23 +184,23 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#28A745]" />
-                  <span className="text-emerald-900 font-bold">Import Batch Upload Completed Successfully!</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-800 font-bold">Import Batch Upload Completed Successfully!</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Checked</span>
-                  <span className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1 block">{importSummary.total_processed || 0}</span>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 rounded-2xl">
+                  <span className="text-xs text-slate-400 font-bold block">Total Checked</span>
+                  <span className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-1 block">{importSummary.total_processed || 0}</span>
                 </div>
                 <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 rounded-2xl">
-                  <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider block">Created</span>
-                  <span className="text-xl font-black text-[#28A745] mt-1 block">{importSummary.success_count || 0}</span>
+                  <span className="text-xs text-emerald-600 font-bold block">Created</span>
+                  <span className="text-xl font-bold text-emerald-600 mt-1 block">{importSummary.success_count || 0}</span>
                 </div>
                 <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 rounded-2xl">
-                  <span className="text-[10px] text-rose-600 font-bold uppercase tracking-wider block">Errors</span>
-                  <span className="text-xl font-black text-rose-600 mt-1 block">{importSummary.failure_count || 0}</span>
+                  <span className="text-xs text-rose-600 font-bold block">Errors</span>
+                  <span className="text-xl font-bold text-rose-600 mt-1 block">{importSummary.failure_count || 0}</span>
                 </div>
               </div>
 
@@ -249,7 +249,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <button
                 onClick={handleUploadSubmit}
                 disabled={!selectedFile || isUploading}
-                className="px-5 py-2 bg-[#0052CC] hover:bg-[#0043A4] disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold text-xs rounded-full shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {isUploading ? 'Uploading...' : 'Process Batch Import'}
                 <ArrowRight className="w-3.5 h-3.5" />
