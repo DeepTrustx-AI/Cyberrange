@@ -200,7 +200,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-7 text-slate-100 md:px-8">
+    <main className="guided-lab min-h-screen px-4 py-7 md:px-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">

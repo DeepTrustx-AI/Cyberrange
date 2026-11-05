@@ -51,9 +51,9 @@ const PHASES: { id: Phase; title: string; pts: number; description: string }[] =
   { id: 'verify', title: 'Verify', pts: 50, description: 'Check scope and complete the assessment' },
 ];
 const BLANK: Evidence = { observations: {}, impacts: {}, plans: {}, verification: '' };
-const selectStyle = 'mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 outline-none focus-visible:border-sky-400';
-const primaryStyle = 'rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50';
-const mutedStyle = 'rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50';
+const selectStyle = 'mt-1 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/15 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus-visible:border-amber-400';
+const primaryStyle = 'rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-600 dark:text-amber-950 dark:hover:bg-amber-500';
+const mutedStyle = 'rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-xs transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 
 function errorMessage(payload: unknown, fallback: string): string {
   if (payload && typeof payload === 'object' && 'detail' in payload && typeof payload.detail === 'string') return payload.detail;
@@ -76,8 +76,8 @@ function FeedbackMark({ ok, hint }: { ok?: boolean; hint?: string }) {
   </p>;
 }
 function SnapshotPanel({ title, subtitle, content }: { title: string; subtitle: string; content: string }) {
-  return <section className="min-w-0 rounded-xl border border-slate-700 bg-slate-900 p-4">
-    <h3 className="text-sm font-semibold text-slate-100">{title} <span className="ml-2 font-normal text-slate-400">READ ONLY</span></h3>
+  return <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title} <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">Read only</span></h3>
     <p className="my-2 text-xs text-slate-400">{subtitle}</p>
     <pre className="max-h-72 min-h-32 overflow-auto whitespace-pre rounded-lg bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-200" tabIndex={0}>{content}</pre>
   </section>;
@@ -184,7 +184,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
   const relevant = view === 'briefing' || view === 'review' ? undefined : results[view];
   const activeFeedback = relevant?.feedback ?? [];
 
-  return <main className="min-h-screen bg-slate-950 px-4 py-7 text-slate-100 md:px-8">
+  return <main className="guided-lab min-h-screen px-4 py-7 md:px-8">
     <div className="mx-auto max-w-6xl">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
