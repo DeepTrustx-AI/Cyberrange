@@ -388,6 +388,20 @@ assignment IDs as creation order. A labelled native sort select offers Newest
 first, Oldest first and Most urgent first, independent of the status filters.
 The selected order is kept in the URL. The dashboard still prioritizes urgent work.
 
+### Dashboard assignment groups
+The Assigned labs panel shows the lab name and clay art once. Every assignment
+stays visible beneath it in a compact table with Starts, Deadline and Progress
+columns. Each row retains its own dates, module counts and assignment identity;
+progress is never combined across assignments. Existing date formatting,
+SegmentedBar and lab-route helpers are reused. The API's order is preserved,
+including the catalogue fallback when no assignments exist. Thin neutral row
+dividers and the existing light/Ember tokens carry the hierarchy, with no nested
+cards or accordion. Dashboard totals and My work behavior are unchanged.
+The narrow assignment cells set SegmentedBar's optional maxSegments to 6;
+longer labs use its existing continuous bar, retaining actual counts and ARIA
+values so fixed segment gaps cannot overflow. All other uses keep the default
+24-segment limit. Colors, completion mark and reduced-motion behavior are shared.
+
 ### Buttons
 - **Shape:** full pill (9999px).
 - **Primary:** slate ink fill, white semibold 14px text, 10 by 20px, md shadow tinted brand at 20%, often a filled play icon. Hover steps to deepest ink. In Ember the same class renders burnt orange; celebration and 404 buttons use apricot-deep with espresso text.

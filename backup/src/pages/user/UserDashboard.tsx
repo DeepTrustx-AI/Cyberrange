@@ -17,27 +17,17 @@ import { ActivityFeed, SkillsCard, TodayStrip, type SkillArea } from '../../comp
 import { BadgeShelf, CubeStage } from '../../components/dashboard/GamePanels';
 import { computeGame, useFreshBlocks, useNewBadges } from '../../utils/progressGame';
 import { CUBE_BLOCKS } from '../../components/three/clay';
+import type { TrainingLab } from './dashboardLabs';
+import { DashboardLabGroups } from './DashboardLabGroups';
 import {
   ArrowRight,
   AlertCircle,
-  Clock,
   CheckCircle2,
   Flame,
   Play,
   Trophy,
   Target,
 } from 'lucide-react';
-
-interface TrainingLab {
-  id: string;
-  title: string;
-  category: string;
-  status: 'live' | 'upcoming' | 'completed';
-  description?: string;
-  totalChallenges: number;
-  solvedChallenges: number;
-  durationHours: number;
-}
 
 interface DashboardData {
   user?: { name?: string | null } | null;
@@ -58,6 +48,9 @@ interface DashboardData {
     total_challenges?: number | null;
     solved_challenges?: number | null;
     duration_hours?: number | null;
+    assignment_id?: number | null;
+    start_datetime?: string | null;
+    end_datetime?: string | null;
     tags?: string[] | null;
   }> | null;
 }
@@ -84,36 +77,6 @@ function progressOf(lab: TrainingLab) {
 function pickNextLab(labs: TrainingLab[]) {
   const open = labs.filter((lab) => lab.status !== 'completed' && progressOf(lab) < 1);
   return open.find((lab) => lab.solvedChallenges > 0) ?? open.find((lab) => lab.status === 'live') ?? open[0] ?? null;
-}
-
-function StatusPill({ lab }: { lab: TrainingLab }) {
-  const progress = progressOf(lab);
-  if (progress >= 1 || lab.status === 'completed') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-        <CheckCircle2 className="h-3 w-3" /> Complete
-      </span>
-    );
-  }
-  if (lab.status === 'upcoming') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-        <Clock className="h-3 w-3" /> Upcoming
-      </span>
-    );
-  }
-  if (progress > 0) {
-    return (
-      <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-300">
-        In progress
-      </span>
-    );
-  }
-  return (
-    <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-      Not started
-    </span>
-  );
 }
 
 function NextLabCard({ lab, onOpen, onAll }: { lab: TrainingLab; onOpen: () => void; onAll: () => void }) {
@@ -225,6 +188,9 @@ export const UserDashboard: React.FC = () => {
             totalChallenges: lab.total_challenges ?? 0,
             solvedChallenges: lab.solved_challenges ?? 0,
             durationHours: labHours(lab.id ?? '', lab.duration_hours ?? 0),
+            assignmentId: lab.assignment_id ?? null,
+            startDatetime: lab.start_datetime ?? null,
+            endDatetime: lab.end_datetime ?? null,
           })));
       } catch (error) {
         if (!cancelled) {
@@ -449,37 +415,7 @@ export const UserDashboard: React.FC = () => {
               )}
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100 border-t border-slate-100 dark:divide-slate-800 dark:border-slate-800">
-              {labs.map((lab) => {
-                const meta = categoryMeta(lab.category);
-                return (
-                  <li key={lab.id}>
-                    <button
-                      onClick={() => navigate(labPath(lab.id))}
-                      className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 text-left transition-colors hover:bg-slate-50 sm:grid-cols-[auto_minmax(0,1fr)_10rem_auto] sm:px-6 dark:hover:bg-slate-800/40"
-                    >
-                      <span className="flex h-11 w-14 items-center justify-center overflow-hidden rounded-xl bg-slate-50 transition-colors group-hover:bg-brand-50 dark:bg-slate-800/60 dark:group-hover:bg-brand-500/10">
-                        <LabArtImage kind={labArtKind(lab.id, lab.category)} className="h-12 w-16 max-w-none" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">{lab.title}</span>
-                        <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                          {meta.label}
-                          {lab.durationHours > 0 && ` · ${lab.durationHours} h`}
-                        </span>
-                      </span>
-                      <span className="hidden items-center gap-2.5 sm:flex">
-                        <SegmentedBar done={lab.solvedChallenges} total={lab.totalChallenges} />
-                        <span className="w-8 shrink-0 text-right text-xs tabular text-slate-500 dark:text-slate-400">
-                          {lab.solvedChallenges}/{lab.totalChallenges}
-                        </span>
-                      </span>
-                      <StatusPill lab={lab} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <DashboardLabGroups labs={labs} />
           )}
         </section>
 

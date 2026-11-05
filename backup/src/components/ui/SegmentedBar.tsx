@@ -3,12 +3,14 @@ interface SegmentedBarProps {
   total: number;
   label?: string;
   className?: string;
+  maxSegments?: number;
 }
 
 // Progress drawn as one segment per module, so "3 of 5" reads at a glance.
 // Filled segments sweep in one after another; a finished bar turns mint and
-// gets a small check. Long labs (more than 24 modules) use one continuous bar.
-export function SegmentedBar({ done, total, label, className = '' }: SegmentedBarProps) {
+// gets a small check. Long labs use one continuous bar (default: more than 24
+// modules); a compact holder can lower maxSegments without changing real counts.
+export function SegmentedBar({ done, total, label, className = '', maxSegments = 24 }: SegmentedBarProps) {
   const safeTotal = Math.max(0, total);
   const safeDone = Math.min(Math.max(0, done), safeTotal);
   const complete = safeTotal > 0 && safeDone === safeTotal;
@@ -26,7 +28,7 @@ export function SegmentedBar({ done, total, label, className = '' }: SegmentedBa
     >
       {safeTotal === 0 ? (
         <span className={`h-full flex-1 rounded-full ${empty}`} />
-      ) : safeTotal > 24 ? (
+      ) : safeTotal > maxSegments ? (
         <span className={`relative h-full flex-1 overflow-hidden rounded-full ${empty}`}>
           <span className={`segment-fill absolute inset-y-0 left-0 rounded-full ${fill}`} style={{ width: `${(safeDone / safeTotal) * 100}%` }} />
         </span>
