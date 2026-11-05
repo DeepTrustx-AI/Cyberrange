@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import { apiFetch as baseApiFetch } from '../lib/api';
+import { apiFetch as baseApiFetch, authFetch } from '../lib/api';
 
 export interface User {
   id: number;
@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     otpCode?: string
   ): Promise<{ role: string; user: any; status?: string; message?: string; is_first_login?: boolean }> => {
     const endpoint = portal === 'admin' ? '/api/v1/auth/admin-login' : '/api/v1/auth/student-login';
-    const response = await baseApiFetch(endpoint, {
+    const data = await authFetch(endpoint, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -211,18 +211,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }),
     });
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const msg = errData.detail || errData.message || 'Invalid Email or Password';
-      throw new Error(typeof msg === 'string' ? msg : 'Invalid Email or Password');
-    }
-
-    const data = await response.json();
     if (data.status === 'otp_required') {
       return { role: '', user: null, status: 'otp_required', message: data.message };
     }
-    if (!data.success) throw new Error(data.message || 'Invalid Email or Password');
-
     if (data.token) {
       localStorage.setItem('token', data.token);
       tokenRef.current = data.token;
