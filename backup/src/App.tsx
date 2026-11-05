@@ -77,6 +77,7 @@ const CompliancePortalLabPage = lazy(() => import('./pages/user/CompliancePortal
 const CloudSecurityLabPage  = lazy(() => import('./pages/user/CloudSecurityLabPage').then(m => ({ default: m.CloudSecurityLabPage })));
 const CloudStaticSecurityLabPage = lazy(() => import('./pages/user/CloudStaticSecurityLabPage').then(m => ({ default: m.CloudStaticSecurityLabPage })));
 const KubernetesDriftLabPage = lazy(() => import('./pages/user/KubernetesDriftLabPage').then(m => ({ default: m.KubernetesDriftLabPage })));
+const VulnShopLabPage        = lazy(() => import('./pages/user/VulnShopLabPage').then(m => ({ default: m.VulnShopLabPage })));
 const LiveKubernetesSecurityLabPage = lazy(() => import('./pages/user/LiveKubernetesSecurityLabPage').then(m => ({ default: m.LiveKubernetesSecurityLabPage })));
 const PuzzleLabPage         = lazy(() => import('./pages/user/PuzzleLabPage').then(m => ({ default: m.PuzzleLabPage })));
 const TechCorpLabSession    = lazy(() => import('./pages/user/TechCorpLabSession').then(m => ({ default: m.TechCorpLabSession })));
@@ -388,6 +389,14 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
                     <KubernetesDriftLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/labs/vulnshop"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <VulnShopLabPage />
                   </ProtectedRoute>
                 }
               />

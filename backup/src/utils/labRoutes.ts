@@ -12,6 +12,7 @@ export function labPath(labId: string): string {
   if (id === 'live-kubernetes-security-lab') return '/labs/live-kubernetes-security-lab';
   if (id === 'kubernetes-drift-lab') return '/labs/kubernetes-drift-lab';
   if (id === 'cloud-static-security-lab') return '/labs/cloud-static-security-lab';
+  if (id === 'vulnshop') return '/labs/vulnshop';
   if (compact.includes('cloud')) return '/labs/cloud-security-lab/session/sess-cloud-01';
   if (id === 'lab1-recon' || id === 'recon-lab') return '/labs/lab1-recon/session/sess-recon-01';
   if (id === 'techcorp-sysadmin-labs' || id.includes('puzzle')) return '/puzzle';
