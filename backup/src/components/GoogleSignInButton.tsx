@@ -1,6 +1,7 @@
-import { apiFetch as routedApiFetch } from '../lib/api';
-import React, { useEffect, useRef, useState } from 'react';
+import { authFetch } from '../lib/api';
+import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useAuth } from '../context';
+import { secondaryButton } from './auth/formStyles';
 
 declare global {
   interface Window {
@@ -8,21 +9,32 @@ declare global {
   }
 }
 
+const GOOGLE_SCRIPT_TIMEOUT_MS = 15_000;
+const GOOGLE_BUTTON_MAX_WIDTH = 400; // Maximum supported by Google's rendering API.
 let googleScript: Promise<void> | null = null;
 
-// Google's script is only needed where this button is, so it loads here, once, rather than on
-// every page. A failed load can be tried again by the next button that mounts.
 function loadGoogleScript() {
-  googleScript ??= new Promise((resolve, reject) => {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  googleScript ??= new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
+    const fail = () => {
+      window.clearTimeout(timeout);
       script.remove();
       googleScript = null;
-      reject(new Error('Google sign-in did not load'));
+      reject(new Error('Google sign-in did not load.'));
     };
+    const timeout = window.setTimeout(fail, GOOGLE_SCRIPT_TIMEOUT_MS);
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => {
+      if (!window.google?.accounts?.id) {
+        fail();
+        return;
+      }
+      window.clearTimeout(timeout);
+      resolve();
+    };
+    script.onerror = fail;
     document.head.appendChild(script);
   });
   return googleScript;
@@ -41,167 +53,129 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   onSuccess,
   onError,
   buttonText = 'Continue with Google',
-  className = ''
+  className = '',
 }) => {
   const { setSessionToken } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  // Bumped by a click while Google is not ready, which loads it again.
+  const [isReady, setIsReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const hiddenBtnRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const authenticatingRef = useRef(false);
 
-  // Unset, or still a "your-..." placeholder, means Google sign-in is off.
   const clientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-  const configured = clientId !== '' && !clientId.startsWith('your-');
+  const configured = clientId.trim() !== '' && !clientId.startsWith('your-');
 
-  const handleCredentialResponse = async (response: any) => {
-    if (!response || !response.credential) {
-      onError('Failed to obtain Google authentication token.');
+  // The SDK subscription keeps the current portal and callbacks without reinitializing
+  // whenever a parent renders. Google invokes it only after a real button interaction.
+  const handleCredentialResponse = useEffectEvent(async (response: any, isCurrent: () => boolean) => {
+    if (authenticatingRef.current || !isCurrent()) return;
+    if (!response?.credential) {
+      onError('Google did not return a sign-in token. Please try again.');
       return;
     }
-
+    authenticatingRef.current = true;
     setIsAuthenticating(true);
     try {
-      const res = await routedApiFetch('/api/v1/auth/google', {
+      const data = await authFetch('/api/v1/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          credential: response.credential,
-          portal: portal
-        })
+        body: JSON.stringify({ credential: response.credential, portal }),
       });
-
-      const raw = await res.text();
-      let data: any = {};
-
-      if (raw) {
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          throw new Error(`Google authentication returned an invalid response (${res.status}).`);
-        }
+      if (!isCurrent()) return;
+      if (!data.success || !data.token) {
+        throw new Error(data.message || 'Unable to complete Google sign-in. Please try again.');
       }
-
-      setIsAuthenticating(false);
-
-      if (!res.ok || !data.success) {
-        const msg =
-          data.detail ||
-          data.message ||
-          `Google authentication failed${res.status ? ` (${res.status})` : ''}.`;
-        onError(typeof msg === 'string' ? msg : 'Google authentication failed.');
-        return;
-      }
-
-      if (data.token) {
-        // Await this so the account's roles/capabilities (used by ProtectedRoute)
-        // are loaded before onSuccess navigates away — otherwise the redirect can
-        // land before authorization data exists, and get bounced to /unauthorized.
-        await setSessionToken(data.token, data.user);
-        localStorage.setItem('token', data.token);
-        if (data.role) {
-          localStorage.setItem('role', data.role);
-        }
-      }
-
+      await setSessionToken(data.token, data.user);
+      if (!isCurrent()) return;
+      if (data.role) localStorage.setItem('role', data.role);
       onSuccess(data);
     } catch (err: any) {
-      setIsAuthenticating(false);
-      onError(err.message || 'Network error during Google authentication.');
+      if (isCurrent()) onError(err.message || 'Unable to complete Google sign-in. Please try again.');
+    } finally {
+      authenticatingRef.current = false;
+      if (isCurrent()) setIsAuthenticating(false);
     }
-  };
+  });
 
-  const isInitializedRef = useRef(false);
+  const reportLoadFailure = useEffectEvent(() => {
+    onError('Google sign-in could not load. Check your connection and retry, or sign in with your email.');
+  });
 
   useEffect(() => {
     if (!configured) return;
     let cancelled = false;
+    let observer: ResizeObserver | undefined;
+    const target = buttonRef.current;
+    setIsReady(false);
+    setLoadFailed(false);
 
-    const initializeGis = () => {
-      if (isInitializedRef.current) return;
-      if (window.google?.accounts?.id) {
-        try {
-          isInitializedRef.current = true;
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: handleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true,
-          });
+    loadGoogleScript().then(() => {
+      if (cancelled || !target) return;
+      const gis = window.google.accounts.id;
+      gis.initialize({
+        client_id: clientId,
+        callback: (response: any) => handleCredentialResponse(response, () => !cancelled),
+        auto_select: false,
+        ux_mode: 'popup',
+      });
+      let renderedWidth = 0;
+      const renderButton = () => {
+        const width = Math.min(
+          GOOGLE_BUTTON_MAX_WIDTH,
+          Math.floor(containerRef.current?.getBoundingClientRect().width || GOOGLE_BUTTON_MAX_WIDTH),
+        );
+        if (width === renderedWidth) return;
+        renderedWidth = width;
+        target.replaceChildren();
+        gis.renderButton(target, {
+          theme: 'outline',
+          size: 'large',
+          shape: 'pill',
+          text: 'continue_with',
+          type: 'standard',
+          width,
+        });
+      };
+      renderButton();
+      observer = new ResizeObserver(renderButton);
+      if (containerRef.current) observer.observe(containerRef.current);
+      setIsReady(true);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoadFailed(true);
+      reportLoadFailure();
+    });
 
-          if (hiddenBtnRef.current) {
-            window.google.accounts.id.renderButton(hiddenBtnRef.current, {
-              theme: 'outline',
-              size: 'large',
-              width: 280,
-              type: 'standard',
-            });
-          }
-        } catch (e) {
-          console.error('[GoogleSignInButton] Error initializing GIS:', e);
-        }
-      }
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      target?.replaceChildren();
     };
-
-    loadGoogleScript().then(() => { if (!cancelled) initializeGis(); }).catch(() => {});
-    return () => { cancelled = true; };
   }, [clientId, configured, portal, loadAttempt]);
 
-
-  const handleCustomClick = () => {
-    if (!configured) {
-      onError('Google Sign-In is not configured.');
-      return;
-    }
-    if (window.google?.accounts?.id) {
-      try {
-        // Clicking the standard GIS button wrapper directly inside the click handler context
-        // allows browser popups to open immediately as a direct result of user interaction (no popup blocker).
-        const renderedBtn = hiddenBtnRef.current?.querySelector('div[role="button"]') as HTMLElement;
-        if (renderedBtn) {
-          renderedBtn.click();
-        } else {
-          // If fallback is needed, prompt the native Google dialog
-          window.google.accounts.id.prompt();
-        }
-      } catch (e) {
-        console.error('[GoogleSignInButton] Prompt error:', e);
-      }
-    } else {
-      onError('Google sign-in is not ready yet. Please try again in a moment.');
-      setLoadAttempt((attempt) => attempt + 1);
-    }
-  };
-
   return (
-    <div className="w-full relative">
-      <button
-        type="button"
-        onClick={handleCustomClick}
-        disabled={isAuthenticating}
-        className={className || `w-full flex items-center justify-center gap-2.5 py-3 px-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all shadow-sm cursor-pointer disabled:opacity-60`}
-      >
-        {isAuthenticating ? (
-          <>
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span>Verifying Google Identity...</span>
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z" />
-              <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z" />
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z" />
-            </svg>
-            <span>
-              {configured ? buttonText : 'Google Sign-In is not configured.'}
-            </span>
-          </>
-        )}
-      </button>
-
-      {/* Hidden GIS Rendered Element for programmatic trigger fallback */}
-      <div ref={hiddenBtnRef} className="hidden absolute inset-0 pointer-events-none opacity-0" />
+    <div ref={containerRef} className="relative flex h-12 w-full items-center justify-center" role="group" aria-label={buttonText}>
+      {/* Keep Google's real, keyboard-accessible button visible and directly clickable.
+          Synthetic clicks on a hidden button cannot reliably launch Google's flow. */}
+      <div ref={buttonRef} hidden={!isReady || isAuthenticating} />
+      {(!isReady || isAuthenticating) && (
+        <button
+          type="button"
+          disabled={!configured || !loadFailed || isAuthenticating}
+          onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+          className={className || secondaryButton}
+          aria-busy={(configured && !loadFailed) || isAuthenticating}
+        >
+          <span role="status">
+            {!configured ? 'Google sign-in is not configured.'
+              : isAuthenticating ? 'Verifying Google identity…'
+                : loadFailed ? 'Retry Google sign-in'
+                  : 'Loading Google sign-in…'}
+          </span>
+        </button>
+      )}
     </div>
   );
 };
