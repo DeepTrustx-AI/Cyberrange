@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:api-routing && npm run test:auth && tsc -b && vite build",
+    "build": "npm run check:api-routing && npm run test:auth && npm run test:assignments && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "check:api-routing": "node scripts/check-api-routing.mjs",
+    "test:assignments": "node --test scripts/test-assignment-sorting.mjs",
     "test:auth": "node --test scripts/test-auth.mjs",
     "render:lab-art": "node scripts/render-lab-art.mjs"
   },
