@@ -84,6 +84,47 @@ export function parseApiErrorMessage(errData: any, fallback: string): string {
   return fallback;
 }
 
+/** Authentication must distinguish unavailable infrastructure from rejected credentials. */
+export async function authFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<any> {
+  let response: Response;
+  try {
+    response = await apiFetch(path, options);
+  } catch {
+    throw new Error('Unable to connect to CyberRange. Check your connection and try again.');
+  }
+  // Cloudflare and reverse proxies can return HTML or plain text, including 522.
+  if (response.status >= 500) {
+    throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
+  }
+  let data: any;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('Unable to complete sign-in. Please try again in a few minutes.');
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Unable to complete sign-in. Please try again in a few minutes.');
+  }
+  if (!response.ok) {
+    throw new Error(parseApiErrorMessage(
+      data,
+      response.status === 401 ? 'Invalid Email or Password' : 'Unable to complete sign-in. Please try again.',
+    ));
+  }
+  if (data.status !== 'otp_required') {
+    if (data.success !== true) {
+      throw new Error(parseApiErrorMessage(data, 'Unable to complete sign-in. Please try again in a few minutes.'));
+    }
+    if (typeof data.token !== 'string' || !data.token || !data.user || typeof data.user !== 'object' || Array.isArray(data.user)) {
+      throw new Error('Unable to complete sign-in. Please try again in a few minutes.');
+    }
+  }
+  return data;
+}
+
 export function apiWebSocketUrl(path: string): string {
   if (/^wss?:\/\//i.test(path)) {
     return path;

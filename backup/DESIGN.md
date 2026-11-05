@@ -510,6 +510,13 @@ One easing carries the system: `ease-out-expo` (cubic-bezier(0.16, 1, 0.3, 1)); 
 
 ## Known gaps
 
+Authentication provider exception: Google sign-in uses the visible button rendered
+by Google Identity Services, configured as outline/large/pill. Google owns the
+button's typography and height and limits its width to 400px; the existing auth
+secondary-action slot centers it and adapts it to narrow screens. Loading, retry
+and verification states use the shared auth secondary-button style. Service
+outages use the existing inline error banner and never a credential-error message.
+
 Open items in the shipped build. These are defects or limits the build carries, not rules to copy:
 - Catalogue summaries live in the frontend (`src/utils/labCopy.ts`) until the API carries real descriptions; the backend should own them.
 - The playground student cart call (`/api/v1/cart`) fails because the playground database predates the `cart_items.item_type` column.
