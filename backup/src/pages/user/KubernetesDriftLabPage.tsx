@@ -71,7 +71,7 @@ function shuffled(questions: Question[]): Question[] {
 }
 function FeedbackMark({ ok, hint }: { ok?: boolean; hint?: string }) {
   if (ok === undefined) return null;
-  return <p className={`mt-1 text-xs ${ok ? 'text-emerald-300' : 'text-amber-200'}`}>
+  return <p className={`mt-1 text-xs ${ok ? 'text-mint-700' : 'text-amber-700'}`}>
     {ok ? 'Verified' : hint || 'Recheck the original snapshot and the approved baseline.'}
   </p>;
 }
@@ -188,22 +188,22 @@ export const KubernetesDriftLabPage: React.FC = () => {
     <div className="mx-auto max-w-6xl">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <button onClick={() => navigate('/assigned-labs')} className="mb-3 text-sm text-sky-300 hover:underline">← Back to assigned labs</button>
+          <button onClick={() => navigate('/assigned-labs')} className="mb-3 text-sm font-medium text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400">← Back to assigned labs</button>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Kubernetes Configuration Drift Detection</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-300">Investigate the original change, decide what is safe, then restore the simulated workload.</p>
         </div>
-        <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">OFFLINE SIMULATION · 500 POINTS</span>
+        <span className="rounded-full border border-mint-300 bg-mint-50 px-3 py-1 text-xs font-semibold tracking-wide text-mint-700">OFFLINE SIMULATION · 500 POINTS</span>
       </header>
       {loading ? <p className="rounded-xl bg-slate-900 p-6" role="status">Loading guided lab…</p> : !lesson ? (
         <section className="rounded-xl bg-slate-900 p-6"><h2 className="font-semibold">Workspace unavailable</h2>
-          <p className="mt-2 text-sm text-rose-300" role="alert">{error}</p><button className={`${primaryStyle} mt-4`} onClick={() => void load()}>Retry</button></section>
+          <p className="mt-2 text-sm leading-6 text-rose-700" role="alert">{error}</p><button className={`${primaryStyle} mt-4`} onClick={() => void load()}>Retry</button></section>
       ) : <>
         <nav aria-label="Assessment steps" className="mb-6 grid gap-2 sm:grid-cols-4">
           {PHASES.map((step, index) => <button key={step.id} disabled={index > unlocked}
             aria-current={view === step.id ? 'step' : undefined}
             onClick={() => { setView(step.id); setError(''); setNotice(''); }}
-            className={`rounded-xl border px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:opacity-50 ${view === step.id ? 'border-sky-400 bg-sky-950' : index < unlocked ? 'border-emerald-700 bg-slate-900' : 'border-slate-700 bg-slate-900'}`}>
-            <span className="block text-xs text-sky-300">{index < unlocked ? 'Verified' : `Step ${index + 1}`} · {step.pts} pts</span>
+            className={`rounded-xl border px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400 disabled:cursor-not-allowed disabled:opacity-50 ${view === step.id ? 'border-brand-200 bg-brand-100' : index < unlocked ? 'border-mint-200 bg-mint-50' : 'border-slate-700 bg-slate-900 hover:border-brand-200'}`}>
+            <span className={`block text-xs font-semibold ${index < unlocked ? 'text-mint-700' : 'text-brand-700'}`}>{index < unlocked ? 'Verified' : `Step ${index + 1}`} · {step.pts} pts</span>
             <span className="mt-1 block font-semibold">{step.title}</span>
             <span className="mt-1 block text-xs leading-5 text-slate-400">{step.description}</span>
           </button>)}
@@ -233,7 +233,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
             {selected && <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div><p className="text-xs text-slate-400">Difference {focusItem + 1} of {lesson.assessment.observations.length}</p>
-                  <h3 className="mt-1 text-lg font-semibold">{selected.title}</h3><p className="mt-1 break-all font-mono text-xs text-sky-300">{selected.path}</p></div>
+                  <h3 className="mt-1 text-lg font-semibold">{selected.title}</h3><p className="mt-1 break-all font-mono text-xs text-brand-600">{selected.path}</p></div>
                 <div className="flex gap-2"><button className={mutedStyle} disabled={focusItem === 0} onClick={() => setFocusItem((i) => i - 1)}>Previous</button>
                   <button className={mutedStyle} disabled={focusItem === lesson.assessment.observations.length - 1} onClick={() => setFocusItem((i) => i + 1)}>Next</button></div>
               </div>
@@ -261,7 +261,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
                   return <button key={item.id} onClick={() => setFocusItem(index)}
                     aria-label={`Difference ${index + 1}: ${item.title}${status ? verified ? ', verified' : ', needs attention' : ''}`}
                     aria-current={index === focusItem ? 'step' : undefined}
-                    className={`rounded-md px-3 py-2 text-xs font-semibold ${index === focusItem ? 'bg-sky-600 text-white' : status ? verified ? 'bg-emerald-900 text-emerald-100' : 'bg-amber-900 text-amber-100' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}>{index + 1}{status ? verified ? ' ✓' : ' !' : ''}</button>;
+                    className={`rounded-md px-3 py-2 text-xs font-semibold ${index === focusItem ? 'bg-brand-700 text-white' : status ? verified ? 'bg-mint-100 text-mint-800' : 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700 hover:bg-brand-50'}`}>{index + 1}{status ? verified ? ' ✓' : ' !' : ''}</button>;
                 })}
               </div>
             </section>}
@@ -291,7 +291,7 @@ export const KubernetesDriftLabPage: React.FC = () => {
             {relevant?.snapshot_preview && <><SnapshotPanel title="Resulting simulated snapshot" subtitle="Server-generated preview, not a real Kubernetes deployment" content={relevant.snapshot_preview}/>
               <section className="rounded-xl border border-slate-700 bg-slate-900 p-4"><h3 className="font-semibold">Remaining differences: {relevant.finding_count}</h3>
                 {relevant.findings?.length ? <ul className="mt-3 space-y-2 text-sm text-amber-200">{relevant.findings.map((f) => <li key={f.id}>{f.title} · <code className="break-all">{f.path}</code></li>)}</ul>
-                  : <p className="mt-2 text-sm text-emerald-300">No differences in the simulated snapshot. Continue to verification.</p>}</section></>}
+                  : <p className="mt-2 text-sm text-mint-700">No differences in the simulated snapshot. Continue to verification.</p>}</section></>}
           </>}
           {view === 'verify' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
             <h3 className="text-lg font-semibold">What have we actually verified?</h3>
@@ -307,29 +307,29 @@ export const KubernetesDriftLabPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               {phaseIndex(phase.id) > 0 && <button className={mutedStyle} onClick={() => setView(PHASES[phaseIndex(phase.id) - 1].id)}>Back</button>}
               <button className={primaryStyle} disabled={busy} onClick={() => void evaluate(phase.id)}>{busy ? 'Checking…' : `Check ${phase.title.toLowerCase()}`}</button>
-              {relevant?.stage_passed && view !== 'verify' && <button className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold hover:bg-emerald-600" onClick={() => setView(PHASES[phaseIndex(phase.id) + 1].id)}>Continue to {PHASES[phaseIndex(phase.id) + 1].title}</button>}
-              {view === 'verify' && relevant?.stage_passed && <button className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold hover:bg-emerald-600 disabled:opacity-50" disabled={busy} onClick={() => void evaluate('verify', true)}>Submit completed assessment</button>}
+              {relevant?.stage_passed && view !== 'verify' && <button className="rounded-full bg-mint-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mint-800" onClick={() => setView(PHASES[phaseIndex(phase.id) + 1].id)}>Continue to {PHASES[phaseIndex(phase.id) + 1].title}</button>}
+              {view === 'verify' && relevant?.stage_passed && <button className="rounded-full bg-mint-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mint-800 disabled:opacity-50" disabled={busy} onClick={() => void evaluate('verify', true)}>Submit completed assessment</button>}
             </div>
-            {notice && <p className={`mt-3 text-sm ${relevant?.stage_passed ? 'text-emerald-300' : 'text-amber-200'}`} role="status">{notice}</p>}
-            {error && <p className="mt-3 text-sm text-rose-300" role="alert">{error}</p>}
+            {notice && <p className={`mt-3 text-sm ${relevant?.stage_passed ? 'text-mint-700' : 'text-amber-700'}`} role="status">{notice}</p>}
+            {error && <p className="mt-3 text-sm text-rose-700" role="alert">{error}</p>}
             {relevant && <p className="mt-2 text-xs text-slate-400">Feedback applies to this step only. {relevant.stage_passed ? 'Validated; you can continue.' : 'Correct highlighted items, then check again.'}</p>}
           </section>
         </div>}
         {view === 'review' && <section className="rounded-xl border border-slate-700 bg-slate-900 p-6">
           <h2 className="text-xl font-semibold">{completed ? 'Assessment completed' : 'Review your understanding'}</h2>
-          {notice && <p role="status" className="mt-3 text-sm text-emerald-300">{notice}</p>}
+          {notice && <p role="status" className="mt-3 text-sm text-mint-700">{notice}</p>}
           <p className="mt-2 text-sm text-slate-300">This knowledge check provides learning feedback; it does not award additional completion points.</p>
           <div className="mt-5 space-y-5">{lesson.questions.map((question, index) => {
             const feedback = quiz?.results.find((item) => item.question_id === question.id);
             return <fieldset key={question.id} className="border-t border-slate-700 pt-4"><legend className="text-sm font-semibold">{index + 1}. {question.question}</legend>
               <div className="mt-3 space-y-2">{question.options.map((option) => <label key={option.id} className="flex items-start gap-3 rounded-lg bg-slate-950 p-3 text-sm">
                 <input className="mt-1" type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => { setAnswers((old) => ({ ...old, [question.id]: option.id })); setQuiz(null); }}/><span>{option.text}</span>
-              </label>)}</div>{feedback && <p className={`mt-2 text-sm ${feedback.correct ? 'text-emerald-300' : 'text-amber-200'}`}>{feedback.correct ? 'Correct.' : 'Review the reasoning.'} {feedback.explanation}</p>}
+              </label>)}</div>{feedback && <p className={`mt-2 text-sm ${feedback.correct ? 'text-mint-700' : 'text-amber-700'}`}>{feedback.correct ? 'Correct.' : 'Review the reasoning.'} {feedback.explanation}</p>}
             </fieldset>;
           })}</div>
           <button className={`${primaryStyle} mt-5`} disabled={busy || lesson.questions.some((q) => !answers[q.id])} onClick={() => void checkKnowledge()}>Check my answers</button>
           {quiz && <p role="status" className="mt-3 text-sm">{quiz.correct_count} of {quiz.total_questions} correct. {quiz.message}</p>}
-          <button className="mt-5 block text-sm text-sky-300 underline" onClick={() => setView('verify')}>Back to verification</button>
+          <button className="mt-5 block text-sm font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800" onClick={() => setView('verify')}>Back to verification</button>
         </section>}
       </>}
     </div>
