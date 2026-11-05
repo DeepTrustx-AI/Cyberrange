@@ -204,17 +204,17 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
       <div className="mx-auto max-w-7xl">
         <header className="mb-7 flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <button onClick={() => navigate('/labs')} className="mb-3 text-sm text-sky-300 hover:text-sky-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400">← Back to labs</button>
+            <button onClick={() => navigate('/labs')} className="mb-3 text-sm font-medium text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400">← Back to labs</button>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Cloud Configuration Hardening</h1>
             <p className="mt-2 text-sm leading-6 text-slate-300">Learn to investigate cloud exposure, harden insecure configuration, and explain why each change matters.</p>
           </div>
-          <span className="rounded-full border border-emerald-800 px-3 py-1 text-xs font-semibold text-emerald-300">STATIC ANALYSIS ONLY</span>
+          <span className="rounded-full border border-mint-300 bg-mint-50 px-3 py-1 text-xs font-semibold tracking-wide text-mint-700">STATIC ANALYSIS ONLY</span>
         </header>
 
         <nav aria-label="Choose a lab module" className="mb-6 flex flex-wrap gap-2">
           {MODULES.map((module) => (
             <button key={module.id} onClick={() => setModuleId(module.id)} aria-current={module.id === moduleId ? 'step' : undefined}
-              className={`rounded-xl border px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${moduleId === module.id ? 'border-sky-400 bg-sky-950 text-white' : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500'}`}>
+              className={`rounded-xl border px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400 ${moduleId === module.id ? 'border-brand-200 bg-brand-100 text-brand-800' : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-brand-200'}`}>
               <span className="block font-semibold">{module.title}</span>
               <span className="mt-1 block text-xs text-slate-400">{module.description} · {module.points} points</span>
             </button>
@@ -224,8 +224,8 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
         {loading ? <p role="status" className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-slate-300">Loading guided workspace…</p> : !learning ? (
           <section className="rounded-xl border border-slate-700 bg-slate-900 p-6">
             <h2 className="text-lg font-semibold">Workspace unavailable</h2>
-            <p role="alert" className="mt-3 text-sm text-rose-300">{error}</p>
-            <button onClick={() => void loadWorkspace(moduleId)} className="mt-4 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold hover:bg-sky-500">Retry loading</button>
+            <p role="alert" className="mt-3 text-sm leading-6 text-rose-700">{error}</p>
+            <button onClick={() => void loadWorkspace(moduleId)} className="mt-4 rounded-full bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400">Retry loading</button>
           </section>
         ) : <>
           <div className="mb-6 rounded-xl border border-slate-700 bg-slate-900 px-5 py-4">
@@ -236,8 +236,8 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
           <nav aria-label="Learning stages" className="mb-5 grid gap-2 sm:grid-cols-3">
             {STAGES.map((item, index) => (
               <button key={item.id} onClick={() => setStage(item.id)} aria-current={stage === item.id ? 'step' : undefined}
-                className={`rounded-xl border px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${stage === item.id ? 'border-sky-400 bg-sky-950' : 'border-slate-700 bg-slate-900 hover:border-slate-500'}`}>
-                <span className="text-xs font-medium text-sky-300">Step {index + 1}</span>
+                className={`rounded-xl border px-4 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400 ${stage === item.id ? 'border-brand-200 bg-brand-100' : 'border-slate-700 bg-slate-900 hover:border-brand-200'}`}>
+                <span className="text-xs font-semibold text-brand-700">Step {index + 1}</span>
                 <span className="mt-1 block font-semibold">{item.title}</span>
                 <span className="mt-1 block text-xs text-slate-400">{item.description}</span>
               </button>
@@ -250,7 +250,7 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">{learning.scenario}</p>
               <h3 className="mt-7 text-base font-semibold">What you'll be able to do</h3>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-300">{learning.objectives.map((item) => <li key={item}>{item}</li>)}</ul>
-              <button onClick={() => setStage('practice')} className="mt-8 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500">Start investigation →</button>
+              <button onClick={() => setStage('practice')} className="mt-8 rounded-full bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400">Start investigation →</button>
             </section>
             <aside className="space-y-3">
               <h2 className="text-lg font-semibold">Concepts to know</h2>
@@ -268,12 +268,12 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                 <p className="mt-1 text-sm text-slate-400">Work through each task. Reveal a hint only when you need a nudge.</p>
                 <ol className="mt-4 divide-y divide-slate-800">{learning.tasks.map((task, index) => <li key={task.id} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex items-start gap-3">
-                    <span className="mt-0.5 shrink-0 rounded-md bg-slate-800 px-2 py-1 text-xs text-sky-300">{index + 1}</span>
+                    <span className="mt-0.5 shrink-0 rounded-md bg-brand-100 px-2 py-1 text-xs font-semibold text-brand-700">{index + 1}</span>
                     <div><h3 className="text-sm font-semibold">{task.title}</h3>
-                      <p className="mt-1 text-xs text-sky-300">{task.file}</p>
+                      <p className="mt-1 text-xs font-medium text-brand-600">{task.file}</p>
                       <p className="mt-2 text-sm leading-6 text-slate-300">{task.instruction}</p>
                       <button onClick={() => setRevealedHints((current) => current.includes(task.id) ? current.filter((id) => id !== task.id) : [...current, task.id])}
-                        aria-expanded={revealedHints.includes(task.id)} className="mt-2 text-xs font-medium text-sky-300 underline underline-offset-4 hover:text-sky-100">
+                        aria-expanded={revealedHints.includes(task.id)} className="mt-2 text-xs font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800">
                         {revealedHints.includes(task.id) ? 'Hide hint' : 'Reveal hint'}
                       </button>
                       {revealedHints.includes(task.id) && <p className="mt-2 rounded-lg bg-slate-950 p-3 text-sm text-slate-300">{task.hint}</p>}
@@ -285,23 +285,23 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                 <h2 className="text-lg font-semibold">Configuration workspace</h2>
                 <p className="mt-2 text-sm text-slate-300">Read the starter file before scanning. Change only the text below; nothing is deployed or executed.</p>
                 {files.map((file) => <label key={file.filename} className="mt-5 block">
-                  <span className="mb-2 block font-mono text-xs text-sky-300">{file.filename}</span>
+                  <span className="mb-2 block font-mono text-xs font-medium text-brand-600">{file.filename}</span>
                   {file.filename.endsWith('.yaml') && <span className="mb-2 block text-xs leading-5 text-slate-400">
                     YAML uses spaces, not tabs. CloudFormation resources must be siblings directly under <code>Resources</code>; Kubernetes documents are separated with <code>---</code>.
                   </span>}
                   <textarea aria-label={`Edit ${file.filename}`} value={file.content} onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => updateFile(file.filename, event.target.value)} spellCheck={false} tabIndex={0}
-                    className="h-80 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-base leading-6 text-slate-100 outline-none focus:border-sky-400 md:text-sm" />
+                    className="h-80 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 p-4 font-mono text-base leading-6 text-slate-100 outline-none focus:border-brand-300 focus:ring-2 focus:ring-brand-100 md:text-sm" />
                 </label>)}
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button disabled={working || !files.length} onClick={() => void runCheck(false)} className="rounded-lg border border-sky-500 px-4 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-950 disabled:opacity-50">{working ? 'Checking…' : 'Scan configuration'}</button>
-                  <button disabled={working || !files.length} onClick={() => void runCheck(true)} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50">Submit remediation</button>
+                  <button disabled={working || !files.length} onClick={() => void runCheck(false)} className="rounded-full border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-800 hover:bg-brand-100 disabled:opacity-50">{working ? 'Checking…' : 'Scan configuration'}</button>
+                  <button disabled={working || !files.length} onClick={() => void runCheck(true)} className="rounded-full bg-mint-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-mint-800 disabled:opacity-50">Submit remediation</button>
                   <button disabled={working} onClick={() => resetArmed ? resetFiles() : setResetArmed(true)} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50">{resetArmed ? 'Confirm restore (discard edits)' : 'Restore starter files'}</button>
                   {resetArmed && <button onClick={() => setResetArmed(false)} className="rounded-lg px-3 py-2 text-sm text-slate-300 underline underline-offset-4">Cancel</button>}
                 </div>
                 <p className="mt-3 text-xs text-slate-400">Scan previews security findings and resource-integrity requirements without awarding points. Submission awards completion points only when both pass. This is not a production security audit.</p>
-                {error && <p role="alert" className="mt-4 rounded-lg border border-rose-800 bg-rose-950/50 p-3 text-sm text-rose-200">{error}</p>}
+                {error && <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm leading-6 text-rose-700">{error}</p>}
                 {result && <p role="status" className="mt-4 rounded-lg bg-slate-950 p-3 text-sm text-slate-200">{result}</p>}
-                {isCompleted && <button className="mt-4 text-sm font-semibold text-sky-300 underline underline-offset-4" onClick={() => setStage('review')}>Review what you learned →</button>}
+                {isCompleted && <button className="mt-4 text-sm font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800" onClick={() => setStage('review')}>Review what you learned →</button>}
               </section>
             </div>
             <aside className="space-y-4 lg:sticky lg:top-6">
@@ -309,22 +309,22 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
                 <h2 className="font-semibold">Security findings</h2>
                 <p className="mt-1 text-xs leading-5 text-slate-400">Investigate the risk before making changes. Rescan after each edit.</p>
                 {!hasScanned ? <p className="mt-5 text-sm text-slate-400">No scan yet. Inspect the files, then run your first assessment.</p>
-                  : findings.length === 0 ? <p className="mt-5 text-sm text-emerald-300">No taught-pattern findings detected. Check submission integrity below before submitting.</p>
+                  : findings.length === 0 ? <p className="mt-5 text-sm text-mint-700">No taught-pattern findings detected. Check submission integrity below before submitting.</p>
                     : <ul className="mt-4 space-y-3">{findings.map((finding, index) => <li key={`${finding.id}-${index}`} className="rounded-lg border border-slate-700 bg-slate-950 p-3">
                       <span className="text-xs font-bold text-amber-300">{finding.severity}</span>
                       <h3 className="mt-1 text-sm font-semibold">{finding.title}</h3>
                       {finding.explanation && <p className="mt-2 text-xs leading-5 text-slate-300"><strong>Why it matters:</strong> {finding.explanation}</p>}
                       <p className="mt-2 text-xs leading-5 text-slate-300"><strong>Remediation:</strong> {finding.recommendation}</p>
-                      {finding.investigative_hint && <details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-medium text-sky-300">Investigation hint</summary><p className="mt-2">{finding.investigative_hint}</p></details>}
+                      {finding.investigative_hint && <details className="mt-2 text-xs text-slate-300"><summary className="cursor-pointer font-medium text-brand-300">Investigation hint</summary><p className="mt-2">{finding.investigative_hint}</p></details>}
                     </li>)}</ul>}
               </section>
               {requirements.length > 0 && <section className="rounded-xl border border-slate-800 bg-slate-900 p-5" aria-live="polite">
                 <h2 className="font-semibold">Submission integrity</h2>
                 <p className="mt-1 text-xs text-slate-400">{requirements.length - unmetRequirements.length} of {requirements.length} required controls verified during the last scan.</p>
                 {unmetRequirements.length > 0 ? <ul className="mt-3 list-disc space-y-2 pl-4 text-xs leading-5 text-amber-200">{unmetRequirements.map((item) => <li key={item.id}>{item.title}</li>)}</ul>
-                : <p className="mt-3 text-sm text-emerald-300">All required controls detected.</p>}
-                <details className="mt-3 text-xs text-slate-300"><summary className="cursor-pointer text-sky-300">Review every integrity check</summary>
-                  <ul className="mt-2 space-y-2">{requirements.map((item) => <li key={item.id} className={item.met ? 'text-emerald-300' : 'text-amber-200'}>{item.met ? 'Passed' : 'Needs attention'} — {item.title}</li>)}</ul>
+                : <p className="mt-3 text-sm text-mint-700">All required controls detected.</p>}
+                <details className="mt-3 text-xs text-slate-300"><summary className="cursor-pointer text-brand-600">Review every integrity check</summary>
+                  <ul className="mt-2 space-y-2">{requirements.map((item) => <li key={item.id} className={item.met ? 'text-mint-700' : 'text-amber-700'}>{item.met ? 'Passed' : 'Needs attention'} — {item.title}</li>)}</ul>
                 </details>
               </section>}
             </aside>
@@ -337,23 +337,23 @@ export const CloudStaticSecurityLabPage: React.FC = () => {
               const feedback = quiz?.results.find((item) => item.question_id === question.id);
               return <fieldset key={question.id} className="border-t border-slate-700 pt-5">
                 <legend className="text-sm font-semibold leading-6">{index + 1}. {question.question}</legend>
-                <div className="mt-3 space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-200 hover:border-sky-600">
-                  <input type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => { setAnswers((current) => ({ ...current, [question.id]: option.id })); setQuiz(null); }} className="mt-1 accent-sky-500" />
+                <div className="mt-3 space-y-2">{question.options.map((option) => <label key={option.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-200 hover:border-brand-300">
+                  <input type="radio" name={question.id} checked={answers[question.id] === option.id} onChange={() => { setAnswers((current) => ({ ...current, [question.id]: option.id })); setQuiz(null); }} className="mt-1 accent-brand-600" />
                   <span>{option.text}</span>
                 </label>)}</div>
-                {feedback && <p className={`mt-3 text-sm leading-6 ${feedback.correct ? 'text-emerald-300' : 'text-amber-200'}`}>
+                {feedback && <p className={`mt-3 text-sm leading-6 ${feedback.correct ? 'text-mint-700' : 'text-amber-700'}`}>
                   {feedback.correct ? 'Correct.' : `Review this: ${question.options.find((option) => option.id === feedback.correct_option_id)?.text ?? 'Revisit the question.'}`} {feedback.explanation}
                 </p>}
               </fieldset>;
             })}</div>
-            <button disabled={working || learning.questions.some((question) => !answers[question.id])} onClick={() => void checkKnowledge()} className="mt-7 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50">
+            <button disabled={working || learning.questions.some((question) => !answers[question.id])} onClick={() => void checkKnowledge()} className="mt-7 rounded-full bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">
               {working ? 'Checking answers…' : 'Check my answers'}
             </button>
             {quiz && <p role="status" className="mt-4 text-sm font-semibold text-slate-200">{quiz.correct_count} of {quiz.total_questions} correct. {quiz.message}</p>}
             <p className="mt-5 text-xs text-slate-400">To earn module points, return to Investigate & fix and submit a valid remediation.</p>
-            <button onClick={() => setStage('practice')} className="mt-3 text-sm font-medium text-sky-300 underline underline-offset-4">Return to configuration →</button>
+            <button onClick={() => setStage('practice')} className="mt-3 text-sm font-semibold text-brand-600 underline decoration-brand-200 underline-offset-4 hover:text-brand-800">Return to configuration →</button>
           </section>}
-          {error && stage !== 'practice' && <p role="alert" className="mt-5 rounded-lg border border-rose-800 bg-rose-950/50 p-4 text-sm text-rose-200">{error}</p>}
+          {error && stage !== 'practice' && <p role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-700">{error}</p>}
         </>}
       </div>
     </main>
