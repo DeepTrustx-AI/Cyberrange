@@ -13,12 +13,19 @@ import { ACTIVE_SUBMISSION_STATUSES, TERMINAL_SUBMISSION_STATUSES, formatCriteri
 
 function timeAgo(value?: string | null) {
   if (!value) return '';
-  const seconds = Math.max(0, (Date.now() - new Date(value).getTime()) / 1000);
+  // Sysadmin submission timestamps are UTC values.  Older API responses omit
+  // the zone suffix, which JavaScript otherwise interprets as browser-local
+  // time (making a new submission appear several hours old in IST).
+  const normalized = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)
+    ? value
+    : `${value.replace(' ', 'T')}Z`;
+  const submittedAt = new Date(normalized);
+  const seconds = Math.max(0, (Date.now() - submittedAt.getTime()) / 1000);
   if (Number.isNaN(seconds)) return '';
   if (seconds < 60) return 'just now';
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)} h ago`;
-  return new Date(value).toLocaleDateString();
+  return submittedAt.toLocaleDateString();
 }
 
 export function ChecksPanel({
