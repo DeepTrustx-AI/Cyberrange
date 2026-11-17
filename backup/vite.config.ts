@@ -10,8 +10,12 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   server: {
-    host: true,         // Listen on all network interfaces (0.0.0.0)
-    allowedHosts: true, // Allow ngrok host headers
+    // The dev server is for this machine. To reach it from elsewhere (another device,
+    // an ngrok tunnel), opt in per run instead of exposing it to every network:
+    //   VITE_DEV_HOST=0.0.0.0 VITE_DEV_ALLOWED_HOSTS=your-tunnel.ngrok-free.app npm run dev
+    // Accepting any Host header would let other websites reach it by DNS rebinding.
+    host: process.env.VITE_DEV_HOST || 'localhost',
+    allowedHosts: (process.env.VITE_DEV_ALLOWED_HOSTS || '').split(',').map((h) => h.trim()).filter(Boolean),
     watch: {
       ignored: [
         '**/workspaces/**',
