@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:api-routing && npm run test:auth && npm run test:assignments && npm run test:dashboard && tsc -b && vite build",
+    "build": "npm run check:api-routing && npm run test:auth && npm run test:assignments && npm run test:dashboard && npm run test:report && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "check:api-routing": "node scripts/check-api-routing.mjs",
     "test:assignments": "node --test scripts/test-assignment-sorting.mjs",
     "test:dashboard": "node --test scripts/test-dashboard-labs.mjs",
     "test:auth": "node --test scripts/test-auth.mjs",
+    "test:report": "node --test scripts/test-skill-radar.mjs",
     "render:lab-art": "node scripts/render-lab-art.mjs"
   },
   "dependencies": {

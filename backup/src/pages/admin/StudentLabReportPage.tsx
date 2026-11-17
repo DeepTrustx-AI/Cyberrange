@@ -13,6 +13,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { getGradeColor } from '../../utils/grading';
+import { formatSkillLabel, skillChartKind, wrapSkillLabel } from './skillRadar';
 
 interface ModuleBreakdown {
   module_id: string;
@@ -61,59 +62,94 @@ function formatDuration(totalSeconds: number): string {
   return `${secs}s`;
 }
 
+const SkillBars: React.FC<{ labels: string[]; values: number[] }> = ({ labels, values }) => (
+  <ul className="w-full space-y-4 py-2">
+    {labels.map((label, i) => {
+      const value = clampPercent(values[i]);
+      const name = formatSkillLabel(label);
+      return (
+        <li key={label}>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-xs">
+            <span className="min-w-0 truncate font-semibold text-slate-600 dark:text-slate-300" title={name}>{name}</span>
+            <span className="shrink-0 font-bold tabular text-brand-600 dark:text-brand-400">{value}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
+            <div className="h-full rounded-full bg-brand-600 dark:bg-brand-500" style={{ width: `${value}%` }} />
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+);
+
+function clampPercent(value: number | undefined): number {
+  return Math.max(0, Math.min(100, Math.round(value ?? 0)));
+}
+
 const RadarChart: React.FC<{ labels: string[]; values: number[] }> = ({ labels, values }) => {
-  const R = 80;
-  const cx = 130;
-  const cy = 110;
-  const n = Math.max(labels.length, 3);
+  if (skillChartKind(labels) === 'bars') return <SkillBars labels={labels} values={values} />;
+
+  // Everything is drawn in viewBox units, so the chart and its labels scale together and stay inside the card.
+  const width = 400;
+  const height = 300;
+  const R = 88;
+  const cx = width / 2;
+  const cy = height / 2;
+  const lineHeight = 12;
+  const n = labels.length;
   const angles = labels.map((_, i) => (2 * Math.PI * i) / n);
+  const scores = labels.map((_, i) => clampPercent(values[i]));
+  const hasScore = scores.some((v) => v > 0);
 
   const toXY = (angle: number, r: number) => ({
     x: cx + r * Math.sin(angle),
     y: cy - r * Math.cos(angle),
   });
-
-  const rings = [20, 40, 60, 80, 100];
-  const ringPaths = rings.map((pct) =>
-    angles.map((a) => {
-      const pt = toXY(a, (pct / 100) * R);
+  const polygon = (radius: (i: number) => number) =>
+    angles.map((a, i) => {
+      const pt = toXY(a, radius(i));
       return `${pt.x},${pt.y}`;
-    }).join(' ')
-  );
+    }).join(' ');
 
-  const valPoints = angles.map((a, i) => {
-    const v = values[i] ?? 0;
-    const pt = toXY(a, (v / 100) * R);
-    return `${pt.x},${pt.y}`;
-  }).join(' ');
+  const summary = labels.map((label, i) => `${formatSkillLabel(label)} ${scores[i]}%`).join(', ');
 
   return (
-    <svg className="text-brand-600 dark:text-brand-400 w-full h-[260px] max-w-[300px] mx-auto overflow-visible">
-      {ringPaths.map((pts, idx) => (
-        <polygon key={idx} points={pts} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth="1" className="dark:stroke-slate-800" />
+    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Skill areas: ${summary}`} className="text-brand-600 dark:text-brand-400 w-full max-w-[400px] h-auto mx-auto">
+      {[20, 40, 60, 80, 100].map((pct) => (
+        <polygon key={pct} points={polygon(() => (pct / 100) * R)} fill="none" strokeWidth="1" className="stroke-slate-200 dark:stroke-slate-700" />
       ))}
       {angles.map((a, i) => {
         const pt = toXY(a, R);
-        return <line key={i} x1={cx} y1={cy} x2={pt.x} y2={pt.y} stroke="currentColor" strokeOpacity={0.15} strokeWidth="1" className="dark:stroke-slate-800" />;
+        return <line key={i} x1={cx} y1={cy} x2={pt.x} y2={pt.y} strokeWidth="1" className="stroke-slate-200 dark:stroke-slate-700" />;
       })}
-      <polygon points={valPoints} fill="currentColor" fillOpacity={0.15} stroke="currentColor" strokeWidth="2.5" />
+      {hasScore && (
+        <>
+          <polygon points={polygon((i) => (scores[i] / 100) * R)} fill="currentColor" fillOpacity={0.15} stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+          {angles.map((a, i) => {
+            if (scores[i] === 0) return null;
+            const pt = toXY(a, (scores[i] / 100) * R);
+            return <circle key={i} cx={pt.x} cy={pt.y} r="4" fill="currentColor" strokeWidth="1.5" className="stroke-white dark:stroke-slate-900" />;
+          })}
+        </>
+      )}
       {angles.map((a, i) => {
-        const v = values[i] ?? 0;
-        const pt = toXY(a, (v / 100) * R);
-        return <circle key={i} cx={pt.x} cy={pt.y} r="4" fill="currentColor" stroke="white" strokeWidth="1.5" className="dark:stroke-slate-900" />;
-      })}
-      {angles.map((a, i) => {
-        const lp = toXY(a, R + 20);
-        const align = Math.abs(a) < 0.1 || Math.abs(a - Math.PI) < 0.1 ? 'middle' : (a < Math.PI ? 'start' : 'end');
+        const name = formatSkillLabel(labels[i]);
+        const lines = wrapSkillLabel(name, 14, 2);
+        const sin = Math.sin(a);
+        const cos = Math.cos(a);
+        const anchor = Math.abs(sin) < 0.2 ? 'middle' : sin > 0 ? 'start' : 'end';
+        const lp = toXY(a, R + 14);
+        // Top labels grow upwards, bottom labels downwards, side labels sit centred on their spoke.
+        const blockHeight = (lines.length + 1) * lineHeight;
+        const top = cos > 0.5 ? lp.y - blockHeight + lineHeight * 0.75 : cos < -0.5 ? lp.y + lineHeight * 0.75 : lp.y - blockHeight / 2 + lineHeight * 0.75;
         return (
-          <g key={i}>
-            <text x={lp.x} y={lp.y} textAnchor={align} className="text-xs font-semibold fill-slate-500 dark:fill-slate-400">
-              {labels[i]}
-            </text>
-            <text x={lp.x} y={lp.y + 10} textAnchor={align} className="text-[8px] font-bold fill-brand-600">
-              {values[i]}%
-            </text>
-          </g>
+          <text key={i} x={lp.x} y={top} textAnchor={anchor}>
+            <title>{`${name}: ${scores[i]}%`}</title>
+            {lines.map((line, row) => (
+              <tspan key={row} x={lp.x} dy={row === 0 ? 0 : lineHeight} fontSize="11" fontWeight="600" className="fill-slate-500 dark:fill-slate-400">{line}</tspan>
+            ))}
+            <tspan x={lp.x} dy={lineHeight} fontSize="10" fontWeight="700" className="fill-brand-600 dark:fill-brand-400">{scores[i]}%</tspan>
+          </text>
         );
       })}
     </svg>
@@ -277,7 +313,7 @@ export const StudentLabReportPage: React.FC = () => {
                     <td className="p-2.5 text-slate-600 dark:text-slate-300">{m.attempts}</td>
                     <td className="p-2.5 text-slate-600 dark:text-slate-300">{formatDuration(m.time_taken_seconds)}</td>
                     <td className="p-2.5">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      <span className={`inline-block whitespace-nowrap text-xs font-bold px-2 py-0.5 rounded-full ${
                         m.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                         : m.status === 'STARTED' ? 'bg-blue-50 text-blue-600 border border-blue-200'
                         : 'bg-slate-100 text-slate-600 border border-slate-200'
