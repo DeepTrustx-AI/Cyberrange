@@ -459,7 +459,10 @@ Each lab shows its own clay scene from `dioramas.ts` on a shared plinth, camera 
 
 The four CISF beginner labs use the existing neutral panels, pill actions,
 native radio groups and hint disclosures in a single readable column. The
-brief defines two terms before three small tasks. Selected controls use peach;
+brief defines two terms before three small tasks per activity. A neutral activity
+list shows real saved progress and unlocks the next activity only after a
+backend-confirmed save; each activity has its own short discussion/practice
+time plan. Whole-lab duration remains visible in the header. Selected controls use peach;
 server feedback uses mint/rose in both themes. Radio fieldsets have legends,
 visible focus, keyboard navigation and no required motion. These are explicitly
 labelled sample-setting exercises, with no imitation terminal or claim of live

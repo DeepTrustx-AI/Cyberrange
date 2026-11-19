@@ -12,11 +12,12 @@ export function CisfBeginnerLabPage({ labId }: { labId: CisfLabId }) {
   const { apiFetch } = useAuth();
   const [params] = useSearchParams();
   const assignment = assignmentId(params.get('assignment_id'));
+  const stage = params.get('stage');
   // A changed assignment gets a fresh component; neither answers nor results cross contexts.
-  return <Practice key={`${labId}:${assignment}`} labId={labId} assignment={assignment} apiFetch={apiFetch} />;
+  return <Practice key={`${labId}:${assignment}:${stage}`} labId={labId} assignment={assignment} requestedStage={stage} apiFetch={apiFetch} />;
 }
 
-function Practice({ labId, assignment, apiFetch }: { labId: CisfLabId; assignment: number | null;
+function Practice({ labId, assignment, requestedStage, apiFetch }: { labId: CisfLabId; assignment: number | null; requestedStage: string | null;
   apiFetch: ReturnType<typeof useAuth>['apiFetch'] }) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [choices, setChoices] = useState<Choices>({});
@@ -33,14 +34,14 @@ function Practice({ labId, assignment, apiFetch }: { labId: CisfLabId; assignmen
     const abort = new AbortController();
     setLoading(true); setError(''); setLesson(null); setResult(null); setSaved(false); setStarted(false);
     if (!client) { setLoading(false); return; }
-    void client.workspace(abort.signal).then(value => {
+    void client.workspace(abort.signal, requestedStage).then(value => {
       if (abort.signal.aborted) return;
       setLesson(value); setChoices(initialChoices(value)); setSaved(value.completed);
     }).catch(caught => {
       if (!abort.signal.aborted) setError(caught instanceof Error ? caught.message : 'Cannot load the lesson. Please retry.');
     }).finally(() => { if (!abort.signal.aborted) setLoading(false); });
     return () => abort.abort();
-  }, [client, retry]);
+  }, [client, retry, requestedStage]);
 
   async function check(submit: boolean) {
     if (!lesson || !client || busy) return;
@@ -48,7 +49,9 @@ function Practice({ labId, assignment, apiFetch }: { labId: CisfLabId; assignmen
     try {
       const value = await client.grade(lesson, choices, submit);
       setResult(value);
-      if (value.completion) setSaved(true);
+      const completed = value.stages.find(stage => stage.id === lesson.stage_id)?.completed ?? false;
+      setSaved(completed);
+      setLesson(current => current ? { ...current, stages: value.stages, course_completed: value.course_completed, completed } : null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Cannot check your work. Please retry.');
     } finally { setBusy(false); }
@@ -65,15 +68,21 @@ function Practice({ labId, assignment, apiFetch }: { labId: CisfLabId; assignmen
           <h1 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">{lesson.title}</h1>
           <p className="mt-3 max-w-prose text-base leading-7 text-slate-600 dark:text-slate-300">{lesson.summary}</p>
           <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{lesson.safety}</p>
-          {saved && <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300" role="status"><CheckCircle2 size={18} />Completion saved for this assignment. You can practise again.</p>}
+          <p className="mt-4 text-sm font-semibold">{lesson.stages.filter(stage => stage.completed).length} of {lesson.stages.length} activities completed</p>
+          {lesson.course_completed && <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300" role="status"><CheckCircle2 size={18} />All activities completed for this assignment.</p>}
         </header>
+        <nav className={panel} aria-label="Lab activities"><h2 className="font-display text-lg font-semibold">One small activity at a time</h2><ol className="mt-4 grid gap-2 sm:grid-cols-2">{lesson.stages.map((stage, index) => <li key={stage.id}>{stage.available && !busy
+          ? <Link aria-current={stage.id === lesson.stage_id ? 'step' : undefined} to={`/labs/${labId}?assignment_id=${assignment}&stage=${stage.id}`}
+              className={`block rounded-2xl border px-4 py-3 text-sm leading-6 focus-visible:outline-2 focus-visible:outline-offset-2 ${stage.id === lesson.stage_id ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'}`}>{index + 1}. {stage.title} · {stage.minutes} min{stage.completed ? ' · Completed' : ''}</Link>
+          : <span className="block rounded-2xl border border-slate-200 px-4 py-3 text-sm leading-6 text-slate-500 dark:border-slate-700 dark:text-slate-400">{index + 1}. {stage.title} · {stage.minutes} min{stage.completed ? ' · Completed' : ' · Finish earlier activities first'}</span>}</li>)}</ol></nav>
+        <section className={panel}><h2 className="font-display text-xl font-semibold">{lesson.stage_title}</h2><p className="mt-2 text-sm">About {lesson.stage_minutes} minutes for this activity, including discussion.</p><ol className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600 dark:text-slate-300">{lesson.timing.map(item => <li key={item.title}>{item.title}: {item.minutes} min</li>)}</ol>{saved && <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">This activity is saved. You can review it again.</p>}</section>
         {!started ? <section className={`${panel} space-y-5`}>
           <h2 className="font-display text-xl font-semibold">Start here — no experience needed</h2>
           <p className="leading-7">{lesson.introduction}</p>
           <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60"><p className="font-semibold">A familiar example</p><p className="mt-2 leading-7">{lesson.analogy}</p></div>
           <dl className="grid gap-4 sm:grid-cols-2">{lesson.terms.map(term => <div key={term.word}><dt className="font-semibold">{term.word}</dt><dd className="mt-1 leading-6 text-slate-600 dark:text-slate-300">{term.meaning}</dd></div>)}</dl>
           <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">Read the example, change two settings and answer one short question. Use a hint whenever you need it. You can retry without a penalty.</p>
-          <button className={primary} onClick={() => setStarted(true)}>Start the three small tasks</button>
+          <button className={primary} onClick={() => setStarted(true)}>Start this activity</button>
         </section> : <>
           <section className={panel} aria-labelledby="scenario-title"><h2 id="scenario-title" className="font-display text-xl font-semibold">Your task</h2><p className="mt-3 leading-7">{lesson.scenario}</p></section>
           <form onSubmit={event => { event.preventDefault(); void check(false); }} className="space-y-5">
@@ -96,8 +105,11 @@ function Practice({ labId, assignment, apiFetch }: { labId: CisfLabId; assignmen
             <ul className="mt-5 space-y-4">{result.checks.map(item => <li key={item.id}><p className={`font-semibold ${item.passed ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}>{item.passed ? 'Passed' : 'Try again'} · {item.title}</p><p className="mt-1 leading-6">{item.feedback}</p></li>)}</ul>
             <h3 className="mt-6 font-semibold">What your sample settings mean</h3><ul className="mt-2 list-disc space-y-2 pl-5 leading-6">{result.observations.map(item => <li key={item.title}>{item.result}</li>)}</ul>
             {result.passed && <><p className="mt-5 leading-7">{lesson.takeaway}</p>
-              {!result.completion ? <button type="button" className={`${primary} mt-5`} disabled={busy} onClick={() => { void check(true); }}>Finish and save completion</button>
+              {!result.completion ? <button type="button" className={`${primary} mt-5`} disabled={busy} onClick={() => { void check(true); }}>Finish and save this activity</button>
                 : <p role="status" className="mt-5 font-semibold text-emerald-700 dark:text-emerald-300">{result.completion.already_completed ? 'Already completed. No extra points were added.' : `Completion saved. ${result.completion.points_awarded} points awarded.`}</p>}</>}
+            {result.completion && <div className="mt-5">{lesson.stages.findIndex(stage => stage.id === lesson.stage_id) < lesson.stages.length - 1
+              ? <Link className={`${primary} inline-block`} to={`/labs/${labId}?assignment_id=${assignment}&stage=${lesson.stages[lesson.stages.findIndex(stage => stage.id === lesson.stage_id) + 1].id}`}>Next activity</Link>
+              : <Link className={`${primary} inline-block`} to="/assigned-labs">Return to my assignments</Link>}</div>}
           </section>}
         </>}
       </>}

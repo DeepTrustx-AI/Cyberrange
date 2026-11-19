@@ -25,10 +25,10 @@ export function labSummary(labId: string, description: string) {
 // a retry or two included. The API sends 45 for every module and 1.5 h for every
 // lab; these stand in until the lab files carry their own estimates.
 const MODULE_MINUTES: Record<string, Record<string, number>> = {
-  'aws-cisf': { 'aws-cisf_cisf_basics': 15 },
-  'gcp-cisf': { 'gcp-cisf_cisf_basics': 10 },
-  'kubernetes-cisf': { 'kubernetes-cisf_cisf_basics': 20 },
-  'iac-cisf': { 'iac-cisf_cisf_basics': 15 },
+  'aws-cisf': { 'aws-cisf_cisf_basics': 15, 'aws-cisf_cisf_signin': 15, 'aws-cisf_cisf_recovery': 15, 'aws-cisf_cisf_incident': 15 },
+  'gcp-cisf': { 'gcp-cisf_cisf_basics': 10, 'gcp-cisf_cisf_access': 10, 'gcp-cisf_cisf_incident': 10 },
+  'kubernetes-cisf': { 'kubernetes-cisf_cisf_basics': 15, 'kubernetes-cisf_cisf_workloads': 15, 'kubernetes-cisf_cisf_identity': 15, 'kubernetes-cisf_cisf_network': 15, 'kubernetes-cisf_cisf_recovery': 15, 'kubernetes-cisf_cisf_incident': 15 },
+  'iac-cisf': { 'iac-cisf_cisf_basics': 15, 'iac-cisf_cisf_review': 15, 'iac-cisf_cisf_secrets': 15, 'iac-cisf_cisf_verify': 15 },
   'cloud-security-lab': {
     'cloud-security-lab_cloud_mod1': 30,
     'cloud-security-lab_cloud_mod2': 45,
