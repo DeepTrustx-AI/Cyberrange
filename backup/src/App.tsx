@@ -76,6 +76,7 @@ const CryptographyLabPage   = lazy(() => import('./pages/user/CryptographyLabPag
 const CompliancePortalLabPage = lazy(() => import('./pages/user/CompliancePortalLabPage').then(m => ({ default: m.CompliancePortalLabPage })));
 const CloudSecurityLabPage  = lazy(() => import('./pages/user/CloudSecurityLabPage').then(m => ({ default: m.CloudSecurityLabPage })));
 const CloudStaticSecurityLabPage = lazy(() => import('./pages/user/CloudStaticSecurityLabPage').then(m => ({ default: m.CloudStaticSecurityLabPage })));
+const CisfBeginnerLabPage = lazy(() => import('./pages/user/CisfBeginnerLabPage').then(m => ({ default: m.CisfBeginnerLabPage })));
 const KubernetesDriftLabPage = lazy(() => import('./pages/user/KubernetesDriftLabPage').then(m => ({ default: m.KubernetesDriftLabPage })));
 const VulnShopLabPage        = lazy(() => import('./pages/user/VulnShopLabPage').then(m => ({ default: m.VulnShopLabPage })));
 const CisfHoneypotLabPage    = lazy(() => import('./pages/user/CisfHoneypotLabPage').then(m => ({ default: m.CisfHoneypotLabPage })));
@@ -359,6 +360,14 @@ export function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {(['aws-cisf', 'gcp-cisf', 'kubernetes-cisf', 'iac-cisf'] as const).map(labId => (
+                <Route key={labId} path={`/labs/${labId}`} element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <CisfBeginnerLabPage labId={labId} />
+                  </ProtectedRoute>
+                } />
+              ))}
 
               {/* Static IaC and Kubernetes configuration remediation lab */}
               <Route

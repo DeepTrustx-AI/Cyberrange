@@ -2,6 +2,7 @@
 export function labPath(labId: string): string {
   const id = labId.toLowerCase();
   const compact = id.replace(/[\s_-]+/g, '');
+  if (['aws-cisf', 'gcp-cisf', 'kubernetes-cisf', 'iac-cisf'].includes(id)) return `/labs/${id}`;
 
   if (id === 'linux-security-workshop') return '/labs/linux-security-workshop';
   if (id === 'race-conditions-lab') return '/labs/race-conditions-lab';
@@ -24,5 +25,6 @@ export function labPath(labId: string): string {
 // so its link says which one.
 export function assignmentLabPath(labId: string, assignmentId: number): string {
   const path = labPath(labId);
-  return labId === 'live-kubernetes-security-lab' ? `${path}?assignment_id=${assignmentId}` : path;
+  return ['live-kubernetes-security-lab', 'aws-cisf', 'gcp-cisf', 'kubernetes-cisf', 'iac-cisf'].includes(labId.toLowerCase())
+    ? `${path}?assignment_id=${assignmentId}` : path;
 }

@@ -456,6 +456,15 @@ Each lab shows its own clay scene from `dioramas.ts` on a shared plinth, camera 
 - **Reduced motion** stops every mascot loop; poses still change, so it reacts without moving.
 
 ### Lab Workspace
+
+The four CISF beginner labs use the existing neutral panels, pill actions,
+native radio groups and hint disclosures in a single readable column. The
+brief defines two terms before three small tasks. Selected controls use peach;
+server feedback uses mint/rose in both themes. Radio fieldsets have legends,
+visible focus, keyboard navigation and no required motion. These are explicitly
+labelled sample-setting exercises, with no imitation terminal or claim of live
+cloud execution. Checks and saved completion come from the assignment-scoped
+backend. No new palette, illustration primitive or animation is introduced.
 A compact sticky header (challenge position and title, cleared count bar, workspace status with minutes left, end), the challenge rail (cleared challenges get a mint disc, the selected one a peach-50 fill), the brief pane and the terminal. Before a machine exists the terminal column shows a wash panel with the live lab scene and a start button; while it starts, the mascot carries a block over the loader ground. Under the terminal a status bar names what the grader is doing. The in-pane code editor (CodeMirror on terminal night, JetBrains Mono 13px) replaces the terminal view until the student goes back.
 - **Checks:** a paper summary box (pass mark or last score, "N of M checks pass"), then one row per criterion that ticks in mint or crosses in rose with its feedback, staggered 60ms; skeleton circles while checking.
 - **Attempts:** one row per submission with a status dot, "Attempt #N · time ago" and the score.

@@ -25,6 +25,10 @@ export function labSummary(labId: string, description: string) {
 // a retry or two included. The API sends 45 for every module and 1.5 h for every
 // lab; these stand in until the lab files carry their own estimates.
 const MODULE_MINUTES: Record<string, Record<string, number>> = {
+  'aws-cisf': { 'aws-cisf_cisf_basics': 15 },
+  'gcp-cisf': { 'gcp-cisf_cisf_basics': 10 },
+  'kubernetes-cisf': { 'kubernetes-cisf_cisf_basics': 20 },
+  'iac-cisf': { 'iac-cisf_cisf_basics': 15 },
   'cloud-security-lab': {
     'cloud-security-lab_cloud_mod1': 30,
     'cloud-security-lab_cloud_mod2': 45,
@@ -213,6 +217,7 @@ export function labHours(labId: string, fallback: number) {
   const known = MODULE_MINUTES[labId];
   if (!known) return fallback;
   const total = Object.values(known).reduce((sum, minutes) => sum + minutes, 0);
+  if (['aws-cisf', 'gcp-cisf', 'kubernetes-cisf', 'iac-cisf'].includes(labId)) return total / 60;
   return Math.round(total / 30) / 2;
 }
 
