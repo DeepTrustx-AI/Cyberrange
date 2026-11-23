@@ -394,9 +394,13 @@ export const LinuxSysadminLabPage: React.FC<{ workshop?: boolean; race?: boolean
   // Which challenges the student has passed or tried, for the challenge rail.
   const refreshChallengeStates = useCallback(async () => {
     try {
-      const rows = await sysadminGradingService.listRecentSubmissions(apiFetch, 50);
+      const [rows, summary] = await Promise.all([
+        sysadminGradingService.listRecentSubmissions(apiFetch, 50),
+        sysadminGradingService.getChallengeStatus(apiFetch).catch(() => null),
+      ]);
       const states: Record<string, ChallengeState> = {};
-      rows.forEach((row) => {
+      // The summary covers every attempt ever made; recent rows are only a fallback for older backends.
+      (summary ?? rows).forEach((row) => {
         if (row.passed) states[row.lab_id] = 'passed';
         else if (!states[row.lab_id]) states[row.lab_id] = 'attempted';
       });
