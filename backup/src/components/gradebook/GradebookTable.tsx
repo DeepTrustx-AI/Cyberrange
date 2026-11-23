@@ -65,7 +65,7 @@ export function GradebookTable({ rows, drafts, locked, onChange }: GradebookTabl
                   <p className="text-xs text-slate-500 dark:text-slate-400">{row.email}</p>
                 </td>
                 <td className="px-3 py-3">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STANDING_STYLE[standing]}`}>{STANDING_LABEL[standing]}</span>
+                  <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${STANDING_STYLE[standing]}`}>{STANDING_LABEL[standing]}</span>
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-2">
