@@ -47,6 +47,11 @@ export interface SysadminSubmission {
   error: string | null;
 }
 
+export interface SysadminChallengeStatus {
+  lab_id: string;
+  passed: boolean;
+}
+
 export interface SysadminWorkspaceSession {
   workspace_id: string;
   lab_id: string;
@@ -116,6 +121,11 @@ export const sysadminGradingService = {
   // The student's most recent submissions across every challenge, newest first.
   listRecentSubmissions(apiFetch: AuthenticatedFetch, limit = 50): Promise<SysadminSubmission[]> {
     return apiJson(apiFetch, `/api/v1/sysadmin-grading/submissions?limit=${limit}`);
+  },
+
+  // Every challenge the student has ever submitted to, and whether any attempt passed.
+  getChallengeStatus(apiFetch: AuthenticatedFetch): Promise<SysadminChallengeStatus[]> {
+    return apiJson(apiFetch, '/api/v1/sysadmin-grading/challenge-status');
   },
 
   getWorkspace(apiFetch: AuthenticatedFetch): Promise<SysadminWorkspaceSession | null> {
