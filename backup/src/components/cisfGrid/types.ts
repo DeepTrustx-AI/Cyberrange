@@ -37,6 +37,8 @@ export interface SessionInfo {
   };
   eval_token?: string;
   eval_token_expires_at?: string;
+  stopped_unexpectedly?: boolean;
+  error_message?: string;
 }
 
 export interface AreaFeedback {

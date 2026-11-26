@@ -131,8 +131,12 @@ export const CisfGridLabPage: React.FC = () => {
     };
   }, []);
 
-  const isRunning = session?.status === 'running' && Boolean(session.urls?.terminal);
-  const isPreparing = Boolean(session && !isRunning && !['stopped', 'failed'].includes(session.status));
+  const isStoppedUnexpectedly = Boolean(session && (session.status === 'failed' || session.stopped_unexpectedly));
+  const isRunning = session?.status === 'running' && Boolean(session.urls?.terminal) && !stopping;
+  const isStoppingUnexpectedly = isStoppedUnexpectedly && session?.status === 'stopping';
+  const isPreparing = Boolean(
+    session && !isRunning && !isStoppedUnexpectedly && !['stopped', 'failed'].includes(session.status),
+  );
 
   const currentModule = useMemo(() => {
     if (session?.session.mode === 'full_op' || activeModuleId === 'full_op') {
@@ -186,14 +190,23 @@ export const CisfGridLabPage: React.FC = () => {
     void refreshSession();
   }, [refreshSession]);
 
-  // Poll while session is queued or provisioning.
+  // Poll while session is queued, provisioning, or finalizing an unexpected stop.
   useEffect(() => {
-    if (!isPreparing) return;
+    if (!isPreparing && !isStoppingUnexpectedly) return;
     const timer = window.setInterval(() => {
       void refreshSession();
     }, 3000);
     return () => window.clearInterval(timer);
-  }, [isPreparing, refreshSession]);
+  }, [isPreparing, isStoppingUnexpectedly, refreshSession]);
+
+  // Periodically check health of a running session so a stopped lab is caught within 30 s.
+  useEffect(() => {
+    if (!isRunning) return;
+    const timer = window.setInterval(() => {
+      void refreshSession();
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [isRunning, refreshSession]);
 
   // Load persisted tour preferences and notes on mount.
   useEffect(() => {
@@ -229,16 +242,20 @@ export const CisfGridLabPage: React.FC = () => {
         const sr = await api.getShiftReport(assignmentId);
         if (sr) setShiftReport(sr);
       }
-    } catch {
-      // Non-fatal until checker completes first sync.
+    } catch (err) {
+      if (err instanceof CisfGridApiError && (err.status === 409 || err.status === 502)) {
+        void refreshSession();
+      }
     }
     try {
       const entries = await api.getDispatch();
       setDispatchFeed(entries);
-    } catch {
-      // Non-fatal if EMS is warming up.
+    } catch (err) {
+      if (err instanceof CisfGridApiError && (err.status === 409 || err.status === 502)) {
+        void refreshSession();
+      }
     }
-  }, [api, assignmentId, isRunning]);
+  }, [api, assignmentId, isRunning, refreshSession]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -254,8 +271,50 @@ export const CisfGridLabPage: React.FC = () => {
     }
 
     let cancelled = false;
+    let connectTimer: number | null = null;
     let reconnectTimer: number | null = null;
     let socket: WebSocket | null = null;
+
+    const closeSocketCleanly = (isUnload = false) => {
+      if (connectTimer !== null) {
+        window.clearTimeout(connectTimer);
+        connectTimer = null;
+      }
+      if (reconnectTimer !== null) {
+        window.clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      const sock = socket;
+      socket = null;
+      if (!sock) return;
+      sock.onopen = null;
+      sock.onmessage = null;
+      sock.onerror = null;
+      sock.onclose = null;
+      if (sock.readyState === WebSocket.OPEN) {
+        try {
+          sock.close(1000, isUnload ? 'page unload' : 'closing');
+        } catch {
+          // Ignore closing errors.
+        }
+      } else if (sock.readyState === WebSocket.CONNECTING) {
+        if (isUnload) {
+          try {
+            sock.close(1000, 'page unload');
+          } catch {
+            // Ignore unload close errors.
+          }
+        } else {
+          sock.onopen = () => {
+            try {
+              sock.close(1000, 'closing');
+            } catch {
+              // Ignore detached close errors.
+            }
+          };
+        }
+      }
+    };
 
     const connect = () => {
       if (cancelled) return;
@@ -273,8 +332,9 @@ export const CisfGridLabPage: React.FC = () => {
           const msg = JSON.parse(String(event.data)) as { type?: string; state?: Partial<EmsTelemetryState> };
           if (msg.type === 'snapshot' && msg.state) {
             setTelemetry(msg.state as EmsTelemetryState);
-            if (Array.isArray(msg.state.passed_modules)) {
-              setPassedModules(msg.state.passed_modules);
+            if (Array.isArray(msg.state.passed_modules) && msg.state.passed_modules.length > 0) {
+              const incoming = msg.state.passed_modules;
+              setPassedModules((prev) => Array.from(new Set([...prev, ...incoming])));
             }
             if (!initialModuleSyncedRef.current && typeof msg.state.module_id === 'string') {
               const liveMod = msg.state.module_id;
@@ -289,8 +349,9 @@ export const CisfGridLabPage: React.FC = () => {
             }
           } else if (msg.type === 'delta' && msg.state) {
             setTelemetry((prev) => ({ ...(prev ?? {}), ...msg.state }));
-            if (Array.isArray(msg.state.passed_modules)) {
-              setPassedModules(msg.state.passed_modules);
+            if (Array.isArray(msg.state.passed_modules) && msg.state.passed_modules.length > 0) {
+              const incoming = msg.state.passed_modules;
+              setPassedModules((prev) => Array.from(new Set([...prev, ...incoming])));
             }
           }
         } catch {
@@ -309,12 +370,24 @@ export const CisfGridLabPage: React.FC = () => {
       };
     };
 
-    connect();
+    // Defer by a tick so React StrictMode double-mount does not abort a CONNECTING socket.
+    connectTimer = window.setTimeout(() => {
+      connectTimer = null;
+      connect();
+    }, 0);
+
+    const handleUnload = () => {
+      cancelled = true;
+      closeSocketCleanly(true);
+    };
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
 
     return () => {
       cancelled = true;
-      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
-      if (socket) socket.close();
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
+      closeSocketCleanly(false);
     };
   }, [api, isRunning, token, wsNonce]);
 
@@ -330,17 +403,28 @@ export const CisfGridLabPage: React.FC = () => {
     throw new Error('Evaluation token unavailable. Reload your active session.');
   }, [refreshSession]);
 
-  const handleStart = async () => {
-    if (starting || isRunning || isPreparing) return;
+  const handleStart = async (modeOverride?: CisfGridMode) => {
+    if (starting || isRunning || isPreparing || isStoppingUnexpectedly) return;
+    const requestedMode = modeOverride ?? launchMode;
     setStarting(true);
     setError('');
     setPausedNotice('');
+    setActionNotice('');
+    setVerifyState(null);
+    setPracticeResult(null);
+    setTelemetry(null);
+    initialModuleSyncedRef.current = false;
     try {
-      const started = await api.startSession(assignmentId, launchMode);
+      const started = await api.startSession(assignmentId, requestedMode);
       applySessionPayload(started);
     } catch (err) {
       if (err instanceof CisfGridApiError && err.status === 409) {
-        setPausedNotice(err.message);
+        if (err.message.toLowerCase().includes('paused')) {
+          setPausedNotice(err.message);
+        } else {
+          setError(err.message);
+          void refreshSession();
+        }
       } else {
         setError(err instanceof Error ? err.message : 'Could not start CISF OT Grid session.');
       }
@@ -435,6 +519,9 @@ export const CisfGridLabPage: React.FC = () => {
       setPracticeResult(res);
       setMissionTab('checks');
     } catch (err) {
+      if (err instanceof CisfGridApiError && (err.status === 409 || err.status === 502)) {
+        void refreshSession();
+      }
       setError(err instanceof Error ? err.message : 'Practice check failed.');
     } finally {
       setPracticeBusy(false);
@@ -466,6 +553,9 @@ export const CisfGridLabPage: React.FC = () => {
         } catch (err) {
           if (activeCheckRef.current?.checkId !== checkId) return;
           setVerifyBusy(false);
+          if (err instanceof CisfGridApiError && (err.status === 409 || err.status === 502)) {
+            void refreshSession();
+          }
           setError(err instanceof Error ? err.message : 'Verification status check failed.');
           return;
         }
@@ -476,7 +566,7 @@ export const CisfGridLabPage: React.FC = () => {
         setError('Verification check polling timed out. Refresh to inspect the latest state.');
       }
     },
-    [api, assignmentId, loadCaseAndDispatch],
+    [api, assignmentId, loadCaseAndDispatch, refreshSession],
   );
 
   const handleVerify = async () => {
@@ -511,8 +601,15 @@ export const CisfGridLabPage: React.FC = () => {
     } catch (err) {
       setVerifyBusy(false);
       if (err instanceof CisfGridApiError && err.status === 409) {
-        setPausedNotice(err.message);
+        if (err.message.toLowerCase().includes('paused')) {
+          setPausedNotice(err.message);
+        } else {
+          void refreshSession();
+        }
       } else {
+        if (err instanceof CisfGridApiError && err.status === 502) {
+          void refreshSession();
+        }
         setError(err instanceof Error ? err.message : 'Verification could not be started.');
       }
     }
@@ -671,17 +768,31 @@ export const CisfGridLabPage: React.FC = () => {
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
                 isRunning
                   ? 'bg-mint-50 text-mint-700 dark:bg-mint-950/60 dark:text-mint-300'
-                  : isPreparing || starting
-                    ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200'
-                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                  : isStoppedUnexpectedly
+                    ? 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200'
+                    : isPreparing || starting
+                      ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
               }`}
             >
               <span
                 className={`h-2 w-2 rounded-full ${
-                  isRunning ? 'bg-mint-500' : isPreparing || starting ? 'bg-amber-400' : 'bg-slate-400'
+                  isRunning
+                    ? 'bg-mint-500'
+                    : isStoppedUnexpectedly
+                      ? 'bg-rose-500'
+                      : isPreparing || starting
+                        ? 'bg-amber-400'
+                        : 'bg-slate-400'
                 }`}
               />
-              {isRunning ? 'Session running' : isPreparing || starting ? 'Provisioning...' : 'Not started'}
+              {isRunning
+                ? 'Session running'
+                : isStoppedUnexpectedly
+                  ? 'Lab stopped'
+                  : isPreparing || starting
+                    ? 'Provisioning...'
+                    : 'Not started'}
             </span>
 
             {(isRunning || isPreparing) && (
@@ -737,6 +848,24 @@ export const CisfGridLabPage: React.FC = () => {
                   <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300">
                     Provisioning isolated IEC-104 RTUs, SCADA EMS, Purdue firewall fence, grading sandbox, and key-authenticated responder shell. This view switches automatically once health probes pass.
                   </p>
+                </div>
+              ) : isStoppedUnexpectedly ? (
+                <div role="status" className="flex flex-col items-center py-8 text-center">
+                  <AlertTriangle className="h-10 w-10 text-amber-500" />
+                  <h2 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">
+                    Your lab stopped. Start it again; your points are safe.
+                  </h2>
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      onClick={() => void handleStart(session?.session.mode ?? launchMode)}
+                      disabled={starting || isStoppingUnexpectedly || Boolean(pausedNotice)}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-700"
+                    >
+                      <Play className="h-4 w-4" />
+                      {isStoppingUnexpectedly ? 'Finishing stop...' : 'Start lab again'}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1357,25 +1486,28 @@ export const CisfGridLabPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="min-h-0 flex-1 p-3">
-                <div className={rightTab === 'terminal' ? 'block h-full' : 'hidden'}>
+              <div className="flex min-h-0 flex-1 flex-col p-3">
+                <div className={rightTab === 'terminal' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
                   <RealTerminal
                     labId="cisf-ot-grid"
                     wsPath="/api/v1/terminal/ws/cisf-ot-grid"
                     token={token ?? undefined}
+                    enabled={isRunning}
                     terminalTitle="CISF OT Grid Responder Shell"
-                    height="calc(100vh - 14rem)"
-                    className="min-h-[32rem]"
+                    height="100%"
+                    className="min-h-[32rem] flex-1"
                   />
                 </div>
                 {rightTab === 'editor' && (
-                  <CisfGridCodeEditor
-                    filename={editorFile}
-                    onSelectFile={setEditorFile}
-                    loadFile={loadWorkspaceContent}
-                    saveFile={saveWorkspaceContent}
-                    recommendedFiles={currentModule.artifactFiles}
-                  />
+                  <div className="flex min-h-0 flex-1 flex-col">
+                    <CisfGridCodeEditor
+                      filename={editorFile}
+                      onSelectFile={setEditorFile}
+                      loadFile={loadWorkspaceContent}
+                      saveFile={saveWorkspaceContent}
+                      recommendedFiles={currentModule.artifactFiles}
+                    />
+                  </div>
                 )}
               </div>
             </section>

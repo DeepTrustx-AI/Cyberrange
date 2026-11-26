@@ -122,4 +122,19 @@ test('CisfGridLabPage adheres to aesthetic, routing, and Decision 6 invariants',
     CISF_GRID_MODULES.reduce((acc, m) => acc + m.pts, 0),
     1000,
   );
+
+  // L1, L3, L4 live-check regression invariants
+  assert.ok(
+    pageSrc.includes('Your lab stopped. Start it again; your points are safe.'),
+    'CisfGridLabPage must render L1 stopped-lab message',
+  );
+  assert.ok(pageSrc.includes('enabled={isRunning}'), 'CisfGridLabPage must gate RealTerminal socket on isRunning (L3)');
+  assert.ok(pageSrc.includes('height="100%"'), 'CisfGridLabPage must stretch RealTerminal to fill right column (L4)');
+  assert.doesNotMatch(stageSrc, /truncate text-xs text-slate-500/, 'CisfGridStage must not truncate bay feeder names (L4)');
+  assert.ok(stageSrc.includes('title={fullFeederName}'), 'CisfGridStage must expose full feeder name via title/aria-label (L4)');
+
+  const termSrc = await readFile(new URL('../src/components/RealTerminal.tsx', import.meta.url), 'utf8');
+  assert.ok(termSrc.includes('beforeunload') && termSrc.includes('pagehide'), 'RealTerminal must close WebSocket cleanly on unload (L3)');
+  assert.ok(termSrc.includes('enabled?: boolean'), 'RealTerminal must accept enabled prop (L3)');
+  assert.ok(termSrc.includes('className="truncate" title={resolvedTitle}'), 'RealTerminal header title must truncate cleanly on narrow screens (L4)');
 });

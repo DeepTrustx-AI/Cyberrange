@@ -201,22 +201,19 @@ export const CisfGridStage: React.FC<CisfGridStageProps> = ({ telemetry, wsStatu
                   const mwVal = typeof bay?.mw === 'number' ? bay.mw : brk?.mw;
                   const mw = typeof mwVal === 'number' ? `${mwVal.toFixed(1)} MW` : '--';
                   const rtuLabel = bay?.rtu ? bay.rtu.toUpperCase() : idx < 3 ? 'RTU-1' : 'RTU-2';
-                  const subtitle =
-                    !blinded && bay?.label
-                      ? `${bay.label}${typeof bay.tier === 'number' && bay.tier > 0 ? ` · T${bay.tier}` : ''}`
-                      : `${rtuLabel} · 33 kV feeder`;
+                  const fullFeederName =
+                    !blinded && bay?.label ? bay.label : `${rtuLabel} · 33 kV feeder`;
+                  const tierMeta =
+                    !blinded && typeof bay?.tier === 'number' && bay.tier > 0 ? `Tier ${bay.tier}` : rtuLabel;
                   return (
                     <div
                       key={bayId}
-                      className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950/70"
+                      className="flex min-w-0 flex-col justify-between gap-1.5 rounded-2xl border border-[var(--line)] bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-950/70"
                     >
-                      <div className="min-w-0">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">{bayId}</div>
-                        <div className="truncate text-xs text-slate-500 dark:text-slate-400">{subtitle}</div>
-                      </div>
-                      <div className="text-right">
                         <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          className={`inline-block shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                             isClosed
                               ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-200'
                               : 'bg-mint-50 text-mint-700 dark:bg-mint-950/60 dark:text-mint-300'
@@ -224,9 +221,19 @@ export const CisfGridStage: React.FC<CisfGridStageProps> = ({ telemetry, wsStatu
                         >
                           {isClosed ? 'CLOSED' : 'OPEN'}
                         </span>
-                        <div className="tabular mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                      </div>
+                      <div
+                        className="break-words text-xs leading-snug text-slate-600 dark:text-slate-300"
+                        title={fullFeederName}
+                        aria-label={`${bayId} feeder: ${fullFeederName}`}
+                      >
+                        {fullFeederName}
+                      </div>
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="font-medium text-slate-500 dark:text-slate-400">{tierMeta}</span>
+                        <span className="tabular shrink-0 font-mono font-semibold text-slate-700 dark:text-slate-200">
                           {mw}
-                        </div>
+                        </span>
                       </div>
                     </div>
                   );
