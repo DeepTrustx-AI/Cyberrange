@@ -10,6 +10,7 @@ const SUMMARIES: Record<string, string> = {
   'ot-security-lab': 'Map an industrial network, change PLC registers, read Modbus and S7 traffic, then respond to the incident.',
   'ot-railroad-north': "Probe a railway's PLCs over Modbus, tamper with signals and switches, then trace it in the logs.",
   'ot-water-treatment': "Scan a water plant's Modbus coils, check the chemical dosing setpoints and defend the PLCs.",
+  'cisf-ot-grid': 'Investigate a blinded 220/132/33 kV substation over live IEC 60870-5-104 traffic, remove the replay implant, enforce OT zone containment, restore power safely, and ship Zeek detections.',
   'puzzle-lab': 'Twenty levels of permissions, setuid, sudoers, user and systemd puzzles on a live system.',
 };
 
@@ -144,6 +145,18 @@ const MODULE_MINUTES: Record<string, Record<string, number>> = {
     'ot-water-treatment_module4': 50,
     'ot-water-treatment_module5': 70,
   },
+  'cisf-ot-grid': {
+    'cisf-ot-grid_m01': 50,
+    'cisf-ot-grid_m02': 60,
+    'cisf-ot-grid_m03': 50,
+    'cisf-ot-grid_m04': 65,
+    'cisf-ot-grid_m05': 65,
+    'cisf-ot-grid_m06': 60,
+    'cisf-ot-grid_m07': 60,
+    'cisf-ot-grid_m08': 60,
+    'cisf-ot-grid_m09': 70,
+    'cisf-ot-grid_m10': 65,
+  },
   'puzzle-lab': {
     'puzzle-lab_module1': 15,
     'puzzle-lab_module2': 15,
@@ -202,6 +215,7 @@ const MODULE_MINUTES: Record<string, Record<string, number>> = {
 // Difficulty the catalogue shows where the API's value is out of date.
 const DIFFICULTY: Record<string, string> = {
   'race-conditions-lab': 'advanced',
+  'cisf-ot-grid': 'advanced',
 };
 
 export function moduleMinutes(labId: string, moduleId: string, fallback: number) {

@@ -400,6 +400,110 @@
   from { transform: translateY(-18px); opacity: 0; }
 }
 
+/* Phase 3 lab-tour poses: point, hop, nod, phone (zero raw hex literals; transform/opacity only). */
+.mascot {
+  --m-phone-body: var(--color-clay-peach, var(--color-peach-300, var(--color-brand-300)));
+  --m-phone-cap: var(--color-clay-peach-lit, var(--color-peach-100, var(--color-brand-100)));
+}
+
+.mascot .m-phone-body { fill: var(--m-phone-body); }
+.mascot .m-phone-cap { fill: var(--m-phone-cap); }
+.mascot .m-phone {
+  opacity: 0;
+  transform-origin: 94px 54px;
+  transition: opacity 0.2s ease-out, transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Point: directional mitten + gaze, 240 ms ease-out, holds still. */
+.mascot--point .m-rig {
+  animation: none;
+}
+.mascot--point .m-arm {
+  transition: opacity 0.2s ease-out, transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mascot--point[data-dir="left"] {
+  --look-x: -2.4px;
+  --look-y: 0px;
+}
+.mascot--point[data-dir="left"] .m-arm-l {
+  transform: rotate(92deg) translateY(-2px);
+}
+.mascot--point[data-dir="left"] .m-arm-r {
+  transform: rotate(-10deg);
+}
+.mascot--point[data-dir="right"] {
+  --look-x: 2.4px;
+  --look-y: 0px;
+}
+.mascot--point[data-dir="right"] .m-arm-r {
+  transform: rotate(-92deg) translateY(-2px);
+}
+.mascot--point[data-dir="right"] .m-arm-l {
+  transform: rotate(10deg);
+}
+.mascot--point[data-dir="up"] {
+  --look-x: 0.6px;
+  --look-y: -2px;
+}
+.mascot--point[data-dir="up"] .m-arm-r {
+  transform: rotate(-158deg) translateY(-3px);
+}
+.mascot--point[data-dir="up"] .m-arm-l {
+  transform: rotate(12deg);
+}
+.mascot--point[data-dir="down"] {
+  --look-x: 0.6px;
+  --look-y: 2px;
+}
+.mascot--point[data-dir="down"] .m-arm-r {
+  transform: rotate(-36deg) translateY(3px);
+}
+.mascot--point[data-dir="down"] .m-arm-l {
+  transform: rotate(12deg);
+}
+
+/* Hop: airborne stance while WAAPI translates the mascot wrapper. */
+.mascot--hop .m-rig { animation: none; }
+.mascot--hop .m-arm-l { transform: rotate(118deg); }
+.mascot--hop .m-arm-r { transform: rotate(-118deg); }
+.mascot--hop .m-shadow { opacity: 0.06; transform: scale(0.74); }
+
+/* Nod: two 180 ms dips (360 ms total), played once. */
+.mascot--nod .m-rig {
+  animation: m-nod 360ms ease-in-out 1;
+}
+.mascot--nod .m-eyes-open { opacity: 0; }
+.mascot--nod .m-eyes-happy { opacity: 1; }
+
+@keyframes m-nod {
+  0% { transform: translateY(0) scaleY(1); }
+  25% { transform: translateY(2px) scaleY(0.95); }
+  50% { transform: translateY(0) scaleY(1); }
+  75% { transform: translateY(2px) scaleY(0.95); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+/* Phone: clay peach handset held beside the face, subtle 3 s tilt loop while visible. */
+.mascot--phone .m-phone {
+  opacity: 1;
+  transform: rotate(-10deg);
+}
+.mascot--phone .m-arm-r {
+  transform: rotate(-132deg) translate(-2px, 4px);
+}
+.mascot--phone .m-arm-l {
+  transform: rotate(14deg);
+}
+.mascot--phone .m-rig {
+  animation: m-phone-tilt 3s ease-in-out infinite;
+}
+
+@keyframes m-phone-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-3deg); }
+  70% { transform: rotate(2deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mascot,
   .mascot *,
