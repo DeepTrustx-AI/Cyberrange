@@ -289,6 +289,7 @@ export const AvailableLabs: React.FC = () => {
     else if (id === 'cloud-static-security-lab') navigate('/labs/cloud-static-security-lab');
     else if (id === 'vulnshop') navigate('/labs/vulnshop');
     else if (id === 'cisf-honeypot') navigate('/labs/cisf-honeypot');
+    else if (id === 'cisf-ot-grid') navigate('/labs/cisf-ot-grid');
     else if (id === 'cloud-security-lab' || id === 'cloudcorp-aws-lab' || id.includes('cloud')) navigate('/labs/cloud-security-lab/session/sess-cloud-01');
     else if (id.includes('puzzle')) navigate('/puzzle');
     else navigate(`/labs/${lab.id}/session/sess-123`);

@@ -16,6 +16,12 @@ test('labRoutes maps cisf-ot-grid and preserves assignment_id query param', asyn
   assert.equal(labPath('cisf-ot-grid'), '/labs/cisf-ot-grid');
   assert.equal(assignmentLabPath('cisf-ot-grid', 42), '/labs/cisf-ot-grid?assignment_id=42');
   assert.equal(labPath('cisf-honeypot'), '/labs/cisf-honeypot');
+
+  const availableSrc = await readFile(new URL('../src/pages/user/AvailableLabs.tsx', import.meta.url), 'utf8');
+  assert.ok(
+    availableSrc.includes("id === 'cisf-ot-grid') navigate('/labs/cisf-ot-grid')"),
+    'AvailableLabs.tsx must route cisf-ot-grid launches directly to /labs/cisf-ot-grid',
+  );
 });
 
 test('labCopy and skills register cisf-ot-grid metadata cleanly', async () => {
