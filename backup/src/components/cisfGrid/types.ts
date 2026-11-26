@@ -447,7 +447,7 @@ export const CISF_GRID_MODULES: CisfGridModuleSpec[] = [
     steps: [
       'Run grid-calc budget and grid-calc clpu <bay> --t 0,10,20,30,45 in the terminal to inspect seeded feeder loads and CLPU curves.',
       'Save ~/workspace/restore_plan.yaml and ~/workspace/restore_calc.json (predicted peak MW per step within +/-3%).',
-      'Execute two-step Select-Before-Operate switching via sbo CLI (or Station Controls) matching your plan, hold steady in 49.90 to 50.05 Hz, and submit.',
+      'Execute two-step Select-Before-Operate switching via sbo CLI (including sbo governor <freq_hz> in 49.00 to 51.00 Hz to adjust generator frequency into the ANSI 25 window before closing CB-220-TIE1) or Station Controls matching your plan, hold steady in 49.90 to 50.05 Hz, and submit.',
     ],
     objectives: [
       'Inspect seeded feeder MW and CLPU decay curves via grid-calc',
