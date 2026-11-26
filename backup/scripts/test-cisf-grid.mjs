@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import test from 'node:test';
 import ts from 'typescript';
 
@@ -52,52 +52,71 @@ test('Mascot Phase 3 additions have zero raw hex literals and cover all four pos
   assert.ok(hopTs.includes('prefers-reduced-motion: reduce'), 'mascotHop.ts must honor prefers-reduced-motion');
 });
 
-test('CisfGridLabPage adheres to aesthetic, routing, and Decision 6 invariants', async () => {
+test('CisfGridLabPage and V13 Living Stage port adhere to aesthetic, routing, security, and L1-L4 invariants', async () => {
   const files = [
     'src/pages/user/CisfGridLabPage.tsx',
     'src/components/cisfGrid/types.ts',
     'src/components/cisfGrid/api.ts',
+    'src/components/cisfGrid/CisfGridV13Workspace.tsx',
     'src/components/cisfGrid/CisfGridCodeEditor.tsx',
     'src/components/cisfGrid/CisfGridStage.tsx',
     'src/components/cisfGrid/CisfGridTour.tsx',
+    'src/components/cisfGrid/v13/platformTransport.ts',
+    'src/components/cisfGrid/v13/ems.d.ts',
+    'src/components/cisfGrid/v13/ems.js',
+    'src/components/cisfGrid/v13/modules.js',
+    'src/components/cisfGrid/v13/scene.js',
+    'src/components/cisfGrid/v13/panels.js',
+    'src/components/cisfGrid/v13/glossary.js',
+    'src/components/cisfGrid/v13/mascot.js',
+    'src/components/cisfGrid/v13/terminal.js',
+    'src/components/cisfGrid/v13/story.js',
+    'src/components/cisfGrid/v13/tour.js',
+    'src/components/cisfGrid/v13/v13Styles.css',
+    'src/components/cisfGrid/v13/v13Tour.css',
   ];
   for (const rel of files) {
     const src = await readFile(new URL(`../${rel}`, import.meta.url), 'utf8');
     assert.doesNotMatch(src, /[\u2013\u2014]/, `${rel} must not contain em/en dashes`);
-    assert.doesNotMatch(src, /transition-all|transition:\s*all/, `${rel} must not use transition-all`);
+    assert.doesNotMatch(src, /transition-all|transition:\s*all\b/, `${rel} must not use transition-all`);
     assert.doesNotMatch(src, /\b(?:purple|violet|indigo)-\d{2,3}\b/, `${rel} must not use purple/violet/indigo`);
-    assert.doesNotMatch(src, /\bfetch\s*\(/, `${rel} must not call raw fetch()`);
+    if (/\.(js|ts|tsx)$/.test(rel)) {
+      assert.doesNotMatch(src, /\bfetch\s*\(/, `${rel} must not call raw fetch()`);
+    }
   }
 
   const pageSrc = await readFile(new URL('../src/pages/user/CisfGridLabPage.tsx', import.meta.url), 'utf8');
-  assert.ok(pageSrc.includes('wsPath="/api/v1/terminal/ws/cisf-ot-grid"'), 'CisfGridLabPage must wire RealTerminal to cisf-ot-grid');
-  assert.ok(pageSrc.includes('activeCheckRef'), 'CisfGridLabPage must isolate async check_id polling');
-  assert.ok(pageSrc.includes('X-Grid-Eval-Token') || (await readFile(new URL('../src/components/cisfGrid/api.ts', import.meta.url), 'utf8')).includes('X-Grid-Eval-Token'), 'Must send X-Grid-Eval-Token on verify');
+  const wsBridgeSrc = await readFile(new URL('../src/components/cisfGrid/CisfGridV13Workspace.tsx', import.meta.url), 'utf8');
+  const transportSrc = await readFile(new URL('../src/components/cisfGrid/v13/platformTransport.ts', import.meta.url), 'utf8');
+  const v13EmsSrc = await readFile(new URL('../src/components/cisfGrid/v13/ems.js', import.meta.url), 'utf8');
+  const v13TermSrc = await readFile(new URL('../src/components/cisfGrid/v13/terminal.js', import.meta.url), 'utf8');
+  const v13CssSrc = await readFile(new URL('../src/components/cisfGrid/v13/v13Styles.css', import.meta.url), 'utf8');
+  const apiSrc = await readFile(new URL('../src/components/cisfGrid/api.ts', import.meta.url), 'utf8');
+
+  assert.ok(pageSrc.includes('<CisfGridV13Workspace'), 'CisfGridLabPage must mount CisfGridV13Workspace when running');
+  assert.ok(wsBridgeSrc.includes('mountV13Workspace'), 'CisfGridV13Workspace must mount V13 workspace');
+  assert.ok(wsBridgeSrc.includes("assetBase: '/cisf-grid/assets'"), 'CisfGridV13Workspace must point sprites to /cisf-grid/assets');
+  assert.ok(transportSrc.includes('/api/v1/terminal/ws/cisf-ot-grid'), 'platformTransport must wire terminal WS to cisf-ot-grid');
+  assert.ok(transportSrc.includes('apiWebSocketUrl'), 'platformTransport must build WS URLs via apiWebSocketUrl');
+  assert.ok(apiSrc.includes('X-Grid-Eval-Token'), 'api.ts must send X-Grid-Eval-Token on verify');
+  assert.ok(apiSrc.includes('rec.error') && apiSrc.includes('rec.retry_after_s'), 'api.ts must surface checker error and retry_after_s');
   assert.doesNotMatch(pageSrc, /interactive=\{true\}/, 'Mascot must never be interactive inside CisfGridLabPage');
+
+  // Verify all 40 Clay 3D WebP sprites are packaged under public/cisf-grid/assets
+  const assetFiles = (await readdir(new URL('../public/cisf-grid/assets', import.meta.url))).filter((f) => f.endsWith('.webp'));
+  assert.equal(assetFiles.length, 40, `Expected 40 Clay 3D WebP sprites in public/cisf-grid/assets, found ${assetFiles.length}`);
+
+  // Verify V13 CSS is scoped strictly under .cg-v13-root and preserves CyberRange OKLCH ramps
+  assert.ok(v13CssSrc.includes('html.dark .cg-v13-root'), 'v13Styles.css must scope Ember dark tokens to .cg-v13-root');
+  assert.ok(v13CssSrc.includes('oklch(0.56 0.155 40)'), 'v13Styles.css must carry CyberRange Burnt Orange Ember primary token');
+  assert.doesNotMatch(v13CssSrc, /^:root\b/m, 'v13Styles.css must not leak unscoped :root');
 
   const designMd = await readFile(new URL('../DESIGN.md', import.meta.url), 'utf8');
   assert.ok(designMd.includes('Decision 6'), 'DESIGN.md must document Decision 6 eighth allowed place');
   assert.ok(designMd.includes('living-lab-stage'), 'DESIGN.md must document living-lab-stage');
 
-  // Regression assertions for Frontend Verifier Round 1 findings:
   const mascotSrc = await readFile(new URL('../src/components/mascot/Mascot.tsx', import.meta.url), 'utf8');
   assert.ok(mascotSrc.includes("shown !== 'point'"), 'Mascot.tsx must not clobber CSS point gaze when look is omitted');
-
-  const stageSrc = await readFile(new URL('../src/components/cisfGrid/CisfGridStage.tsx', import.meta.url), 'utf8');
-  assert.ok(stageSrc.includes('telemetry?.gen_mw'), 'CisfGridStage must render live gen_mw from SCADA telemetry');
-  assert.ok(stageSrc.includes('telemetry?.districts'), 'CisfGridStage must render City Grid from telemetry.districts');
-  assert.ok(stageSrc.includes('Red = Closed (live)'), 'CisfGridStage must show ANSI/IEC breaker polarity legend');
-  assert.doesNotMatch(stageSrc, /DISTRICT_FALLBACKS/, 'CisfGridStage must never hardcode permuted BAY-01..06 to districts');
-
-  const apiSrc = await readFile(new URL('../src/components/cisfGrid/api.ts', import.meta.url), 'utf8');
-  assert.ok(apiSrc.includes('rec.error') && apiSrc.includes('rec.retry_after_s'), 'api.ts must surface checker error and retry_after_s');
-
-  const editorSrc = await readFile(new URL('../src/components/cisfGrid/CisfGridCodeEditor.tsx', import.meta.url), 'utf8');
-  assert.ok(editorSrc.includes('loadSeqRef'), 'CisfGridCodeEditor must guard async file loads with sequence token');
-  assert.ok(editorSrc.includes('otherWorkspaceFiles'), 'CisfGridCodeEditor must deduplicate select options');
-
-  assert.ok(pageSrc.includes('moduleSwitchSeqRef') && pageSrc.includes('.resetModule(modId'), 'CisfGridLabPage must sync active module to container on switch');
-  assert.ok(pageSrc.includes('let evalToken = await ensureEvalToken()'), 'CisfGridLabPage must refresh eval_token in practice and verify');
 
   // P3-6: Module points table parity against canonical 10-module ladder (total 1000 pts)
   const { CISF_GRID_MODULES } = await loadTsModule('src/components/cisfGrid/types.ts');
@@ -123,15 +142,20 @@ test('CisfGridLabPage adheres to aesthetic, routing, and Decision 6 invariants',
     1000,
   );
 
-  // L1, L3, L4 live-check regression invariants
+  // L1, L3, L4 live-check regression invariants across page + V13 modules + RealTerminal
   assert.ok(
     pageSrc.includes('Your lab stopped. Start it again; your points are safe.'),
     'CisfGridLabPage must render L1 stopped-lab message',
   );
-  assert.ok(pageSrc.includes('enabled={isRunning}'), 'CisfGridLabPage must gate RealTerminal socket on isRunning (L3)');
-  assert.ok(pageSrc.includes('height="100%"'), 'CisfGridLabPage must stretch RealTerminal to fill right column (L4)');
-  assert.doesNotMatch(stageSrc, /truncate text-xs text-slate-500/, 'CisfGridStage must not truncate bay feeder names (L4)');
-  assert.ok(stageSrc.includes('title={fullFeederName}'), 'CisfGridStage must expose full feeder name via title/aria-label (L4)');
+  assert.ok(v13EmsSrc.includes('activeCheckPollId'), 'v13/ems.js must isolate async check polling');
+  assert.ok(
+    v13EmsSrc.includes('syncPassedModulesFromSigned(s.passed_modules, false)') &&
+      v13EmsSrc.includes('syncPassedModulesFromSigned(ids, true)'),
+    'v13/ems.js must union live WS passed_modules so fresh containers after L1 restart never wipe Postgres completions',
+  );
+  assert.ok(v13EmsSrc.includes('beforeunload') && v13EmsSrc.includes('pagehide'), 'v13/ems.js must close EMS WebSocket cleanly on unload (L3)');
+  assert.ok(v13TermSrc.includes('beforeunload') && v13TermSrc.includes('pagehide'), 'v13/terminal.js must close terminal WebSocket cleanly on unload (L3)');
+  assert.ok(v13EmsSrc.includes('nm.title = fullName') && v13EmsSrc.includes('feeder: ${fullName}'), 'v13/ems.js must expose full feeder name via aria-label/title (L4)');
 
   const termSrc = await readFile(new URL('../src/components/RealTerminal.tsx', import.meta.url), 'utf8');
   assert.ok(termSrc.includes('beforeunload') && termSrc.includes('pagehide'), 'RealTerminal must close WebSocket cleanly on unload (L3)');

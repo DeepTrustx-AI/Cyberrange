@@ -1,0 +1,316 @@
+{
+  "version": "cg-story-v1",
+  "coldOpen": {
+    "title": "21:40",
+    "durationMs": 25000,
+    "skipLabel": "Skip",
+    "beats": [
+      {
+        "id": "beat-1",
+        "startMs": 0,
+        "endMs": 4000,
+        "clock": "21:39:52",
+        "visual": "city_all_lit",
+        "line": "Suryanagar. A Tuesday night.",
+        "reducedMotion": true
+      },
+      {
+        "id": "beat-2",
+        "startMs": 4000,
+        "endMs": 9000,
+        "clock": "21:40:00",
+        "visual": "three_districts_drop",
+        "line": "21:40. Three feeders drop.",
+        "reducedMotion": false
+      },
+      {
+        "id": "beat-3",
+        "startMs": 9000,
+        "endMs": 14000,
+        "clock": "21:40:05",
+        "visual": "hmi_inset_normal",
+        "line": "The control room sees nothing wrong.",
+        "reducedMotion": true
+      },
+      {
+        "id": "beat-4",
+        "startMs": 14000,
+        "endMs": 19000,
+        "clock": "21:40:10",
+        "visual": "split_dark_vs_hmi_diesel",
+        "line": "The hospital is on diesel. The screens say all is well.",
+        "reducedMotion": false
+      },
+      {
+        "id": "beat-5",
+        "startMs": 19000,
+        "endMs": 25000,
+        "clock": "21:40:15",
+        "visual": "dispatch_raghav_phone",
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "pose": "phone",
+        "line": "Raghav Menon: \"My screens say normal, and the city is dark. I need you here.\"",
+        "reducedMotion": true
+      }
+    ]
+  },
+  "acts": [
+    {
+      "id": 1,
+      "title": "1. The call",
+      "modules": ["m01", "m02"],
+      "question": "What is really on this network?",
+      "sceneCue": "Three districts dark while the screen inset shows them lit",
+      "durationMs": 3000
+    },
+    {
+      "id": 2,
+      "title": "2. The lie",
+      "modules": ["m03", "m04"],
+      "question": "Is the control room seeing the truth?",
+      "sceneCue": "The split view: the screen on one side, the field on the other",
+      "durationMs": 3000
+    },
+    {
+      "id": 3,
+      "title": "3. The trail",
+      "modules": ["m05", "m06", "m07"],
+      "question": "Who sent the commands, how did they reach the control room, and what is still running?",
+      "sceneCue": "The path through the zones draws hop by hop, as the learner proves each one",
+      "durationMs": 3000
+    },
+    {
+      "id": 4,
+      "title": "4. Shut the doors",
+      "modules": ["m08"],
+      "question": "Can we close the zones without stopping the grid?",
+      "sceneCue": "Zone walls close while the polling line keeps flowing",
+      "durationMs": 3000
+    },
+    {
+      "id": 5,
+      "title": "5. Lights back",
+      "modules": ["m09", "m10"],
+      "question": "Bring the city back safely, then make sure this is caught next time",
+      "sceneCue": "Districts relight one by one, and the handover goes to Commandant Rathore",
+      "durationMs": 3000
+    }
+  ],
+  "modules": {
+    "m01": {
+      "act": 1,
+      "cardTitle": "Callout",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "Three feeders down, hospital on diesel, and my screen says all normal. Tell me what's actually talking out there."
+      },
+      "closer": "You know who's on the wire. Next: what each signal means.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You confirmed your vantage on the substation network and inventoried the active control and RTU sessions from passive wire captures.",
+        "Instead of trusting transport port status alone, you verified live IEC-104 interrogation traffic and located your own read-only frames on the tap.",
+        "With every active master and RTU endpoint established, the team can map individual switchyard points without guesswork."
+      ],
+      "realWorldNote": "Before touching relays or firewalls during an OT outage, responders inventory live substation communications passively so active polling is never disrupted."
+    },
+    "m02": {
+      "act": 1,
+      "cardTitle": "Signal map",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "Half our signal sheet was lost in the retrofit. Without it we can't read a single breaker."
+      },
+      "closer": "The station has a map again. Next: what normal looked like.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You separated the station's authoritative polling stream from a benign secondary monitor and rebuilt the point schedule across all ten controllable assets.",
+        "Each breaker, transformer, tie, and generator now has verified status, measurement, and command addresses tied to its owning RTU.",
+        "That verified point map makes every forensic log and switching decision downstream traceable to physical switchgear."
+      ],
+      "realWorldNote": "IEC 60870-5-104 point tables are unique to each substation; after hardware retrofits, paper drawings often lag behind live RTU databases."
+    },
+    "m03": {
+      "act": 2,
+      "cardTitle": "Baseline",
+      "opener": {
+        "speaker": "Devika Nair",
+        "initials": "DN",
+        "role": "Substation Bay Technician, Field Switchyard",
+        "pose": "phone",
+        "line": "I can read you any meter in the yard. Tell me what you expect to see first."
+      },
+      "closer": "You have a baseline. Next: hold it against the screen.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You audited the pre-incident historian export, removed clock jumps, duplicate timestamps, and sensor spikes, and calculated clean normal electrical readings.",
+        "You also queried the DMZ historian read path directly and verified your own request in its access log.",
+        "With a clean reference for normal bus voltage, transformer loading, and frequency, subtle manipulation can no longer blend into background noise."
+      ],
+      "realWorldNote": "Indian grid operators track steady-state system frequency against the 49.90 to 50.05 Hz band under CERC Indian Electricity Grid Code 2023 Regulation 30(1)."
+    },
+    "m04": {
+      "act": 2,
+      "cardTitle": "The lie",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "My screen shows the hospital feeder live. Devika is standing next to it and the meter reads zero."
+      },
+      "closer": "Proven: the screen is lying. Next: who made it lie.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "By comparing the control room, the DMZ historian, and the passive field tap, you proved that the operator displays were replaying stale telemetry while suppressing trip events.",
+        "You separated deliberate replay timestamp skew from harmless sub-second clock jitter and corroborated the open switchyard bays with Devika's physical panel check.",
+        "The substation team now has hard multi-vantage proof that the HMI cannot be trusted until the tampering is found and removed."
+      ],
+      "realWorldNote": "In the December 2015 Ukraine grid outage, the utility's call centre was flooded with fake calls, so the operators could not hear what customers saw. Keeping the operators blind buys time."
+    },
+    "m05": {
+      "act": 3,
+      "cardTitle": "Commands",
+      "opener": {
+        "speaker": "Dr Arvind Kulkarni",
+        "initials": "AK",
+        "role": "Facilities Engineering, District Trauma Hospital",
+        "pose": "phone",
+        "line": "We have hours of diesel left, not days. I need to know this was deliberate."
+      },
+      "closer": "You have the commands and where they came from. Next: how they reached the control room.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You isolated the unauthorized IEC-104 control session on the field tap and reconstructed every Select and Execute command pair that opened the tripped feeders.",
+        "Contrasting those hostile control frames against your own benign read-only probe established clear protocol proof of deliberate remote switching.",
+        "Pairing packet forensics with hospital diesel and water reservoir margins anchored the response around life-safety priorities."
+      ],
+      "realWorldNote": "In April 2022, Industroyer2 sent IEC-104 commands to open breakers at Ukrainian substations. It was caught and stopped before the outage it was set for."
+    },
+    "m06": {
+      "act": 3,
+      "cardTitle": "The path",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "Our office network should never reach the control room. Show me how it did."
+      },
+      "closer": "The path is known. Next: what was left running.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You tied authentication records, cross-zone firewall flows, and host audit trails together to trace the attacker's three-hop lateral pivot across the substation zones.",
+        "Inspecting the engineering workstation snapshot revealed the compromised maintenance account and the scheduled persistence entry left behind.",
+        "Knowing both the entry path and the persistence mechanism prevents the attacker from simply returning after containment."
+      ],
+      "realWorldNote": "Public post-mortems of the 2015 and 2016 Ukraine grid intrusions documented attackers entering through corporate IT networks and pivoting across jump hosts into substation control environments."
+    },
+    "m07": {
+      "act": 3,
+      "cardTitle": "The implant",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "Something on the workstation is still feeding the screen old data."
+      },
+      "closer": "The screen tells the truth again. Next: close the doors without stopping the grid.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You verified the CRC-32 checksum and decoded the binary target configuration left on the engineering workstation, matching its fields against your wire forensics.",
+        "Using both your Module 6 persistence path and your decoded checksum, you removed the persistence unit and disabled the telemetry replay shim without interrupting polling.",
+        "Control room screens flipped immediately to true open breaker status and real alarms returned to the operator desk."
+      ],
+      "realWorldNote": "Public technical analyses of Industroyer2 described hardcoded per-substation configuration data encoding target RTU addresses, ASDU settings, and breaker IOAs."
+    },
+    "m08": {
+      "act": 4,
+      "cardTitle": "Contained",
+      "opener": {
+        "speaker": "Raghav Menon",
+        "initials": "RM",
+        "role": "Shift Charge Engineer, SN-220-MAIN",
+        "pose": "phone",
+        "line": "Lock it down, but if polling stops for even a minute, we're blind again."
+      },
+      "closer": "Doors shut, polling healthy. Next: bring the city back.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You replaced the permissive inter-zone posture with a default-deny Purdue policy that kept essential substation polling and historian access alive.",
+        "You proved containment from the shell with a blocked cross-zone probe and verified a full sixty seconds of uninterrupted post-apply IEC-104 traffic on the passive tap.",
+        "With unauthorized conduits sealed and live visibility intact, the switchyard is safe to re-energize."
+      ],
+      "realWorldNote": "Real utilities isolate zones while keeping telemetry alive, because a blind control room is its own outage."
+    },
+    "m09": {
+      "act": 5,
+      "cardTitle": "Restored",
+      "opener": {
+        "speaker": "Harish Verma",
+        "initials": "HV",
+        "role": "Chief Operator, Suryanagar Water Works",
+        "pose": "phone",
+        "line": "The pumps need stable voltage to restart. Get it wrong and we trip again."
+      },
+      "closer": "Suryanagar has power. One job left: make sure this is caught next time.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You calculated each switching step's cold-load surge against this station's seeded ratings and executed controlled two-step switching with critical Tier 1 services first.",
+        "Every feeder came back online without tripping overcurrent, voltage, or underfrequency protection, holding cleanly inside the 49.90 to 50.05 Hz band.",
+        "Hospital and water works load transferred cleanly off emergency backup, and Suryanagar's districts are lit again."
+      ],
+      "realWorldNote": "After extended outages, substation black-start procedures pace feeder closings carefully because cold-load pickup surges can trip transformers or islanded generators."
+    },
+    "m10": {
+      "act": 5,
+      "cardTitle": "Handed over",
+      "opener": {
+        "speaker": "Commandant Vikram Rathore",
+        "initials": "VR",
+        "role": "CISF Critical Infrastructure Protection Unit",
+        "pose": "phone",
+        "line": "Brief me. What happened, and how will we see it next time?"
+      },
+      "closer": "Handover accepted. Operation Blackout is closed.",
+      "debriefHeading": "What really happened",
+      "debriefLines": [
+        "You wrote a protocol-invariant IEC-104 detection policy that catches rogue masters, spoofed Originator Addresses, and SBO bypasses across unseen captures with zero false alerts on normal polling.",
+        "Your handover brief tied together root cause, compromised credentials, affected bays, containment, operating margin, and residual risks from your own shift evidence.",
+        "Commandant Rathore accepted the handover and Suryanagar returns to normal operations with active detection on the field tap."
+      ],
+      "realWorldNote": "Durable OT detection policies validate protocol invariants such as authorized master tuples and Select-Before-Operate state rather than static IP addresses from a single incident."
+    }
+  },
+  "caseBoard": {
+    "tabLabel": "Case",
+    "heading": "Case Board",
+    "emptyHint": "Each card fills in with your verified findings after you pass that module.",
+    "chainOrder": ["m01", "m02", "m03", "m04", "m05", "m06", "m07", "m08", "m09", "m10"]
+  },
+  "stakes": {
+    "outageTemplate": "Hospital: on diesel, about {hospital_diesel_hours} h left \u00b7 Water works: pumps down \u00b7 {dark_count} districts dark",
+    "partialTemplate": "Hospital: restored \u00b7 Water works: restored \u00b7 {dark_count} districts dark",
+    "restoredText": "All districts restored"
+  },
+  "shiftReport": {
+    "heading": "Shift report",
+    "subheading": "Operation Blackout: Suryanagar 220/132/33 kV Substation",
+    "printLabel": "Print or save PDF",
+    "totalTimeLabel": "Total time",
+    "totalScoreLabel": "Total score",
+    "hintsLabel": "Hints used",
+    "actsHeading": "Time and score by act",
+    "caseHeading": "Case Board",
+    "commanderName": "Commandant Vikram Rathore",
+    "commanderInitials": "VR",
+    "commanderReply": "Received. Suryanagar is back, and next time we'll see it coming. Good shift, responder."
+  }
+}
