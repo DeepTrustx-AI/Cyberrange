@@ -139,10 +139,10 @@ const state = {
   postTripResets: 0,
   resetPenaltyPct: 0,
   nextResetPenaltyPct: 0,
-  maxResetPenaltyPct: 30,
+  maxResetPenaltyPct: 20,
   tripEvents: 0,
   tripPenaltyPct: 0,
-  maxTripPenaltyPct: 30,
+  maxTripPenaltyPct: 20,
 
   alarms: [],
   soeEvents: [],
@@ -857,16 +857,28 @@ function syncL3HintUI() {
 function hydrateHintsFromCase(hintsUnlocked) {
   if (!hintsUnlocked || typeof hintsUnlocked !== 'object') return;
   for (const [cid, info] of Object.entries(hintsUnlocked)) {
-    if (!info || typeof info !== 'object') continue;
+    if (!info) continue;
     const lid = localModId(cid);
-    if (info.l1) state.hintsTracked.add(`${cid}:1`);
-    if (info.l2) state.hintsTracked.add(`${cid}:2`);
-    if (info.l3) {
+    if (Array.isArray(info)) {
+      if (info.includes(1)) state.hintsTracked.add(`${cid}:1`);
+      if (info.includes(2)) state.hintsTracked.add(`${cid}:2`);
+      if (info.includes(3)) {
+        state.l3Unlocked.add(lid);
+        state.hintsTracked.add(`${cid}:3`);
+      }
+      continue;
+    }
+    if (typeof info !== 'object') continue;
+    const lvls = Array.isArray(info.levels) ? info.levels : [];
+    if (info.l1 || lvls.includes(1)) state.hintsTracked.add(`${cid}:1`);
+    if (info.l2 || lvls.includes(2)) state.hintsTracked.add(`${cid}:2`);
+    if (info.l3 || lvls.includes(3)) {
       state.l3Unlocked.add(lid);
       state.hintsTracked.add(`${cid}:3`);
-      if (typeof info.l3_text === 'string' && info.l3_text.trim()) {
-        state.l3HintText[lid] = info.l3_text.trim();
-      }
+      const text = typeof info.l3_text === 'string' && info.l3_text.trim()
+        ? info.l3_text.trim()
+        : (info.texts && typeof info.texts['3'] === 'string' ? info.texts['3'].trim() : '');
+      if (text) state.l3HintText[lid] = text;
     }
   }
   syncL3HintUI();
@@ -1299,7 +1311,7 @@ function syncM7ShimPill() {
 function syncM9ResetControls() {
   const trips = state.tripEvents;
   const pen = state.tripPenaltyPct;
-  const maxPen = state.maxTripPenaltyPct || 30;
+  const maxPen = state.maxTripPenaltyPct || 20;
   if (el.btnResetElectrical) {
     el.btnResetElectrical.textContent = 'Reset electrical state';
   }
@@ -1307,10 +1319,7 @@ function syncM9ResetControls() {
     const showNotice = state.module === 'm9';
     el.checksResetNotice.classList.toggle('is-hidden', !showNotice);
     if (showNotice) {
-      const warn3 = trips >= 2
-        ? ' Warning: a 3rd trip disqualifies both Full Pass and Safe Partial.'
-        : ' Avoid 3 trips (disqualifies Full Pass and Safe Partial).';
-      el.checksResetNotice.textContent = `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${trips}${pen > 0 ? ` (-${pen}%)` : ''}.${warn3}`;
+      el.checksResetNotice.textContent = `Each protection trip in Module 9 costs 10% (capped at ${maxPen}%). Trips so far: ${trips}${pen > 0 ? ` (-${pen}%)` : ''}.`;
     }
   }
 }
@@ -3579,7 +3588,7 @@ function wireEvents() {
       logStation('Governor setpoint must be between 48.50 and 51.50 Hz.', 't-err');
       return;
     }
-    const resp = await apiJson('POST', '/api/ems/governor/set', { freq_hz: Number(freqHz.toFixed(2)) });
+    const resp = await apiJson('POST', '/api/ems/governor/set', { freq_ref_hz: Number(freqHz.toFixed(2)) });
     if (resp && resp.ok && resp.data?.ok !== false) {
       logStation(`Governor frequency reference set to ${freqHz.toFixed(2)} Hz.`, 't-ok');
       await refreshStateOnce();
@@ -3619,12 +3628,9 @@ function wireEvents() {
     }
   });
   document.getElementById('btn-reset-electrical').addEventListener('click', () => {
-    const maxPen = state.maxTripPenaltyPct || 30;
-    const tripWarn = state.tripEvents >= 2
-      ? ' Warning: you have 2 trips logged; a 3rd trip disqualifies both Full Pass and Safe Partial.'
-      : '';
+    const maxPen = state.maxTripPenaltyPct || 20;
     const costNote = state.module === 'm9'
-      ? `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${state.tripEvents}. Resetting does not lower your trip count.${tripWarn} `
+      ? `Each protection trip in Module 9 costs 10% (capped at ${maxPen}%). Trips so far: ${state.tripEvents}. Resetting does not lower your trip count. `
       : '';
     openConfirmDialog({
       title: 'Reset electrical state?',

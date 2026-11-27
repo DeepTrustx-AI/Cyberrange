@@ -296,18 +296,18 @@ export const MODULES = [
     artifacts: ['restore_plan.yaml', 'restore_calc.json'],
     artifactNote: '~/workspace/restore_plan.yaml + ~/workspace/restore_calc.json',
     keyTerms: ['sbo', 'clpu', 'ansi-25', 'lockout-86', 'gen-132-gt1'],
-    scenario: 'The substation starts at Clean Start: all six 33 kV feeders are open, TR-2 is on standby, and the station is running islanded on GEN-132-GT1 (42 MW continuous / 46 MW 10 s ceiling). Inspect this instance seeded feeder loads and cold-load pickup (CLPU) decay curves, write ~/workspace/restore_plan.yaml and ~/workspace/restore_calc.json, then energize Suryanagar safely in your planned order (islanded_paced or tie_synced via CB-220-TIE1). Full pass awards up to 140 pts (pass >= 112); Safe Partial (Tier 1 + >= 4 feeders with < 3 trips) awards 85 pts.',
-    roe: 'Safe scope: Restore Tier 1 feeders (Trauma Hospital and Water Works) strictly first with wait_s >= 2 on every feeder close. Warning: each protection trip logs a permanent -10% penalty across electrical resets (avoid a 3rd trip, which disqualifies both Full Pass and Safe Partial).',
+    scenario: 'The substation starts at Clean Start: all six 33 kV feeders are open, TR-2 is on standby, and the station is running islanded on GEN-132-GT1 (42 MW continuous / 46 MW 10 s ceiling). Inspect this instance seeded feeder loads and cold-load pickup (CLPU) decay curves, write ~/workspace/restore_plan.yaml and ~/workspace/restore_calc.json, then energize Suryanagar safely in your planned order (islanded_paced or tie_synced via CB-220-TIE1). Full pass awards up to 140 pts (pass >= 112); Safe Partial (Tier 1 + >= 4 feeders) awards 85 pts.',
+    roe: 'Safe scope: Restore Tier 1 feeders (Trauma Hospital and Water Works) strictly first with wait_s >= 2 on every feeder close. Each protection trip logs a -10% penalty (capped at -20%) that persists across electrical resets.',
     steps: [
       'Run grid-calc budget and grid-calc clpu <bay> --t 0,10,20,30,45 in the Terminal to read this instance seeded feeder steady MW and CLPU decay curves.',
       'Save ~/workspace/restore_plan.yaml ({strategy: islanded_paced | tie_synced, steps: [{action, target, wait_s}]}) and ~/workspace/restore_calc.json ({steps: [{target, predicted_total_mw}]} matching restore_plan.yaml steps within +/-3%).',
       'Execute two-step SBO switching in Station -> Controls (or sbo CLI, using Gov ref in Station -> Controls or sbo governor <freq_hz> in 48.50 to 51.50 Hz to enter the ANSI 25 window for tie_synced) matching your plan while watching Station -> Trends.',
-      'If an overload latches Lockout 86, inspect the 15 s trip replay in Station -> Controls, clear Lockout 86 or reset electrical state before risking a 3rd trip, wait for CLPU decay to settle in 49.90 to 50.05 Hz, then run Practice and Submit module.',
+      'If an overload latches Lockout 86, inspect the 15 s trip replay in Station -> Controls, clear Lockout 86 or reset electrical state, wait for CLPU decay to settle in 49.90 to 50.05 Hz, then run Practice and Submit module.',
     ],
     objectives: [
       'Read seeded feeder MW and CLPU decay curves using grid-calc budget and grid-calc clpu',
       'Save ~/workspace/restore_plan.yaml and ~/workspace/restore_calc.json',
-      'Energize Tier 1 feeders first in Station -> Controls without hitting 3 protection trips',
+      'Energize Tier 1 feeders first in Station -> Controls with safe surge pacing',
       'Hold steady inside 49.90 to 50.05 Hz and submit (Full >= 112 pts or Safe Partial 85 pts)',
     ],
     hints: [

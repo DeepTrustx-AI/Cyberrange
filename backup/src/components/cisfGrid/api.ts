@@ -100,11 +100,14 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       return readJsonOrThrow<{ status: string }>(res, 'Could not stop CISF OT Grid session.');
     },
 
-    async getWsTicket(assignmentId: number | null): Promise<{ ticket: string; expires_in: number }> {
+    async getWsTicket(
+      assignmentId: number | null,
+      scope: 'ems' | 'terminal' | 'any' = 'any',
+    ): Promise<{ ticket: string; expires_in: number }> {
       const res = await apiFetch(withAssignment('/api/v1/ot-grid/ws-ticket', assignmentId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignment_id: assignmentId }),
+        body: JSON.stringify({ scope }),
       });
       return readJsonOrThrow<{ ticket: string; expires_in: number }>(
         res,

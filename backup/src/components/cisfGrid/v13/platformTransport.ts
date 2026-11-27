@@ -87,9 +87,9 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
     }
   }
 
-  async function resolveWsAuth(): Promise<{ ticket?: string; token?: string }> {
+  async function resolveWsAuth(scope: 'ems' | 'terminal'): Promise<{ ticket?: string; token?: string }> {
     try {
-      const res = await api.getWsTicket(assignmentId);
+      const res = await api.getWsTicket(assignmentId, scope);
       if (res && typeof res.ticket === 'string' && res.ticket) {
         return { ticket: res.ticket };
       }
@@ -253,7 +253,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
     },
 
     async getEmsWsUrl(): Promise<string> {
-      const auth = await resolveWsAuth();
+      const auth = await resolveWsAuth('ems');
       return api.emsWebSocketUrl(auth);
     },
 
@@ -265,7 +265,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
 
     async getTerminalWsUrl(): Promise<string> {
       const base = '/api/v1/terminal/ws/cisf-ot-grid';
-      const auth = await resolveWsAuth();
+      const auth = await resolveWsAuth('terminal');
       if (auth.ticket) {
         return apiWebSocketUrl(`${base}?ticket=${encodeURIComponent(auth.ticket)}`);
       }
