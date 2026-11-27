@@ -2367,6 +2367,7 @@ async function loadEditorFile(fnameOrModId, forceDisk = false) {
   try {
     const r = await transport.readFile(fname);
     if (disposed || seq !== state.editorLoadSeq) return;
+    if (!forceDisk && state.editorDirty && state.editorFile === fname) return;
     if (r && r.ok) {
       const clean = String(r.text || '').replace(/\r\n/g, '\n');
       el.editorText.value = clean;
@@ -3399,7 +3400,9 @@ function wireEvents() {
   });
 
   el.editorText.addEventListener('input', () => {
+    state.editorLoadSeq += 1;
     state.editorDirty = true;
+    state.editorLoadedFile = getActiveEditorFilename();
     el.editorStatus.textContent = 'Unsaved';
     stashCurrentEditorDraft();
     updateEditorGutter();
