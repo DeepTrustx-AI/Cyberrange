@@ -88,18 +88,24 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
   }
 
   async function resolveWsAuth(scope: 'ems' | 'terminal'): Promise<{ ticket?: string; token?: string }> {
-    try {
-      const res = await api.getWsTicket(assignmentId, scope);
-      if (res && typeof res.ticket === 'string' && res.ticket) {
-        return { ticket: res.ticket };
-      }
-    } catch (err) {
-      if (err instanceof CisfGridApiError && err.status !== 404 && err.status !== 405 && err.status !== 501) {
-        // On non-404 transient failure, still fall back to bearer token if available.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await api.getWsTicket(assignmentId, scope);
+        if (res && typeof res.ticket === 'string' && res.ticket) {
+          return { ticket: res.ticket };
+        }
+        break;
+      } catch (err) {
+        if (err instanceof CisfGridApiError && (err.status === 404 || err.status === 405 || err.status === 501)) {
+          const freshToken = resolveToken();
+          return freshToken ? { token: freshToken } : {};
+        }
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 250));
+        }
       }
     }
-    const freshToken = resolveToken();
-    return freshToken ? { token: freshToken } : {};
+    return {};
   }
 
   return {
@@ -186,7 +192,11 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
 
         // All live SCADA/EMS operational endpoints go through the authenticated private-ENI proxy
         const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-        const proxyPath = `/api/v1/ot-grid/proxy/ems${normalizedPath}`;
+        const rawProxyPath = `/api/v1/ot-grid/proxy/ems${normalizedPath}`;
+        const proxyPath =
+          assignmentId !== null && assignmentId !== undefined
+            ? `${rawProxyPath}${rawProxyPath.includes('?') ? '&' : '?'}assignment_id=${encodeURIComponent(String(assignmentId))}`
+            : rawProxyPath;
         const opts: RequestInit = { method: upper };
         if (payload !== null && upper !== 'GET' && upper !== 'HEAD') {
           opts.headers = { 'Content-Type': 'application/json' };
@@ -254,7 +264,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
 
     async getEmsWsUrl(): Promise<string> {
       const auth = await resolveWsAuth('ems');
-      return api.emsWebSocketUrl(auth);
+      return api.emsWebSocketUrl(auth, assignmentId);
     },
 
     async openEmsSocket(): Promise<WebSocket | null> {
@@ -266,13 +276,17 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
     async getTerminalWsUrl(): Promise<string> {
       const base = '/api/v1/terminal/ws/cisf-ot-grid';
       const auth = await resolveWsAuth('terminal');
+      const params = new URLSearchParams();
+      if (assignmentId !== null && assignmentId !== undefined) {
+        params.set('assignment_id', String(assignmentId));
+      }
       if (auth.ticket) {
-        return apiWebSocketUrl(`${base}?ticket=${encodeURIComponent(auth.ticket)}`);
+        params.set('ticket', auth.ticket);
+      } else if (auth.token) {
+        params.set('token', auth.token);
       }
-      if (auth.token) {
-        return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth.token)}`);
-      }
-      return apiWebSocketUrl(base);
+      const qs = params.toString();
+      return apiWebSocketUrl(qs ? `${base}?${qs}` : base);
     },
   };
 }

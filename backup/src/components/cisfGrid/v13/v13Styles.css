@@ -693,6 +693,8 @@ html.dark .cg-v13-root .theme-icon-sun {
 .cg-v13-root .rail-item-btn { display: flex; align-items: center; gap: 11px; width: 100%; border: 1px solid transparent; background: transparent; border-radius: var(--r-xl); padding: 10px 12px; text-align: left; cursor: pointer; transition: background-color 140ms var(--ease-ui), border-color 140ms var(--ease-ui); }
 .cg-v13-root .rail-item-btn:hover { background: var(--surface-tint); }
 .cg-v13-root .rail-item-btn.is-selected { background: var(--peach-50); border-color: var(--peach-200); }
+.cg-v13-root .rail-item-btn.is-locked { opacity: 0.54; cursor: not-allowed; }
+.cg-v13-root .rail-item-btn.is-locked:hover { background: transparent; }
 .cg-v13-root .rail-disc { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; flex-shrink: 0; background: var(--surface-tint); color: var(--ink-muted); }
 .cg-v13-root .rail-item-btn.is-selected .rail-disc { background: var(--brand-btn); color: var(--brand-btn-text); }
 .cg-v13-root .rail-item-btn.is-cleared .rail-disc { background: var(--brk-open); color: #ffffff; }
@@ -2530,6 +2532,7 @@ html.dark .cg-v13-root .tab-btn.is-active { background: var(--peach-100); border
   .cg-v13-root .deck-expand-btn { display: none; }
 
   .cg-v13-root .stage-top-bar { display: none; }
+  .cg-v13-root .living-stage-card.mobile-map-open .stage-top-bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
   .cg-v13-root .mobile-status-banner { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--paper); }
   .cg-v13-root .mobile-banner-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .cg-v13-root .mobile-banner-summary { font-size: var(--fs-sm); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2541,6 +2544,7 @@ html.dark .cg-v13-root .tab-btn.is-active { background: var(--peach-100); border
   .cg-v13-root .stage-viewport { display: none; height: 240px; }
   .cg-v13-root .living-stage-card.mobile-map-open .stage-viewport { display: block; }
   .cg-v13-root .objective-card { display: none; }
+  .cg-v13-root .living-stage-card.mobile-map-open .objective-card { display: block; }
 
   .cg-v13-root .stage-telemetry-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 12px; }
   .cg-v13-root .rail-group { padding: 8px 10px; }

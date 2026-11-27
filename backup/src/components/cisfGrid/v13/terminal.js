@@ -408,7 +408,6 @@ export class PtyTerminal {
           try { sock.close(1000, 'stale'); } catch {}
           return;
         }
-        this.retryDelayMs = 4000;
         this._setStatus('connected', 'Connected');
         this._startKeepalive(sock);
         this.fit();
@@ -419,6 +418,7 @@ export class PtyTerminal {
 
       sock.onmessage = (ev) => {
         if (this.ws !== sock || !this.term || this.disposed) return;
+        this.retryDelayMs = 4000;
         this.lastRxAt = Date.now();
         if (typeof ev.data === 'string') {
           if (ev.data.length <= 64 && ev.data.startsWith('{') && ev.data.includes('"pong"')) {

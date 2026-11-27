@@ -1421,30 +1421,49 @@ export class TourController {
 
     const nav = document.createElement('div');
     nav.className = 'tour-actions-right';
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'btn-secondary';
+    backBtn.id = 'btn-tour-mobile-back';
+    backBtn.textContent = ctrl.backLabel || 'Back';
+    backBtn.disabled = this.mobileIndex <= 0;
+
     const nextBtn = document.createElement('button');
     nextBtn.type = 'button';
     nextBtn.className = 'btn-primary';
     nextBtn.id = 'btn-tour-mobile-next';
     nextBtn.textContent = this.mobileIndex >= cards.length - 1 ? (ctrl.finishLabel || 'Start Module 1') : (ctrl.nextLabel || 'Next');
+
+    const syncMobileButtons = () => {
+      Array.from(dots.children).forEach((el, i) => el.classList.toggle('is-active', i === this.mobileIndex));
+      backBtn.disabled = this.mobileIndex <= 0;
+      nextBtn.textContent = this.mobileIndex >= cards.length - 1 ? (ctrl.finishLabel || 'Start Module 1') : (ctrl.nextLabel || 'Next');
+    };
+
+    backBtn.addEventListener('click', () => {
+      if (this.mobileIndex <= 0) return;
+      this.mobileIndex -= 1;
+      track.scrollTo({ left: track.clientWidth * this.mobileIndex, behavior: isReducedMotion() ? 'auto' : 'smooth' });
+      syncMobileButtons();
+    });
+
     nextBtn.addEventListener('click', () => {
       if (this.mobileIndex >= cards.length - 1) {
         this.endTour(false);
       } else {
         this.mobileIndex += 1;
         track.scrollTo({ left: track.clientWidth * this.mobileIndex, behavior: isReducedMotion() ? 'auto' : 'smooth' });
-        Array.from(dots.children).forEach((el, i) => el.classList.toggle('is-active', i === this.mobileIndex));
-        nextBtn.textContent = this.mobileIndex >= cards.length - 1 ? (ctrl.finishLabel || 'Start Module 1') : (ctrl.nextLabel || 'Next');
+        syncMobileButtons();
       }
     });
 
     track.addEventListener('scroll', () => {
       const idx = Math.max(0, Math.min(cards.length - 1, Math.round(track.scrollLeft / Math.max(1, track.clientWidth))));
       this.mobileIndex = idx;
-      Array.from(dots.children).forEach((el, i) => el.classList.toggle('is-active', i === idx));
-      nextBtn.textContent = idx >= cards.length - 1 ? (ctrl.finishLabel || 'Start Module 1') : (ctrl.nextLabel || 'Next');
+      syncMobileButtons();
     }, { passive: true });
 
-    nav.appendChild(nextBtn);
+    nav.append(backBtn, nextBtn);
     foot.append(skipBtn, dots, nav);
     this.mobileDeckEl.append(track, foot);
     this.mobileDeckEl.classList.remove('is-hidden');

@@ -19,8 +19,10 @@ export interface CisfGridV13WorkspaceProps {
   token: string | null;
   userId: number | null;
   assignmentId: number | null;
+  generation?: string | null;
   mode: CisfGridMode | string;
-  initialTourPrefs: TourPrefsState;
+  initialTourPrefs: TourPrefsState | null;
+  initialPassedModules?: string[];
   ensureEvalToken: (forceRefresh?: boolean) => Promise<string>;
   onSaveTourPrefs: (prefs: TourPrefsState) => void;
   onProgressUpdated?: (passedModules: string[]) => void;
@@ -34,8 +36,10 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
   token,
   userId,
   assignmentId,
+  generation,
   mode,
   initialTourPrefs,
+  initialPassedModules,
   ensureEvalToken,
   onSaveTourPrefs,
   onProgressUpdated,
@@ -86,7 +90,25 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
   ]);
 
   const initialPrefsRef = useRef(initialTourPrefs);
+  const initialPassedRef = useRef(initialPassedModules);
   const initialThemeRef = useRef(theme);
+  const initialModeRef = useRef(mode);
+  const initialGenRef = useRef(generation);
+  useEffect(() => {
+    initialPrefsRef.current = initialTourPrefs;
+  }, [initialTourPrefs]);
+  useEffect(() => {
+    initialPassedRef.current = initialPassedModules;
+  }, [initialPassedModules]);
+  useEffect(() => {
+    initialThemeRef.current = theme;
+  }, [theme]);
+  useEffect(() => {
+    initialModeRef.current = mode;
+  }, [mode]);
+  useEffect(() => {
+    initialGenRef.current = generation;
+  }, [generation]);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -106,10 +128,14 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
     const handle = mountV13Workspace({
       assetBase: '/cisf-grid/assets',
       userId,
+      assignmentId,
+      generation: initialGenRef.current ?? null,
+      mode: String(initialModeRef.current || 'modules'),
       transport,
       storyData: storyData as Record<string, unknown>,
       tourData: tourData as Record<string, unknown>,
       initialTourPrefs: initialPrefsRef.current,
+      initialPassedModules: initialPassedRef.current,
       onTourPrefsChange: (prefs) => callbacksRef.current.onSaveTourPrefs(prefs),
       TerminalCtor: Terminal,
       FitAddonCtor: FitAddon,
@@ -131,7 +157,7 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
       handle.dispose();
       host.replaceChildren();
     };
-  }, [apiFetch, assignmentId, mode, userId]);
+  }, [apiFetch, assignmentId, userId]);
 
   // Keep V13 synced if CyberRange global theme toggles externally.
   useEffect(() => {

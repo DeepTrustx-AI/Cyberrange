@@ -25,6 +25,7 @@ export const CAMERA_PRESETS = {
   m8: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'network' },
   m9: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'substation' },
   m10: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'network' },
+  full_op: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'city' },
 };
 
 export const BAY_SLOTS = [

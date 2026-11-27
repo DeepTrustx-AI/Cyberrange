@@ -538,14 +538,15 @@ export function renderFrameAnatomy(listEl, detailEl, frames, filterText, selecte
 }
 
 function buildTsharkFilter(fr) {
+  const ipRe = /^[0-9a-fA-F.:]+$/;
   const parts = [];
-  if (fr.src_ip) parts.push(`ip.src == ${fr.src_ip}`);
-  if (fr.dst_ip) parts.push(`ip.dst == ${fr.dst_ip}`);
-  if (fr.asdu && fr.asdu.type_id !== undefined) parts.push(`iec60870_asdu.typeid == ${fr.asdu.type_id}`);
-  if (fr.asdu && fr.asdu.cot !== undefined) parts.push(`iec60870_asdu.causetx == ${fr.asdu.cot}`);
-  if (fr.asdu && fr.asdu.ca !== undefined) parts.push(`iec60870_asdu.addr == ${fr.asdu.ca}`);
-  if (Array.isArray(fr.ioas) && fr.ioas.length === 1 && fr.ioas[0].ioa !== undefined) {
-    parts.push(`iec60870_asdu.ioa == ${fr.ioas[0].ioa}`);
+  if (typeof fr.src_ip === 'string' && ipRe.test(fr.src_ip)) parts.push(`ip.src == ${fr.src_ip}`);
+  if (typeof fr.dst_ip === 'string' && ipRe.test(fr.dst_ip)) parts.push(`ip.dst == ${fr.dst_ip}`);
+  if (fr.asdu && Number.isFinite(Number(fr.asdu.type_id))) parts.push(`iec60870_asdu.typeid == ${Number(fr.asdu.type_id)}`);
+  if (fr.asdu && Number.isFinite(Number(fr.asdu.cot))) parts.push(`iec60870_asdu.causetx == ${Number(fr.asdu.cot)}`);
+  if (fr.asdu && Number.isFinite(Number(fr.asdu.ca))) parts.push(`iec60870_asdu.addr == ${Number(fr.asdu.ca)}`);
+  if (Array.isArray(fr.ioas) && fr.ioas.length === 1 && Number.isFinite(Number(fr.ioas[0].ioa))) {
+    parts.push(`iec60870_asdu.ioa == ${Number(fr.ioas[0].ioa)}`);
   }
   return parts.join(' && ') || 'iec60870_104';
 }

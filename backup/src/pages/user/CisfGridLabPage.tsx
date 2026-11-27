@@ -59,11 +59,7 @@ export const CisfGridLabPage: React.FC = () => {
   const [pausedNotice, setPausedNotice] = useState('');
   const [passedModules, setPassedModules] = useState<string[]>([]);
 
-  const [tourPrefs, setTourPrefs] = useState<TourPrefsState>({
-    cold_open_seen: false,
-    tour_seen: false,
-    dismissed_tips: [],
-  });
+  const [tourPrefs, setTourPrefs] = useState<TourPrefsState | null>(null);
 
   const evalTokenRef = useRef<string>('');
   const evalTokenExpiryRef = useRef<number>(0);
@@ -129,16 +125,25 @@ export const CisfGridLabPage: React.FC = () => {
   // Initial load: fetch current session, persisted progress, and tour preferences before rendering workspace.
   useEffect(() => {
     let active = true;
+    setLoadingSession(true);
+    setPassedModules([]);
     void (async () => {
-      const [, prefs, caseRes] = await Promise.all([
+      const [curSess, prefs, caseRes] = await Promise.all([
         refreshSession(),
         api.getTourPrefs().catch(() => null),
         api.getCaseBoard(assignmentId).catch(() => null),
       ]);
       if (!active) return;
       if (prefs) setTourPrefs(prefs);
+      const resolvedAid = assignmentId ?? curSess?.session?.assignment_id ?? null;
       if (caseRes && Array.isArray(caseRes.passed_modules)) {
         setPassedModules(caseRes.passed_modules);
+      } else if (resolvedAid !== assignmentId && resolvedAid !== null) {
+        const fallbackCase = await api.getCaseBoard(resolvedAid).catch(() => null);
+        if (!active) return;
+        if (fallbackCase && Array.isArray(fallbackCase.passed_modules)) {
+          setPassedModules(fallbackCase.passed_modules);
+        }
       }
       setLoadingSession(false);
     })();
@@ -147,14 +152,29 @@ export const CisfGridLabPage: React.FC = () => {
     };
   }, [api, assignmentId, refreshSession]);
 
-  // If user re-authenticates in another tab (token updates), clear authExpired and re-check session.
+  // If user re-authenticates in another tab (token updates), clear authExpired and re-check session + prefs.
   useEffect(() => {
-    if (authExpired && token) {
-      setAuthExpired(false);
-      setError('');
-      void refreshSession();
-    }
-  }, [authExpired, token, refreshSession]);
+    if (!authExpired || !token) return;
+    let active = true;
+    setAuthExpired(false);
+    setError('');
+    void (async () => {
+      const [curSess, prefs] = await Promise.all([
+        refreshSession(),
+        api.getTourPrefs().catch(() => null),
+      ]);
+      if (!active) return;
+      if (prefs) setTourPrefs(prefs);
+      const resolvedAid = assignmentId ?? curSess?.session?.assignment_id ?? null;
+      const caseRes = await api.getCaseBoard(resolvedAid).catch(() => null);
+      if (active && caseRes && Array.isArray(caseRes.passed_modules)) {
+        setPassedModules(caseRes.passed_modules);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [api, assignmentId, authExpired, token, refreshSession]);
 
   // Resume session check cleanly once browser comes back online.
   useEffect(() => {
@@ -246,7 +266,8 @@ export const CisfGridLabPage: React.FC = () => {
     setStopping(true);
     setError('');
     try {
-      await api.stopSession(assignmentId);
+      const stopAid = assignmentId ?? session?.session?.assignment_id ?? null;
+      await api.stopSession(stopAid);
       sessionReqSeqRef.current += 1;
       evalTokenRef.current = '';
       evalTokenExpiryRef.current = 0;
@@ -282,7 +303,10 @@ export const CisfGridLabPage: React.FC = () => {
     [stopping, authExpired, refreshSession],
   );
 
-  const clearedCount = passedModules.length;
+  const clearedCount = passedModules.includes('full_op')
+    ? 10
+    : passedModules.filter((m) => m !== 'full_op').length;
+  const effectiveAssignmentId = assignmentId ?? session?.session?.assignment_id ?? null;
 
   // Running state: render the full 1-to-1 V13 Living Stage EMS workspace directly.
   if (!loadingSession && isRunning && session) {
@@ -339,13 +363,15 @@ export const CisfGridLabPage: React.FC = () => {
           </div>
         )}
         <CisfGridV13Workspace
-          key={session.session.generation}
+          key={`${user?.id ?? 'anon'}:${effectiveAssignmentId ?? 'default'}:${session.session.generation}`}
           apiFetch={apiFetch}
           token={token ?? null}
           userId={user?.id ?? null}
-          assignmentId={assignmentId}
+          assignmentId={effectiveAssignmentId}
+          generation={session.session.generation}
           mode={session.session.mode}
           initialTourPrefs={tourPrefs}
+          initialPassedModules={passedModules}
           ensureEvalToken={ensureEvalToken}
           onSaveTourPrefs={handleSaveTourPrefs}
           onProgressUpdated={setPassedModules}

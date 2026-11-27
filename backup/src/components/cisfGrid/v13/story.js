@@ -495,7 +495,7 @@ export class StoryController {
     if (this.cinemaClockEl) this.cinemaClockEl.textContent = scene.clock;
 
     const beats = (this.data && this.data.coldOpen && this.data.coldOpen.beats) || [];
-    const b1 = beats[0]?.line || 'Suryanagar. A Tuesday night.';
+    const b1 = beats[0]?.line || 'Suryanagar. A Wednesday night.';
     const b2 = beats[1]?.line || '21:40. Three feeders drop.';
     const b3 = beats[2]?.line || 'The control room sees nothing wrong.';
     const b4 = beats[3]?.line || 'The hospital is on diesel. The screens say all is well.';
@@ -645,6 +645,8 @@ export class StoryController {
       this.cinemaPauseBtn.classList.toggle('is-hidden', this.cinemaReduced);
     }
 
+    const labShell = document.getElementById('lab-shell');
+    if (labShell) labShell.inert = true;
     this.cinemaEl.classList.remove('is-hidden', 'is-fading-out');
     this.setSceneView('city');
     this._applyCinemaScene(0);
@@ -660,6 +662,8 @@ export class StoryController {
   }
 
   finishColdOpen(silent = false, action = 'skip') {
+    const labShell = document.getElementById('lab-shell');
+    if (labShell) labShell.inert = false;
     if (!this.coldOpenActive) return;
     this.coldOpenActive = false;
     this.onColdOpenVisibilityChange(false);

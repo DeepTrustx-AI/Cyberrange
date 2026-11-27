@@ -138,11 +138,10 @@ export function createMascot({
             <ellipse fill="url(#${id}-mitt)" cx="74" cy="57" rx="11.4" ry="11.2"/>
           </g>
         </g>
-        <g class="m-phone">
-          <rect class="m-arm-cover" x="92" y="54" width="11" height="20" rx="5.5" transform="rotate(24 97 64)"/>
-          <rect class="m-phone-handset" x="88" y="38" width="13" height="28" rx="4.5" transform="rotate(14 94 52)"/>
-          <rect class="m-phone-cap" x="90" y="40" width="9" height="6" rx="2.5" transform="rotate(14 94 52)"/>
-          <ellipse fill="url(#${id}-mitt-shade)" cx="95" cy="58" rx="7.6" ry="6.8"/>
+        <g class="m-phone" aria-hidden="true">
+          <rect class="m-phone-body" x="88" y="42" width="12" height="24" rx="5"/>
+          <rect class="m-phone-cap" x="90" y="44.5" width="8" height="4.5" rx="2.2"/>
+          <rect class="m-phone-cap" x="90" y="59" width="8" height="4.5" rx="2.2"/>
         </g>
         <g class="m-notes">
           <g class="m-note">

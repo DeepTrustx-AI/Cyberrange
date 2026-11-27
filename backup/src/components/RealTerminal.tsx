@@ -47,7 +47,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const connectTimerRef = useRef<number | null>(null);
   const enabledRef = useRef<boolean>(enabled);
+  const tokenRef = useRef<string | undefined>(token);
   useEffect(() => { enabledRef.current = enabled; }, [enabled]);
+  useEffect(() => { tokenRef.current = token; }, [token]);
   // Tracks the cancellation token of the current socket so stale async events are silenced
   const cancelTokenRef = useRef<{ cancelled: boolean }>({ cancelled: false });
   // Accumulates the current typed command line for objective detection
@@ -145,11 +147,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     const [pathOnly, existingQuery = ''] = basePath.split('?', 2);
     const params = new URLSearchParams(existingQuery);
     if (!wsPath) params.set('level', String(levelNum));
-    if (token) params.set('token', token);
+    const currentToken = tokenRef.current;
+    if (currentToken) params.set('token', currentToken);
     const query = params.toString();
     const wsUrl = apiWebSocketUrl(`${pathOnly}${query ? `?${query}` : ''}`);
 
-    console.log('[RealTerminal] Connecting to WebSocket:', wsUrl);
     const socket = new WebSocket(wsUrl);
     socket.binaryType = 'arraybuffer';
     socketRef.current = socket;
@@ -339,7 +341,17 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
       closeSocketCleanly(false);
       term.dispose();
     };
-  }, [labId, levelNum, token, wsPath, enabled, closeSocketCleanly]);
+  }, [labId, levelNum, wsPath, enabled, closeSocketCleanly]);
+
+  // Reconnect cleanly without destroying xterm scrollback if token arrives after initial mount while disconnected.
+  useEffect(() => {
+    if (!token || !enabled || !termInstanceRef.current) return;
+    const sock = socketRef.current;
+    if (!sock || sock.readyState === WebSocket.CLOSED) {
+      connectWebSocket();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(token), enabled]);
 
   const sendRaw = (data: string) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) socketRef.current.send(data);

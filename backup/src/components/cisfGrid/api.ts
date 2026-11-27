@@ -241,16 +241,23 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       return readJsonOrThrow<TourPrefsState>(res, 'Could not save tour preferences.');
     },
 
-    emsWebSocketUrl(auth?: { ticket?: string | null; token?: string | null } | string | null): string {
+    emsWebSocketUrl(
+      auth?: { ticket?: string | null; token?: string | null } | string | null,
+      assignmentId?: number | null,
+    ): string {
       const base = '/api/v1/ot-grid/proxy/ems/ws';
+      const params = new URLSearchParams();
+      if (assignmentId !== null && assignmentId !== undefined) {
+        params.set('assignment_id', String(assignmentId));
+      }
       if (typeof auth === 'string' && auth) {
-        return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth)}`);
+        params.set('token', auth);
+      } else if (auth && typeof auth === 'object') {
+        if (auth.ticket) params.set('ticket', auth.ticket);
+        else if (auth.token) params.set('token', auth.token);
       }
-      if (auth && typeof auth === 'object') {
-        if (auth.ticket) return apiWebSocketUrl(`${base}?ticket=${encodeURIComponent(auth.ticket)}`);
-        if (auth.token) return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth.token)}`);
-      }
-      return apiWebSocketUrl(base);
+      const qs = params.toString();
+      return apiWebSocketUrl(qs ? `${base}?${qs}` : base);
     },
   };
 }

@@ -44,10 +44,12 @@ function clearLabLocalStorage(userId?: number | null): void {
       if (!k) continue;
       if (
         k.startsWith('cisf_grid_') ||
+        k.startsWith('cg_anon_') ||
+        k.startsWith('cr-editor-draft:') ||
         k.startsWith('cg-layout-') ||
         k.startsWith('cg-tour-') ||
         k.startsWith('cg-story-') ||
-        (userPrefix && k.startsWith(userPrefix))
+        (userPrefix ? k.startsWith(userPrefix) : k.startsWith('cg_u'))
       ) {
         keysToDelete.push(k);
       }
@@ -64,7 +66,12 @@ function clearLabLocalStorage(userId?: number | null): void {
     for (let i = 0; i < sessionStorage.length; i++) {
       const k = sessionStorage.key(i);
       if (!k) continue;
-      if (k.startsWith('cisf_grid_') || (userPrefix && k.startsWith(userPrefix))) {
+      if (
+        k.startsWith('cisf_grid_') ||
+        k.startsWith('cg_anon_') ||
+        k.startsWith('cr-editor-draft:') ||
+        (userPrefix ? k.startsWith(userPrefix) : k.startsWith('cg_u'))
+      ) {
         sessionKeys.push(k);
       }
     }
@@ -76,7 +83,7 @@ function clearLabLocalStorage(userId?: number | null): void {
   }
 }
 
-function decodeJwtExpMs(token: string | null): number | null {
+function decodeJwtPayload(token: string | null): Record<string, unknown> | null {
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -84,13 +91,23 @@ function decodeJwtExpMs(token: string | null): number | null {
     const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
     const json = atob(padded);
-    const payload = JSON.parse(json) as { exp?: unknown };
-    return typeof payload.exp === 'number' && Number.isFinite(payload.exp)
-      ? payload.exp * 1000
-      : null;
+    const payload = JSON.parse(json);
+    return payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : null;
   } catch {
     return null;
   }
+}
+
+function decodeJwtExpMs(token: string | null): number | null {
+  const payload = decodeJwtPayload(token);
+  return payload && typeof payload.exp === 'number' && Number.isFinite(payload.exp)
+    ? payload.exp * 1000
+    : null;
+}
+
+function decodeJwtSub(token: string | null): string | null {
+  const payload = decodeJwtPayload(token);
+  return payload && typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
 }
 
 export interface User {
@@ -230,21 +247,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [token, refreshAccessToken]);
 
-  // Sync cross-tab re-login or sign-out via localStorage events.
+  // Sync cross-tab re-login or sign-out via localStorage events without split-brain user/token state.
   useEffect(() => {
+    let seq = 0;
     const onStorage = (event: StorageEvent) => {
       if (event.key !== TOKEN_KEY) return;
+      const prevToken = tokenRef.current;
       const nextToken = event.newValue;
-      if (nextToken === tokenRef.current) return;
+      if (nextToken === prevToken) return;
+      seq += 1;
+      const curSeq = seq;
       tokenRef.current = nextToken;
       setToken(nextToken);
       if (!nextToken) {
         setUser(null);
         setAuthorization(null);
+        return;
+      }
+      const prevSub = decodeJwtSub(prevToken);
+      const nextSub = decodeJwtSub(nextToken);
+      if (prevSub !== nextSub || userIdRef.current === null) {
+        setUser(null);
+        setAuthorization(null);
+        setIsLoading(true);
+        void (async () => {
+          try {
+            const meRes = await baseApiFetch('/api/v1/auth/me', {
+              headers: { Authorization: `Bearer ${nextToken}` },
+              credentials: 'include',
+            });
+            if (curSeq !== seq || tokenRef.current !== nextToken) return;
+            if (!meRes.ok) {
+              setUser(null);
+              setAuthorization(null);
+              return;
+            }
+            const nextUser = (await meRes.json()) as User;
+            if (curSeq !== seq || tokenRef.current !== nextToken) return;
+            setUser(nextUser);
+            const rbacRes = await baseApiFetch('/api/v1/rbac/me', {
+              headers: { Authorization: `Bearer ${nextToken}` },
+              credentials: 'include',
+            });
+            if (curSeq !== seq || tokenRef.current !== nextToken) return;
+            setAuthorization(rbacRes.ok ? ((await rbacRes.json()) as AuthorizationInfo) : null);
+          } catch {
+            if (curSeq === seq) {
+              setUser(null);
+              setAuthorization(null);
+            }
+          } finally {
+            if (curSeq === seq) setIsLoading(false);
+          }
+        })();
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      seq += 1;
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   // Back after signing out can bring the old page back from the browser's memory, still showing

@@ -81,7 +81,7 @@ html.dark .cg-v13-root .hdr-guide-btn.is-help-highlighted {
   box-shadow: 0 0 0 4px oklch(0.8 0.12 70 / 0.42), 0 6px 26px oklch(0.8 0.12 70 / 0.38);
 }
 
-.help-arrival-toast {
+.cg-v13-root .help-arrival-toast {
   position: fixed;
   z-index: 940;
   pointer-events: none;
@@ -99,14 +99,14 @@ html.dark .cg-v13-root .hdr-guide-btn.is-help-highlighted {
   transition: opacity 220ms var(--ease-ui), transform 220ms var(--ease-ui);
 }
 
-html.dark .help-arrival-toast {
+html.dark .cg-v13-root .help-arrival-toast {
   background: var(--color-slate-900);
   color: var(--color-brand-50);
   border-color: var(--color-brand-400);
   box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.65), 0 0 0 3px oklch(0.8 0.12 70 / 0.28);
 }
 
-.help-arrival-toast.is-visible {
+.cg-v13-root .help-arrival-toast.is-visible {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
 }
@@ -153,12 +153,16 @@ html.dark .cg-v13-root .is-tour-pulse-target {
   font-weight: 800;
 }
 
-.tour-flying-mascot {
+.cg-v13-root .tour-flying-mascot {
   position: fixed;
   z-index: 950;
   pointer-events: none;
   margin: 0;
   will-change: transform, opacity;
+}
+
+.cg-v13-root .mascot {
+  --m-mouth: var(--mascot-mouth, #ffe7d1);
 }
 
 .cg-v13-root .cinema-intro {
@@ -538,16 +542,19 @@ html.dark .cg-v13-root .is-tour-pulse-target {
   align-items: center;
   justify-content: center;
   opacity: 0;
+  visibility: hidden;
   transform: translateY(18px);
   pointer-events: none;
-  transition: opacity 480ms var(--ease-ui), transform 480ms var(--ease-ui);
+  transition: opacity 480ms var(--ease-ui), transform 480ms var(--ease-ui), visibility 0s linear 480ms;
   will-change: opacity, transform;
 }
 
 .cg-v13-root .cinema-intro[data-beat="beat-4"] .cinema-dispatch-panel {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
+  transition: opacity 480ms var(--ease-ui), transform 480ms var(--ease-ui), visibility 0s linear 0s;
 }
 
 .cg-v13-root .cinema-dispatch-card {
@@ -1414,7 +1421,7 @@ html[data-shift-report="open"] .cg-v13-root .shift-report-card {
 .cg-v13-root .tour-scrim-svg,
 .cg-v13-root .tour-spotlight-ring,
 .cg-v13-root .hdr-guide-btn,
-.help-arrival-toast,
+.cg-v13-root .help-arrival-toast,
 .cg-v13-root .is-tour-pulse-target,
 .cg-v13-root .theme-icon,
 .cg-v13-root .case-card.is-clack {
@@ -1424,6 +1431,17 @@ html[data-shift-report="open"] .cg-v13-root .shift-report-card {
 
 }
 
+.cg-v13-root .is-hidden .mascot,
+.cg-v13-root .is-hidden .mascot *,
+.cg-v13-root [hidden] .mascot,
+.cg-v13-root [hidden] .mascot * {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-reduced-motion="true"] .cg-v13-root .mascot,
+html[data-reduced-motion="true"] .cg-v13-root .mascot *,
+html[data-reduced-motion="true"] .cg-v13-root .help-arrival-toast,
 html[data-reduced-motion="true"] .cg-v13-root .cinema-intro,
 html[data-reduced-motion="true"] .cg-v13-root .cinema-city-panel,
 html[data-reduced-motion="true"] .cg-v13-root .cinema-compare-panel,

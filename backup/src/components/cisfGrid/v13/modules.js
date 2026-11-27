@@ -145,22 +145,22 @@ export const MODULES = [
     artifacts: ['divergence.csv'],
     keyTerms: ['hmi', 'historian', 'apci', 'cot', 'dispatch-soe'],
     scenario: 'The hospital is running on diesel and water pumps have stopped, yet the Control Room HMI still insists every feeder is closed with zero alarms. Compare three independent views of the incident (Control Room capture, DMZ historian log, and passive field tap) and request a physical switchyard bay readout from Devika Nair to prove exactly when and where the screen stopped telling the truth.',
-    roe: 'Safe scope: Forensic comparison only. Record all graded timestamps in UTC (within +/-2.0 s). Use exact vantage values hmi or historian in divergence.csv.',
+    roe: 'Safe scope: Forensic comparison only. Record all graded timestamps in UTC (within +/-2.0 s). Use exact vantage values hmi or historian (plus optional uncompromised field_tap comparison rows) in divergence.csv.',
     steps: [
       'Compare /evidence/m4/cr_master.pcap, /evidence/m4/dmz_historian.jsonl, and /evidence/m4/field_sensor.pcap in the Terminal.',
       'Isolate APCI sequence breaks, backward CP56Time2a timestamp skew, and spontaneous trip messages (COT=3) using tshark or Evidence -> IEC-104 Frames.',
       'Open Station -> Controls (or Evidence -> Dispatch, or run dispatchctl in the Terminal) to request a physical switchyard bay readout from Devika Nair, and pin key findings to Evidence -> Timeline.',
-      'Save ~/workspace/divergence.csv with columns timestamp_utc,vantage,bay_id,reported_state,true_state,cp56_skew_s,suppressed_cot3,dispatch_bay_checked (using exact vantage value hmi or historian), test with Practice, and click Submit module.',
+      'Save ~/workspace/divergence.csv with 3 to 9 rows and columns timestamp_utc,vantage,bay_id,reported_state,true_state,cp56_skew_s,suppressed_cot3,dispatch_bay_checked (using hmi or historian for blinded vantages, and OPEN,OPEN,0,false if including optional field_tap rows), test with Practice, and click Submit module.',
     ],
     objectives: [
       'Compare Control Room, DMZ historian, and field tap captures in the Terminal',
       'Request a physical bay check in Station -> Controls, Evidence -> Dispatch, or dispatchctl',
       'Pin corroborating evidence to Evidence -> Timeline',
-      'Save ~/workspace/divergence.csv (vantage hmi or historian) and submit',
+      'Save ~/workspace/divergence.csv (3 to 9 rows) and submit',
     ],
     hints: [
       'Replay blinding injects slight load jitter so readings still move. Inspect APCI N(S)/N(R) continuity and CP56Time2a timestamps across cr_master.pcap and dmz_historian.jsonl.',
-      'Compare spontaneous COT=3 state transitions on /evidence/m4/field_sensor.pcap against what reached L3 Control Room, and set vantage strictly to hmi or historian.',
+      'Compare spontaneous COT=3 state transitions on /evidence/m4/field_sensor.pcap against what reached L3 Control Room; mark hmi/historian rows with suppressed_cot3=true and optional field_tap comparison rows with OPEN,OPEN,0,false.',
     ],
     rubric: [
       'Divergence onset timestamp recorded in UTC within +/-2.0 s',
@@ -351,5 +351,52 @@ export const MODULES = [
     ],
   },
 ];
+
+export const FULL_OP_MODULE = {
+  id: 'full_op', contractId: 'full_op', num: 11, isFullOp: true, pts: 100, pass: 100, time: '3.5 hr capstone',
+  title: 'Full Operation Mode',
+  artifact: '~/workspace/ioa_map.json',
+  artifacts: [
+    'ioa_map.json',
+    'baseline_report.json',
+    'divergence.csv',
+    'rogue_commands.json',
+    'pivot_dossier.json',
+    'implant_decode.json',
+    'policy.yaml',
+    'm8_evidence.json',
+    'restore_plan.yaml',
+    'restore_calc.json',
+    'grid_defense.zeek',
+    'handover_brief.json',
+  ],
+  artifactNote: 'All 12 graded artifacts across 6 capstone gates (forensics, shim removal, firewall, restoration, Zeek, handover)',
+  keyTerms: ['iec-104', 'sbo', 'purdue-model', 'clpu', 'ansi-25'],
+  scenario: 'Single continuous 3.5-hour live substation incident response exercise across SN-220-MAIN. Reconstruct IOA & baseline ground truth, prove replay blinding, attribute rogue SBO commands and lateral pivot hops, decode and disable the replay shim, apply zero-downtime Purdue zone policy, synchronize CB-220-TIE1 and restore the 3 tripped feeders safely without overloading live bus load, and ship unseen-attack Zeek IEC-104 detections plus handover_brief.json.',
+  roe: 'Safe scope: No per-module Clean Start resets and max 3 electrical recoveries. Switching and bay-role truth unlock only after disabling the replay shim.',
+  steps: [
+    'Complete forensic artifacts (ioa_map.json, baseline_report.json, divergence.csv, rogue_commands.json, pivot_dossier.json, implant_decode.json) and disable the replay shim from the responder shell.',
+    'Apply and probe ~/workspace/policy.yaml + m8_evidence.json while keeping IEC-104 polling uninterrupted.',
+    'Synchronize CB-220-TIE1 (strategy: tie_synced) and restore the 3 open feeders in priority order within thermal/frequency limits (recording restore_plan.yaml and restore_calc.json).',
+    'Validate ~/workspace/grid_defense.zeek + handover_brief.json and submit Full Operation Mode.',
+  ],
+  objectives: [
+    'Prove blinding, rogue SBO commands, and 3-hop pivot chain',
+    'Decode and disable the replay shim to restore live truth',
+    'Enforce default-deny Purdue zone policy without dropping RTU polling',
+    'Restore all 6 feeders stably and ship Zeek detections + handover brief',
+  ],
+  hints: [
+    'Switching commands remain locked until you decode the implant and disable the replay shim in the responder shell.',
+    'Remember 3 feeders are already warm and closed in Full Operation Mode; pace cold-load pickup on the 3 tripped feeders within the 46.0 MW island ceiling.',
+  ],
+  rubric: [
+    'Blinding proof, rogue SBO forensics, and 3-hop pivot attribution',
+    'Binary implant decode and live replay-shim eradication',
+    'Zero-downtime Purdue zone containment policy and hold',
+    'Priority-ordered feeder restoration without protection trips',
+    'Protocol-invariant Zeek IEC-104 detector and handover brief',
+  ],
+};
 
 export const SCORED_MODULES = MODULES;

@@ -36,10 +36,16 @@ export interface V13Transport {
 export interface V13MountOptions {
   assetBase?: string;
   userId?: number | null;
+  assignmentId?: number | null;
+  generation?: string | null;
+  mode?: string | null;
   transport: V13Transport;
   storyData?: Record<string, unknown>;
   tourData?: Record<string, unknown>;
-  initialTourPrefs?: TourPrefsState;
+  loadTourData?: () => Promise<Record<string, unknown> | null>;
+  loadStoryData?: () => Promise<Record<string, unknown> | null>;
+  initialTourPrefs?: TourPrefsState | null;
+  initialPassedModules?: string[];
   onTourPrefsChange?: (prefs: TourPrefsState) => void;
   TerminalCtor?: typeof Terminal;
   FitAddonCtor?: typeof FitAddon;

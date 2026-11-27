@@ -623,10 +623,50 @@ test('Independent audit regressions: P0-2 rail lock, P2-6 tour/story parity, P3-
   assert.ok(pageSrc.includes('api.getCaseBoard(assignmentId)'), 'CisfGridLabPage must preload persisted progress on mount');
 
   const workerSrc = readFileSync(new URL('../../worker-entry.js', import.meta.url), 'utf8');
-  assert.ok(workerSrc.includes("script-src 'self' https://accounts.google.com https://checkout.razorpay.com"), 'worker-entry.js CSP must restrict script-src');
+  assert.ok(workerSrc.includes("script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client https://checkout.razorpay.com/v1/checkout.js"), 'worker-entry.js CSP must restrict script-src while supporting pdfjs WASM');
+
+  const headersSrc = readFileSync(new URL('../public/_headers', import.meta.url), 'utf8');
+  assert.ok(headersSrc.includes("Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client"), 'public/_headers must enforce CSP on Cloudflare static/SPA assets');
+  assert.ok(headersSrc.includes('X-Content-Type-Options: nosniff'), 'public/_headers must set nosniff');
+
+  const cssSrc = readFileSync(new URL('../src/components/cisfGrid/v13/v13Styles.css', import.meta.url), 'utf8');
+  assert.ok(cssSrc.includes('.rail-item-btn.is-locked'), 'v13Styles.css must style locked M8..M10 rail buttons');
+  assert.ok(emsSrc.includes('latest.isSubmit !== false'), 'btn-next-module must not appear on 0-point practice checks');
+  assert.ok(emsSrc.includes('cisf-ot-grid-tab:'), 'BroadcastChannel must be scoped per user and assignment');
+  assert.ok(emsSrc.includes('hostInitialLight'), 'dispose() must restore host documentElement theme classes');
+  assert.ok(pageSrc.includes('effectiveAssignmentId'), 'CisfGridLabPage must pass server-resolved assignment_id into workspace');
+
+  const modMod = await import('../src/components/cisfGrid/v13/modules.js');
+  assert.equal(modMod.MODULES.length, 10, 'MODULES must remain strictly 10 guided modules');
+  assert.equal(modMod.SCORED_MODULES.length, 10, 'SCORED_MODULES must remain 10 guided modules');
+  assert.ok(modMod.FULL_OP_MODULE && modMod.FULL_OP_MODULE.id === 'full_op' && modMod.FULL_OP_MODULE.isFullOp, 'FULL_OP_MODULE must export separate capstone descriptor');
 
   const tourSrc = readFileSync(new URL('../src/components/cisfGrid/v13/data/tour.json', import.meta.url), 'utf8');
   assert.ok(tourSrc.includes('resets themselves are free'), 'tour.json m9-first-trip must reflect free resets / trip penalty');
   assert.ok(tourSrc.includes('**Station** -> **Controls**'), 'tour.json must point replay scrubber to Station -> Controls');
   assert.ok(!tourSrc.includes('starts M9 over, and it costs points'), 'tour.json must not carry stale reset-penalty warning');
+
+  // Pass 2 regressions: FULL_OP_MODULE 12 artifacts, AuthContext JWT sub check, RealTerminal no token log, narrow CSP
+  assert.equal(modMod.FULL_OP_MODULE.artifacts.length, 12, 'FULL_OP_MODULE must expose all 12 graded capstone artifacts');
+  assert.ok(modMod.FULL_OP_MODULE.artifacts.includes('pivot_dossier.json'), 'FULL_OP_MODULE must use pivot_dossier.json');
+  assert.ok(modMod.FULL_OP_MODULE.artifacts.includes('implant_decode.json'), 'FULL_OP_MODULE must use implant_decode.json');
+  assert.ok(modMod.FULL_OP_MODULE.keyTerms.includes('purdue-model'), 'FULL_OP_MODULE must reference valid glossary key purdue-model');
+
+  const authSrc = readFileSync(new URL('../src/context/AuthContext.tsx', import.meta.url), 'utf8');
+  assert.ok(authSrc.includes('function decodeJwtSub'), 'AuthContext must detect cross-tab JWT subject changes');
+
+  const realTermSrc = readFileSync(new URL('../src/components/RealTerminal.tsx', import.meta.url), 'utf8');
+  assert.ok(!realTermSrc.includes('Connecting to WebSocket:'), 'RealTerminal must never log ticketed WebSocket URLs to console');
+
+  assert.ok(workerSrc.includes("worker-src 'self'; form-action 'self'"), 'worker-entry.js CSP must set worker-src and form-action');
+  assert.ok(headersSrc.includes("worker-src 'self'; form-action 'self'"), 'public/_headers CSP must set worker-src and form-action');
+
+  // Pass 3 regressions: safe tour DOM rendering, active WS ping watchdog, full_op mount mode, cross-tab notes sync, default-src CSP
+  const tourJsSrc = readFileSync(new URL('../src/components/cisfGrid/v13/tour.js', import.meta.url), 'utf8');
+  assert.ok(tourJsSrc.includes('function appendRichText'), 'tour.js must render bold markdown via DOM nodes');
+  assert.ok(!tourJsSrc.includes('card.innerHTML'), 'tour.js must not build tour cards via innerHTML');
+  assert.ok(emsSrc.includes('WS_PING_THRESHOLD_MS'), 'ems.js must send active WebSocket ping before forcing stale reconnect');
+  assert.ok(emsSrc.includes("options.mode === 'full_op' ? 'full_op' : 'm1'"), 'ems.js must honor full_op mode on initial mount');
+  assert.ok(emsSrc.includes('if (!silent && isModuleLocked(modId)) return;'), 'public setModule handle must enforce M7 progression lock');
+  assert.ok(workerSrc.includes("default-src 'self'") && headersSrc.includes("default-src 'self'"), 'CSP must set default-src self');
 });
