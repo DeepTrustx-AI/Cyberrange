@@ -18,9 +18,9 @@ const CINEMA_SCENES = [
   { id: 'beat-4', startMs: 14500, endMs: 14500, clock: '21:40:15 IST · Incoming Dispatch' },
 ];
 
-function readStoryStorage() {
+function readStoryStorage(storageKey = STORAGE_STORY) {
   try {
-    const raw = localStorage.getItem(STORAGE_STORY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return { actsSeen: {}, openersShown: {} };
     const p = JSON.parse(raw);
     return {
@@ -32,9 +32,9 @@ function readStoryStorage() {
   }
 }
 
-function writeStoryStorage(obj) {
+function writeStoryStorage(storageKey, obj) {
   try {
-    localStorage.setItem(STORAGE_STORY, JSON.stringify(obj));
+    localStorage.setItem(storageKey || STORAGE_STORY, JSON.stringify(obj));
   } catch {
   }
 }
@@ -52,6 +52,7 @@ function fmtDuration(sec) {
 export class StoryController {
   constructor({
     apiJson,
+    storageKey = STORAGE_STORY,
     storyData = null,
     loadStoryData = null,
     assetBase = './assets',
@@ -64,12 +65,14 @@ export class StoryController {
     onColdOpenVisibilityChange,
     onActCardHidden,
     onCasesUpdated,
+    onHintsHydrated,
     onTabCase,
   }) {
     this.data = storyData || null;
     this.loadStoryData = loadStoryData || null;
+    this.storageKey = storageKey || STORAGE_STORY;
     this.assetBase = String(assetBase || './assets').replace(/\/+$/, '');
-    this.stored = readStoryStorage();
+    this.stored = readStoryStorage(this.storageKey);
     this.apiJson = apiJson;
     this.setSceneView = setSceneView || (() => {});
     this.getBlindedInsetRows = getBlindedInsetRows || (() => [
@@ -84,6 +87,7 @@ export class StoryController {
     this.onColdOpenVisibilityChange = onColdOpenVisibilityChange || (() => {});
     this.onActCardHidden = onActCardHidden || (() => {});
     this.onCasesUpdated = onCasesUpdated || (() => {});
+    this.onHintsHydrated = onHintsHydrated || (() => {});
     this.onTabCase = onTabCase || (() => {});
 
     this.coldOpenActive = false;
@@ -756,7 +760,7 @@ export class StoryController {
     if (!act || this.stored.actsSeen[act.id]) return;
 
     this.stored.actsSeen[act.id] = true;
-    writeStoryStorage(this.stored);
+    writeStoryStorage(this.storageKey, this.stored);
     this.showActCard(act);
   }
 
@@ -814,7 +818,7 @@ export class StoryController {
     const exists = dispatchEntries.some((d) => d._storyOpenerId === contractModId);
     if (exists) return null;
     this.stored.openersShown[contractModId] = true;
-    writeStoryStorage(this.stored);
+    writeStoryStorage(this.storageKey, this.stored);
     return {
       _storyOpenerId: contractModId,
       sender: opener.speaker,
@@ -974,6 +978,9 @@ export class StoryController {
       signedList = Array.isArray(resp.data.passed_modules)
         ? resp.data.passed_modules
         : Object.keys(this.cases);
+      if (resp.data.hints_unlocked && typeof resp.data.hints_unlocked === 'object') {
+        this.onHintsHydrated(resp.data.hints_unlocked);
+      }
     }
     this.renderCaseBoard(justPassedId);
     if (signedList !== null) {

@@ -1,17 +1,27 @@
 import { MODULES, SCORED_MODULES, ROLE_META, ZONES, ZONE_PAIRS } from './modules.js';
 import { STAGE_BASE_W, STAGE_BASE_H, CAMERA_PRESETS, BAY_SLOTS, SceneFX, buildSceneSVG, buildLabelsSVG, applyStageLayout } from './scene.js';
 import { PtyTerminal } from './terminal.js';
-import { TrendsPanel, escHtml, renderAlarmsTable, renderSoeTable, renderIncidentTimeline, renderFrameAnatomy } from './panels.js';
+import {
+  TrendsPanel,
+  escHtml,
+  formatSoeReplayEvents,
+  parsePolicyYamlToRules,
+  serializePolicyRulesToYaml,
+  renderAlarmsTable,
+  renderSoeTable,
+  renderIncidentTimeline,
+  renderFrameAnatomy,
+} from './panels.js';
 import { TourController } from './tour.js';
 import { StoryController } from './story.js';
 import { GLOSSARY_TERMS, GlossaryController } from './glossary.js';
 
 const osReducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-const STORAGE_NOTES = 'cisf_grid_v8_notes';
-const STORAGE_LAYOUT = 'cisf_grid_v8_layout';
-const STORAGE_GRID_V12 = 'cg-layout-v12';
-const STORAGE_DECK_H = 'cisf_grid_v8_deck_h';
-const STORAGE_OBJ = 'cisf_grid_v8_objectives';
+const MAX_STATION_LOG_LINES = 200;
+const MAX_OPERATOR_LOG = 200;
+const MAX_ATTEMPTS_PER_MODULE = 50;
+const WS_WATCHDOG_INTERVAL_MS = 5000;
+const WS_STALE_THRESHOLD_MS = 12_000;
 
 const DEFAULT_GRID_LAYOUT = {
   orientation: 'wide',
@@ -51,19 +61,26 @@ const MODULE_PRIMARY_JUMP = {
   m8: { tab: 'console', label: 'Open Policy Matrix' },
   m9: { tab: 'console', label: 'Open Switching Console' },
   m10: { tab: 'case', label: 'Open Case Board' },
-  full_op: { tab: 'console', label: 'Open Switching Console' },
 };
 
 export function mountV13Workspace(options = {}) {
 const assetBase = String(options.assetBase || './assets').replace(/\/+$/, '');
 const transport = options.transport;
 if (!transport) throw new Error("V13 platform transport is required");
-const lockedFullOp = Boolean(options.lockedFullOp);
+const userPrefix = options.userId != null ? `cg_u${options.userId}_` : 'cg_anon_';
+const STORAGE_NOTES = `${userPrefix}notes`;
+const STORAGE_PINS = `${userPrefix}pins`;
+const STORAGE_LAYOUT = `${userPrefix}layout`;
+const STORAGE_GRID_V12 = `${userPrefix}grid_v12`;
+const STORAGE_DECK_H = `${userPrefix}deck_h`;
+const STORAGE_OBJ = `${userPrefix}objectives`;
+const STORAGE_TOUR = `${userPrefix}tour_v1`;
+const STORAGE_STORY = `${userPrefix}story_v1`;
 const ac = new AbortController();
 let disposed = false;
 
 const state = {
-  module: lockedFullOp ? 'full_op' : 'm1',
+  module: 'm1',
   activeView: 'city',
   activeTab: 'brief',
   activeGroup: 'mission',
@@ -80,12 +97,17 @@ const state = {
   motionPaused: false,
   cinemaActive: false,
   stageLogicalW: STAGE_BASE_W,
+  sceneDomDirtyWhileHidden: false,
 
   liveConnected: false,
   liveInitialSynced: false,
+  lastServerModuleId: null,
+  wsHasConnectedOnce: false,
   wsRetryMs: 4000,
   wsRetryTimer: null,
   wsConnectTimer: null,
+  wsConnectSeq: 0,
+  lastWsRxAt: 0,
   stateWs: null,
 
   truthVisible: false,
@@ -95,10 +117,13 @@ const state = {
   busKv: 0.0,
   tr1Pct: 0,
   tr2Pct: 0,
+  genMw: 0.0,
+  gridTieMw: 0.0,
   totalMw: 0.0,
   tieClosed: false,
   tr2Online: false,
   lockout86: false,
+  activeLockouts: [],
   syncAngleDeg: 0,
   syncDf: 0,
   syncDv: 0,
@@ -131,18 +156,28 @@ const state = {
   clearedModules: new Set(),
   attemptedModules: new Set(),
   l3Unlocked: new Set(),
+  l3HintText: {},
+  hintsTracked: new Set(),
   attemptsByModule: {},
+  verifyInFlight: false,
   pinnedArtifacts: [],
   pinSeq: 0,
+  notesHydrated: false,
+  notesDirtyOffline: false,
   stationLogUnread: 0,
   moduleEnteredAt: Date.now(),
 
   editorDirty: false,
+  editorFile: 'station_inventory.json',
+  editorLoadedFile: null,
+  editorLoadedMtime: null,
+  editorLoadSeq: 0,
+  editorDrafts: {},
   m1Highlight: false,
   splitLensOn: false,
   lensPct: 34,
   m8ShieldsRaised: false,
-  policyMatrix: Object.fromEntries(ZONE_PAIRS.map((p) => [p.key, { action: '', port: '' }])),
+  policyRules: {},
 
   soeReplay: { available: false, active: false, playing: false, index: 0, timerId: null, frames: [] },
 };
@@ -250,12 +285,24 @@ const el = {
   btnToggleEditor: document.getElementById('btn-toggle-editor'),
   editorToggleLabel: document.getElementById('editor-toggle-label'),
   editorPath: document.getElementById('editor-path'),
+  editorFileSelect: document.getElementById('editor-file-select'),
   editorStatus: document.getElementById('editor-status'),
+  btnEditorReload: document.getElementById('btn-editor-reload'),
+  editorConflictBar: document.getElementById('editor-conflict-bar'),
+  editorConflictMsg: document.getElementById('editor-conflict-msg'),
+  btnConflictReload: document.getElementById('btn-conflict-reload'),
+  btnConflictOverwrite: document.getElementById('btn-conflict-overwrite'),
   editorGutter: document.getElementById('editor-gutter'),
   editorText: document.getElementById('editor-textarea'),
   submitArtifact: document.getElementById('submit-artifact'),
   btnPractice: document.getElementById('btn-practice-check'),
   btnSubmit: document.getElementById('btn-submit-module'),
+  btnUnlockL3: document.getElementById('btn-unlock-l3'),
+  hint3: document.getElementById('hint-3'),
+  hintDetails1: document.getElementById('hint-details-1'),
+  hintDetails2: document.getElementById('hint-details-2'),
+  govFreqInput: document.getElementById('gov-freq-input'),
+  btnGovSet: document.getElementById('btn-gov-set'),
 
   dialog: document.getElementById('confirm-dialog'),
   dialogTitle: document.getElementById('dialog-title'),
@@ -279,10 +326,72 @@ el.svgLabelsHost.innerHTML = buildLabelsSVG(false);
 el.lensHmiLayer.innerHTML = buildSceneSVG(true, assetBase);
 el.lensLabelsLayer.innerHTML = buildLabelsSVG(true);
 
+// Cache static scene and inline physics DOM nodes once at mount (E-18).
+const sceneDom = {
+  feederLines: document.getElementById('feeder-lines'),
+  cableGalleryMask: document.getElementById('cable-gallery-mask'),
+  cb220Tie1: document.getElementById('cb-220-tie1'),
+  tieStemLower: document.getElementById('tie-stem-lower'),
+  bus220A: document.getElementById('bus-220-a'),
+  bc1Coupler: document.getElementById('bc1-coupler'),
+  genSvgHz: document.getElementById('gen-svg-hz'),
+  tr1Glow: document.getElementById('tr1-glow'),
+  tr2Glow: document.getElementById('tr2-glow'),
+  tr1SvgPct: document.getElementById('tr1-svg-pct'),
+  tr2SvgPct: document.getElementById('tr2-svg-pct'),
+  tr1Lockout86: document.getElementById('tr1-lockout-86'),
+  tr2Unit: document.getElementById('tr-2-unit'),
+  tr2Lines: ['tr2-hv-b', 'tr2-lv-stem'].map((id) => document.getElementById(id)),
+  busLines: ['tr1-lv-stem', 'gen-stem', 'bus-132-b', 'drop-c1', 'drop-c2', 'bus-33-c1', 'bus-33-c2', 'bc1-stub-l', 'bc1-stub-r'].map((id) => ({
+    id,
+    node: document.getElementById(id),
+  })),
+  screens: ['cr-scr-1', 'cr-scr-2', 'cr-scr-3', 'cr-scr-4'].map((id) => document.getElementById(id)),
+  m1Comms: ['comms-rtu1', 'comms-rtu2', 'comms-hist'].map((id) => document.getElementById(id)),
+  shields: ['shield-corp-dmz', 'shield-dmz-field', 'shield-corp-field', 'shield-ctrl-field'].map((id) => document.getElementById(id)),
+  m1Rtu1State: document.getElementById('m1-rtu1-state'),
+  m1Rtu2State: document.getElementById('m1-rtu2-state'),
+  m1PollPct: document.getElementById('m1-poll-pct'),
+  m4HmiVal: document.getElementById('m4-hmi-val'),
+  m4AlarmVal: document.getElementById('m4-alarm-val'),
+  bays: BAY_SLOTS.map((slot) => {
+    const n = slot.idx + 1;
+    return {
+      slot,
+      n,
+      distEl: document.getElementById(slot.distId),
+      distLblGrp: document.getElementById(`lbl-${slot.distId}`),
+      distStatusEl: document.getElementById(`dist-status-${n}`),
+      lineEl: document.getElementById(`line-${n}`),
+      bayEl: document.getElementById(`bay-${n}`),
+      bayLblGrp: document.getElementById(`bay-lbl-grp-${n}`),
+      bayIdEl: document.getElementById(`bay-id-${n}`),
+      bayLabel: document.getElementById(`bay-label-${n}`),
+      baySub: document.getElementById(`bay-sub-${n}`),
+    };
+  }),
+  syncNeedle: document.getElementById('sync-needle'),
+  syncDphi: document.getElementById('sync-dphi'),
+  syncDf: document.getElementById('sync-df'),
+  syncDv: document.getElementById('sync-dv'),
+  syncTieState: document.getElementById('sync-tie-state'),
+  syncStatusSvg: document.getElementById('sync-status-svg'),
+  physGenMw: document.getElementById('phys-gen-mw'),
+  meterGen: document.getElementById('meter-gen'),
+  physTr1Mva: document.getElementById('phys-tr1-mva'),
+  meterTr1: document.getElementById('meter-tr1'),
+  physTr2Mva: document.getElementById('phys-tr2-mva'),
+  meterTr2: document.getElementById('meter-tr2'),
+  ghostGen: document.getElementById('ghost-gen'),
+  ghostTr1: document.getElementById('ghost-tr1'),
+  ghostTr2: document.getElementById('ghost-tr2'),
+};
+
 const glossary = new GlossaryController();
 const fx = new SceneFX(el.canvas, el.stageCard, () => state);
 const tour = new TourController({
   tourData: options.tourData || null,
+  storageKey: STORAGE_TOUR,
   initialPrefs: options.initialTourPrefs || null,
   onPrefsChange: options.onTourPrefsChange || null,
   onReplayColdOpen: () => story.startColdOpen(),
@@ -294,6 +403,7 @@ const tour = new TourController({
 });
 const story = new StoryController({
   apiJson,
+  storageKey: STORAGE_STORY,
   storyData: options.storyData || null,
   assetBase,
   setSceneView,
@@ -322,6 +432,7 @@ const story = new StoryController({
   },
   onActCardHidden: () => tour.flushPendingTips(),
   onCasesUpdated: (ids) => syncPassedModulesFromSigned(ids, true),
+  onHintsHydrated: (hintsMap) => hydrateHintsFromCase(hintsMap),
   onTabCase: () => setTab('case'),
 });
 const pty = new PtyTerminal(
@@ -329,7 +440,11 @@ const pty = new PtyTerminal(
   el.termConnStatus,
   () => {},
   () => tour.notifyEvent('terminal-enter'),
-  { TerminalCtor: options.TerminalCtor || null, FitAddonCtor: options.FitAddonCtor || null }
+  {
+    TerminalCtor: options.TerminalCtor || null,
+    FitAddonCtor: options.FitAddonCtor || null,
+    getWsUrl: () => transport.getTerminalWsUrl(),
+  }
 );
 pty.mount();
 
@@ -344,6 +459,12 @@ const trends = new TrendsPanel(
 );
 
 let flipGen = 0;
+let flipCleanupTimer = null;
+let railRepositionTimer = null;
+let checkPollTimer = null;
+let filterDebounceTimer = null;
+let resumePendingCheckPoll = null;
+let tabChannel = null;
 let demoSwapSnapshot = null;
 let stageResizeRaf = null;
 let lastStageVpW = 0;
@@ -507,15 +628,17 @@ function animateWorkspaceFlip(mutateFn, save = true) {
 
   void el.workspaceMain.offsetWidth;
   requestAnimationFrame(() => {
-    if (gen !== flipGen) return;
+    if (disposed || gen !== flipGen) return;
     animated.forEach((p) => {
       p.style.transition = 'transform 380ms cubic-bezier(0.25, 1, 0.5, 1)';
       p.style.transform = 'none';
     });
   });
 
-  setTimeout(() => {
-    if (gen !== flipGen) return;
+  if (flipCleanupTimer) clearTimeout(flipCleanupTimer);
+  flipCleanupTimer = setTimeout(() => {
+    flipCleanupTimer = null;
+    if (disposed || gen !== flipGen) return;
     animated.forEach((p) => {
       p.style.removeProperty('transition');
       p.style.removeProperty('transform');
@@ -667,12 +790,12 @@ function contractModId(id = state.module) {
 
 function localModId(id) {
   const s = String(id || 'm01').trim().toLowerCase();
-  if (s === 'full_op' || s === 'm10') return s;
+  if (s === 'm10') return s;
   return s.replace(/^m0(\d)$/, 'm$1');
 }
 
 function isOpsConsoleMod(id = state.module) {
-  return id === 'm9' || id === 'full_op';
+  return id === 'm9';
 }
 
 function utcStamp() {
@@ -694,10 +817,14 @@ function parseUtcSeconds(str) {
 }
 
 function logStation(text, cls = '') {
+  if (!el.stationLogOut) return;
   const line = document.createElement('div');
   line.className = `term-line ${cls}`.trim();
   line.textContent = `[${utcStamp()}] ${text}`;
   el.stationLogOut.appendChild(line);
+  while (el.stationLogOut.childElementCount > MAX_STATION_LOG_LINES && el.stationLogOut.firstElementChild) {
+    el.stationLogOut.removeChild(el.stationLogOut.firstElementChild);
+  }
   el.stationLogOut.scrollTop = el.stationLogOut.scrollHeight;
   if (state.rightTab !== 'log') {
     state.stationLogUnread += 1;
@@ -706,14 +833,53 @@ function logStation(text, cls = '') {
   }
 }
 
+function syncEvalButtons() {
+  const disabled = !state.liveConnected || state.verifyInFlight;
+  el.btnPractice.disabled = disabled;
+  el.btnSubmit.disabled = disabled;
+}
+
+function syncL3HintUI() {
+  const m = getMod();
+  const h3 = el.hint3 || document.getElementById('hint-3');
+  const unlockBtn = el.btnUnlockL3 || document.getElementById('btn-unlock-l3');
+  const unlocked = state.l3Unlocked.has(m.id);
+  if (h3) {
+    h3.textContent = unlocked ? (state.l3HintText[m.id] || 'Level 3 hint unlocked.') : '';
+    h3.classList.toggle('is-hidden', !unlocked);
+  }
+  if (unlockBtn) {
+    unlockBtn.textContent = unlocked ? 'Unlocked (-10%)' : 'Reveal hint';
+    unlockBtn.disabled = unlocked || !state.liveConnected;
+  }
+}
+
+function hydrateHintsFromCase(hintsUnlocked) {
+  if (!hintsUnlocked || typeof hintsUnlocked !== 'object') return;
+  for (const [cid, info] of Object.entries(hintsUnlocked)) {
+    if (!info || typeof info !== 'object') continue;
+    const lid = localModId(cid);
+    if (info.l1) state.hintsTracked.add(`${cid}:1`);
+    if (info.l2) state.hintsTracked.add(`${cid}:2`);
+    if (info.l3) {
+      state.l3Unlocked.add(lid);
+      state.hintsTracked.add(`${cid}:3`);
+      if (typeof info.l3_text === 'string' && info.l3_text.trim()) {
+        state.l3HintText[lid] = info.l3_text.trim();
+      }
+    }
+  }
+  syncL3HintUI();
+}
+
 function setConnectedState(connected) {
   const prev = state.liveConnected;
   state.liveConnected = Boolean(connected);
   el.connPill.textContent = state.liveConnected ? 'Connected' : 'Not connected';
   el.connPill.classList.toggle('is-connected', state.liveConnected);
   el.connPill.classList.toggle('is-disconnected', !state.liveConnected);
-  el.btnPractice.disabled = !state.liveConnected;
-  el.btnSubmit.disabled = !state.liveConnected;
+  syncEvalButtons();
+  syncL3HintUI();
   if (prev && !state.liveConnected) {
     logStation('Station link disconnected. Practice and Submit disabled until reconnected.', 't-err');
     tour.notifyEvent('connection-lost');
@@ -730,11 +896,8 @@ async function apiJson(method, path, payload = null) {
       setConnectedState(false);
       return null;
     }
-    if (res.status >= 502 && res.status <= 504) {
+    if (res.status === 0 || (res.status >= 502 && res.status <= 504)) {
       setConnectedState(false);
-      if (typeof options.onUpstreamLost === 'function') options.onUpstreamLost(res.status);
-    } else if (res.status === 409 && typeof options.onUpstreamLost === 'function') {
-      options.onUpstreamLost(res.status);
     }
     return res;
   } catch {
@@ -759,9 +922,12 @@ function setRightTab(tab) {
     el.stationLogBadge.classList.add('is-hidden');
     tour.notifyEvent('station-log-opened');
   } else if (tab === 'terminal') {
-    requestAnimationFrame(() => { pty.fit(); pty.focus(); });
+    requestAnimationFrame(() => { if (!disposed) { pty.fit(); pty.focus(); } });
   } else if (tab === 'editor') {
-    loadEditorFile(state.module);
+    const targetFile = getActiveEditorFilename();
+    if (!(state.editorDirty && state.editorLoadedFile === targetFile)) {
+      void loadEditorFile(targetFile, false);
+    }
     el.editorText.focus();
   }
 }
@@ -863,6 +1029,8 @@ function setTab(tabName) {
     tour.notifyEvent('frames-opened');
   } else if (resolvedTab === 'trends') {
     trends.render();
+  } else if (resolvedTab === 'console') {
+    if (isOpsConsoleMod()) syncInlinePhysics();
   } else if (resolvedTab === 'timeline') {
     renderTimelineView();
   } else if (resolvedTab === 'dispatch') {
@@ -980,10 +1148,15 @@ function toggleRail(force) {
   el.rail.classList.toggle('is-collapsed', !state.railOpen);
   el.btnRail.setAttribute('aria-expanded', String(state.railOpen));
   requestAnimationFrame(() => {
+    if (disposed) return;
     pty.fit();
     tour._repositionActive();
   });
-  setTimeout(() => tour._repositionActive(), 240);
+  if (railRepositionTimer) clearTimeout(railRepositionTimer);
+  railRepositionTimer = setTimeout(() => {
+    railRepositionTimer = null;
+    if (!disposed) tour._repositionActive();
+  }, 240);
 }
 
 function loadObjectiveTicks() {
@@ -1075,17 +1248,13 @@ function renderBriefAndChecks() {
   document.getElementById('brief-roe').textContent = m.roe;
   document.getElementById('brief-steps').innerHTML = m.steps.map((s) => `<li>${escHtml(s)}</li>`).join('');
 
-  document.getElementById('hint-1').textContent = m.hints[0];
-  document.getElementById('hint-2').textContent = m.hints[1];
-  const h3 = document.getElementById('hint-3');
-  const unlockBtn = document.getElementById('btn-unlock-l3');
-  h3.textContent = m.hints[2];
-  const unlocked = state.l3Unlocked.has(m.id);
-  h3.classList.toggle('is-hidden', !unlocked);
-  unlockBtn.textContent = unlocked ? 'Unlocked (-10%)' : 'Reveal hint';
-  unlockBtn.disabled = unlocked || !state.liveConnected;
+  document.getElementById('hint-1').textContent = m.hints[0] || '';
+  document.getElementById('hint-2').textContent = m.hints[1] || '';
+  if (el.hintDetails1) el.hintDetails1.open = false;
+  if (el.hintDetails2) el.hintDetails2.open = false;
+  syncL3HintUI();
 
-  const consoleKey = m.isFullOp ? 'm9' : ['m1', 'm4', 'm8', 'm9'].includes(m.id) ? m.id : 'other';
+  const consoleKey = ['m1', 'm4', 'm8', 'm9'].includes(m.id) ? m.id : 'other';
   document.querySelectorAll('[data-console]').forEach((v) => {
     v.classList.toggle('is-hidden', v.dataset.console !== consoleKey);
   });
@@ -1099,13 +1268,16 @@ function renderBriefAndChecks() {
     briefJumpBtn.dataset.jumpTab = jump.tab;
   }
 
-  const shortFile = m.artifact.split('/').pop();
+  syncEditorFileSelector(m);
+  const shortFile = getActiveEditorFilename(m);
   el.editorToggleLabel.textContent = `Edit ${shortFile}`;
-  el.btnToggleEditor.title = `Edit ${m.artifact}`;
-  el.editorPath.textContent = m.artifact;
+  el.btnToggleEditor.title = `Edit ~/workspace/${shortFile}`;
+  el.editorPath.textContent = `~/workspace/${shortFile}`;
   el.submitArtifact.textContent = shortFile;
   el.submitArtifact.title = m.artifactNote || m.artifact;
-  if (state.rightTab === 'editor') loadEditorFile(m.id);
+  if (state.rightTab === 'editor' && state.editorLoadedFile !== shortFile) {
+    void loadEditorFile(shortFile, false);
+  }
 
   renderObjectiveCard();
   renderChecksTab();
@@ -1132,10 +1304,13 @@ function syncM9ResetControls() {
     el.btnResetElectrical.textContent = 'Reset electrical state';
   }
   if (el.checksResetNotice) {
-    const showNotice = state.module === 'm9' || state.module === 'full_op';
+    const showNotice = state.module === 'm9';
     el.checksResetNotice.classList.toggle('is-hidden', !showNotice);
     if (showNotice) {
-      el.checksResetNotice.textContent = `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${trips}${pen > 0 ? ` (-${pen}%)` : ''}.`;
+      const warn3 = trips >= 2
+        ? ' Warning: a 3rd trip disqualifies both Full Pass and Safe Partial.'
+        : ' Avoid 3 trips (disqualifies Full Pass and Safe Partial).';
+      el.checksResetNotice.textContent = `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${trips}${pen > 0 ? ` (-${pen}%)` : ''}.${warn3}`;
     }
   }
 }
@@ -1184,6 +1359,21 @@ function renderHistoryTab() {
     .join('');
 }
 
+function syncPolicyRulesForPair(pair, action, portsRaw) {
+  const prefix = `${pair.src}->${pair.dst}:`;
+  for (const k of Object.keys(state.policyRules)) {
+    if (k.startsWith(prefix)) delete state.policyRules[k];
+  }
+  if (action !== 'allow' && action !== 'deny') return;
+  const parts = String(portsRaw || '').split(/[\s,;]+/).filter(Boolean);
+  for (const part of parts) {
+    const port = parseInt(part, 10);
+    if (port >= 1 && port <= 65535) {
+      state.policyRules[`${prefix}${port}`] = { src: pair.src, dst: pair.dst, port, action };
+    }
+  }
+}
+
 function buildEmptyPolicyMatrixUI() {
   const host = document.getElementById('policy-matrix');
   host.replaceChildren();
@@ -1199,12 +1389,13 @@ function buildEmptyPolicyMatrixUI() {
           <option value="allow">allow</option>
           <option value="deny">deny</option>
         </select>
-        <input type="number" min="1" max="65535" placeholder="port" data-pair-port="${escHtml(pair.key)}" aria-label="Port for ${escHtml(pair.src)} to ${escHtml(pair.dst)}" />
+        <input type="text" inputmode="numeric" placeholder="port(s)" data-pair-port="${escHtml(pair.key)}" aria-label="Port or comma-separated ports for ${escHtml(pair.src)} to ${escHtml(pair.dst)}" />
       </div>`;
     const actSel = card.querySelector(`[data-pair-action="${pair.key}"]`);
     const portInp = card.querySelector(`[data-pair-port="${pair.key}"]`);
-    actSel.addEventListener('change', () => { state.policyMatrix[pair.key].action = actSel.value; });
-    portInp.addEventListener('input', () => { state.policyMatrix[pair.key].port = portInp.value.trim(); });
+    const onPairEdit = () => syncPolicyRulesForPair(pair, actSel.value, portInp.value);
+    actSel.addEventListener('change', onPairEdit);
+    portInp.addEventListener('input', onPairEdit);
     host.appendChild(card);
   });
 
@@ -1219,52 +1410,27 @@ function buildEmptyPolicyMatrixUI() {
 
 function policyMatrixToYaml() {
   const dp = document.getElementById('m8-default-policy')?.value === 'allow' ? 'allow' : 'deny';
-  const lines = [`default_policy: ${dp}`, 'rules:'];
-  let count = 0;
-  ZONE_PAIRS.forEach((pair) => {
-    const row = state.policyMatrix[pair.key];
-    const port = parseInt(row.port, 10);
-    if ((row.action === 'allow' || row.action === 'deny') && port >= 1 && port <= 65535) {
-      count += 1;
-      const rid = `r-${pair.src.toLowerCase()}-${pair.dst.toLowerCase()}-${port}`.slice(0, 48);
-      lines.push(`  - id: ${rid}`);
-      lines.push(`    src_zone: ${pair.src}`);
-      lines.push(`    dst_zone: ${pair.dst}`);
-      lines.push('    protocol: tcp');
-      lines.push(`    dst_port: ${port}`);
-      lines.push(`    action: ${row.action}`);
-    }
-  });
-  if (count === 0) return `default_policy: ${dp}\nrules: []\n`;
-  return `${lines.join('\n')}\n`;
+  return serializePolicyRulesToYaml(dp, state.policyRules);
 }
 
 function hydrateMatrixFromYaml(yamlText) {
-  ZONE_PAIRS.forEach((p) => { state.policyMatrix[p.key] = { action: '', port: '' }; });
-  const dpMatch = yamlText.match(/default_policy:\s*(allow|deny)/i);
+  const parsed = parsePolicyYamlToRules(yamlText);
+  state.policyRules = { ...parsed.rules };
   const dpSel = document.getElementById('m8-default-policy');
-  if (dpSel && dpMatch) dpSel.value = dpMatch[1].toLowerCase();
+  if (dpSel) dpSel.value = parsed.defaultPolicy;
 
-  const blocks = yamlText.split(/\n\s*-\s+id:/);
-  for (let i = 1; i < blocks.length; i++) {
-    const b = blocks[i];
-    const s = b.match(/src_zone:\s*(\w+)/);
-    const d = b.match(/dst_zone:\s*(\w+)/);
-    const pt = b.match(/dst_port:\s*(\d+)/);
-    const ac = b.match(/action:\s*(allow|deny)/i);
-    if (s && d && pt && ac) {
-      const key = `${s[1]}->${d[1]}`;
-      if (state.policyMatrix[key]) {
-        state.policyMatrix[key] = { action: ac[1].toLowerCase(), port: pt[1] };
-      }
-    }
+  const grouped = {};
+  for (const r of Object.values(state.policyRules)) {
+    const pk = `${r.src}->${r.dst}`;
+    if (!grouped[pk]) grouped[pk] = { action: r.action, ports: [] };
+    grouped[pk].ports.push(r.port);
   }
   ZONE_PAIRS.forEach((pair) => {
-    const row = state.policyMatrix[pair.key];
+    const g = grouped[pair.key];
     const actSel = document.querySelector(`[data-pair-action="${pair.key}"]`);
     const portInp = document.querySelector(`[data-pair-port="${pair.key}"]`);
-    if (actSel) actSel.value = row.action;
-    if (portInp) portInp.value = row.port;
+    if (actSel) actSel.value = g ? g.action : '';
+    if (portInp) portInp.value = g ? g.ports.sort((a, b) => a - b).join(', ') : '';
   });
 }
 
@@ -1287,6 +1453,12 @@ function bayDisplayInfo(bayNum) {
 }
 
 function syncSceneDOM() {
+  if (disposed) return;
+  if (typeof document !== 'undefined' && document.hidden) {
+    state.sceneDomDirtyWhileHidden = true;
+    return;
+  }
+  state.sceneDomDirtyWhileHidden = false;
   syncM7ShimPill();
   syncM9ResetControls();
   story.updateStakesStrip({
@@ -1296,7 +1468,7 @@ function syncSceneDOM() {
   });
 
   const mod = getMod();
-  const isPreM7 = !mod.isFullOp && mod.num <= 7;
+  const isPreM7 = mod.num <= 7;
   const opsMode = isOpsConsoleMod();
   const replayOn = opsMode && state.soeReplay.available && state.soeReplay.active;
   const rf = replayOn ? state.soeReplay.frames[state.soeReplay.index] : null;
@@ -1308,6 +1480,7 @@ function syncSceneDOM() {
   const viewTr2 = rf ? rf.tr2Pct : state.tr2Pct;
   const viewMw = rf ? rf.totalMw : state.totalMw;
   const viewLockout = rf ? rf.lockout86 : state.lockout86;
+  const viewLockoutAssets = rf && Array.isArray(rf.lockoutAssets) ? rf.lockoutAssets : state.activeLockouts;
   const viewBusesLive = rf ? rf.busesLive : viewKv > 0.5;
 
   const preset = CAMERA_PRESETS[state.module] || CAMERA_PRESETS.m1;
@@ -1331,74 +1504,65 @@ function syncSceneDOM() {
   const showLockout = opsMode && viewLockout;
   el.hudCameraLabel.classList.toggle('is-hidden', showLockout && !replayOn);
   el.hudLockoutPill.classList.toggle('is-hidden', !showLockout || replayOn);
+  if (showLockout) {
+    const assetLabel = viewLockoutAssets.length ? viewLockoutAssets.join(', ') : 'station';
+    setTextIfChanged(el.hudLockoutPill, `Lockout 86 active on ${assetLabel}`);
+  }
   el.chkTr2.checked = state.tr2Online;
   el.btnClear86.disabled = !(opsMode && state.lockout86 && state.liveConnected);
   el.soePanel.classList.toggle('is-hidden', !(opsMode && state.soeReplay.available));
 
-  document.getElementById('feeder-lines')?.classList.toggle('is-masked', !state.truthVisible);
-  document.getElementById('cable-gallery-mask')?.classList.toggle('is-active', !state.truthVisible);
+  sceneDom.feederLines?.classList.toggle('is-masked', !state.truthVisible);
+  sceneDom.cableGalleryMask?.classList.toggle('is-active', !state.truthVisible);
 
-  const tieEl = document.getElementById('cb-220-tie1');
+  const tieEl = sceneDom.cb220Tie1;
   const tieLive = state.tieClosed && !replayOn;
   tieEl?.classList.toggle('is-closed', tieLive);
   tieEl?.classList.toggle('is-open', !tieLive);
   tieEl?.classList.toggle('is-operable', opsMode && state.liveConnected);
-  document.getElementById('tie-stem-lower')?.classList.toggle('is-live', tieLive);
-  document.getElementById('bus-220-a')?.classList.toggle('is-hv-live', tieLive);
+  sceneDom.tieStemLower?.classList.toggle('is-live', tieLive);
+  sceneDom.bus220A?.classList.toggle('is-hv-live', tieLive);
 
-  ['tr1-lv-stem', 'gen-stem', 'bus-132-b', 'drop-c1', 'drop-c2', 'bus-33-c1', 'bus-33-c2', 'bc1-stub-l', 'bc1-stub-r'].forEach((id) => {
-    const line = document.getElementById(id);
-    if (!line) return;
-    line.classList.toggle('is-live', id === 'tr1-lv-stem' ? !viewLockout && viewBusesLive : viewBusesLive);
+  sceneDom.busLines.forEach(({ id, node }) => {
+    if (!node) return;
+    node.classList.toggle('is-live', id === 'tr1-lv-stem' ? !viewLockout && viewBusesLive : viewBusesLive);
   });
 
-  const bc1 = document.getElementById('bc1-coupler');
-  if (bc1) {
-    bc1.classList.toggle('is-closed', viewBusesLive);
-    bc1.classList.toggle('is-open', !viewBusesLive);
+  if (sceneDom.bc1Coupler) {
+    sceneDom.bc1Coupler.classList.toggle('is-closed', viewBusesLive);
+    sceneDom.bc1Coupler.classList.toggle('is-open', !viewBusesLive);
   }
   setTextIfChanged(
-    document.getElementById('gen-svg-hz'),
+    sceneDom.genSvgHz,
     typeof viewGenHz === 'number' ? `GEN-132: ${viewGenHz.toFixed(2)} Hz` : '42 MW island turbine'
   );
 
-  const tr1Glow = document.getElementById('tr1-glow');
-  const tr2Glow = document.getElementById('tr2-glow');
-  if (tr1Glow) {
+  if (sceneDom.tr1Glow) {
     const tr1Fill = showLockout || viewTr1 > 95 ? 'url(#grad-tr-hot)' : viewTr1 >= 75 ? 'url(#grad-tr-warn)' : 'url(#grad-tr-calm)';
-    if (tr1Glow.getAttribute('fill') !== tr1Fill) tr1Glow.setAttribute('fill', tr1Fill);
-    tr1Glow.style.opacity = showLockout ? '0.88' : String(Math.min(0.84, 0.1 + (viewTr1 / 115) * 0.72));
+    if (sceneDom.tr1Glow.getAttribute('fill') !== tr1Fill) sceneDom.tr1Glow.setAttribute('fill', tr1Fill);
+    sceneDom.tr1Glow.style.opacity = showLockout ? '0.88' : String(Math.min(0.84, 0.1 + (viewTr1 / 115) * 0.72));
   }
-  if (tr2Glow) {
+  if (sceneDom.tr2Glow) {
     const tr2Fill = viewTr2 > 95 ? 'url(#grad-tr-hot)' : viewTr2 >= 75 ? 'url(#grad-tr-warn)' : 'url(#grad-tr-calm)';
-    if (tr2Glow.getAttribute('fill') !== tr2Fill) tr2Glow.setAttribute('fill', tr2Fill);
-    tr2Glow.style.opacity = state.tr2Online ? String(Math.min(0.8, 0.1 + (viewTr2 / 115) * 0.68)) : '0.04';
+    if (sceneDom.tr2Glow.getAttribute('fill') !== tr2Fill) sceneDom.tr2Glow.setAttribute('fill', tr2Fill);
+    sceneDom.tr2Glow.style.opacity = state.tr2Online ? String(Math.min(0.8, 0.1 + (viewTr2 / 115) * 0.68)) : '0.04';
   }
 
-  setTextIfChanged(document.getElementById('tr1-svg-pct'), showLockout ? 'Trip 86' : `${viewTr1}%`);
-  setTextIfChanged(document.getElementById('tr2-svg-pct'), state.tr2Online ? `${viewTr2}%` : 'Standby');
-  document.getElementById('tr1-lockout-86')?.classList.toggle('is-visible', showLockout);
-  document.getElementById('tr-2-unit')?.classList.toggle('is-operable', opsMode && state.liveConnected);
+  setTextIfChanged(sceneDom.tr1SvgPct, showLockout ? 'Trip 86' : `${viewTr1}%`);
+  setTextIfChanged(sceneDom.tr2SvgPct, state.tr2Online ? `${viewTr2}%` : 'Standby');
+  sceneDom.tr1Lockout86?.classList.toggle('is-visible', showLockout);
+  sceneDom.tr2Unit?.classList.toggle('is-operable', opsMode && state.liveConnected);
 
-  ['tr2-hv-b', 'tr2-lv-stem'].forEach((id) => {
-    document.getElementById(id)?.classList.toggle('is-live', state.tr2Online);
+  sceneDom.tr2Lines.forEach((node) => {
+    node?.classList.toggle('is-live', state.tr2Online);
   });
 
   const statusLabelFor = (s) => (s === 'lit' ? 'Energized' : s === 'diesel' ? 'Backup diesel' : s === 'dark' ? 'De-energized' : 'Unknown');
   const mobStatuses = [];
 
-  BAY_SLOTS.forEach((slot) => {
-    const n = slot.idx + 1;
+  sceneDom.bays.forEach((entry) => {
+    const { slot, n, distEl, distLblGrp, distStatusEl, lineEl, bayEl, bayLblGrp, bayIdEl, bayLabel, baySub } = entry;
     const info = bayDisplayInfo(n);
-    const distEl = document.getElementById(slot.distId);
-    const distLblGrp = document.getElementById(`lbl-${slot.distId}`);
-    const distStatusEl = document.getElementById(`dist-status-${n}`);
-    const lineEl = document.getElementById(`line-${n}`);
-    const bayEl = document.getElementById(`bay-${n}`);
-    const bayLblGrp = document.getElementById(`bay-lbl-grp-${n}`);
-    const bayIdEl = document.getElementById(`bay-id-${n}`);
-    const bayLabel = document.getElementById(`bay-label-${n}`);
-    const baySub = document.getElementById(`bay-sub-${n}`);
 
     const dState = state.districts && state.districts[slot.sprite] ? state.districts[slot.sprite] : 'unknown';
     distEl?.classList.toggle('is-lit', dState === 'lit');
@@ -1450,21 +1614,20 @@ function syncSceneDOM() {
       .join('');
   }
 
-  const screens = ['cr-scr-1', 'cr-scr-2', 'cr-scr-3', 'cr-scr-4'].map((id) => document.getElementById(id));
   if (!state.truthVisible) {
-    screens.forEach((s) => s?.classList.remove('is-truth-open'));
+    sceneDom.screens.forEach((s) => s?.classList.remove('is-truth-open'));
   } else {
     const openCount = BAY_SLOTS.filter((slot) => !bayDisplayInfo(slot.idx + 1).closed || !viewBusesLive).length;
-    screens.forEach((s, i) => s?.classList.toggle('is-truth-open', i < Math.min(4, openCount)));
+    sceneDom.screens.forEach((s, i) => s?.classList.toggle('is-truth-open', i < Math.min(4, openCount)));
   }
 
-  ['comms-rtu1', 'comms-rtu2', 'comms-hist'].forEach((id) => {
-    document.getElementById(id)?.classList.toggle('is-highlighted', state.module === 'm1' && state.m1Highlight);
+  sceneDom.m1Comms.forEach((node) => {
+    node?.classList.toggle('is-highlighted', state.module === 'm1' && state.m1Highlight);
   });
 
-  const showShields = (state.module === 'm8' || state.module === 'full_op') && state.m8ShieldsRaised;
-  ['shield-corp-dmz', 'shield-dmz-field', 'shield-corp-field', 'shield-ctrl-field'].forEach((id) => {
-    document.getElementById(id)?.classList.toggle('is-raised', showShields);
+  const showShields = state.module === 'm8' && state.m8ShieldsRaised;
+  sceneDom.shields.forEach((node) => {
+    node?.classList.toggle('is-raised', showShields);
   });
 
   if (!state.liveConnected) {
@@ -1474,6 +1637,7 @@ function syncSceneDOM() {
     setTextIfChanged(el.telemTr1, '--');
     setTextIfChanged(el.telemTr2, '--');
     setTextIfChanged(el.telemMw, '--');
+    el.telemMw.title = '';
     setTextIfChanged(el.telemLink, '--');
   } else {
     const deadBus = viewBusHz === null || viewKv <= 0.1;
@@ -1490,78 +1654,102 @@ function syncSceneDOM() {
     setClassIfChanged(el.telemTr1, `rail-v-sub tabular ${showLockout || viewTr1 >= 100 ? 'val-danger' : viewTr1 >= 85 ? 'val-warn' : ''}`);
 
     setTextIfChanged(el.telemTr2, state.tr2Online ? `${viewTr2}%` : 'Standby');
-    setTextIfChanged(el.telemMw, `${viewMw.toFixed(1)} MW`);
+    if (state.tieClosed && !rf) {
+      setTextIfChanged(el.telemMw, `${viewMw.toFixed(1)} MW (Gen ${state.genMw.toFixed(0)} / Tie ${state.gridTieMw.toFixed(0)})`);
+      el.telemMw.title = `Station load ${viewMw.toFixed(1)} MW | GEN-132-GT1 ${state.genMw.toFixed(1)} MW | 220 kV Tie ${state.gridTieMw.toFixed(1)} MW`;
+    } else {
+      setTextIfChanged(el.telemMw, `${viewMw.toFixed(1)} MW`);
+      el.telemMw.title = `Station load ${viewMw.toFixed(1)} MW`;
+    }
 
     const linkTxt = typeof state.pollPct === 'number' ? `${state.pollPct.toFixed(1)}%` : '--';
     setTextIfChanged(el.telemLink, linkTxt);
     setClassIfChanged(el.telemLink, `rail-v-sub tabular ${typeof state.pollPct === 'number' && state.pollPct < 99.0 ? 'val-danger' : 'val-mint'}`);
   }
 
-  setTextIfChanged(document.getElementById('m1-rtu1-state'), state.rtu1Connected ? 'Active polling' : 'Offline');
-  setTextIfChanged(document.getElementById('m1-rtu2-state'), state.rtu2Connected ? 'Active polling' : 'Offline');
-  setTextIfChanged(document.getElementById('m1-poll-pct'), typeof state.pollPct === 'number' ? `${state.pollPct.toFixed(1)}%` : '--');
+  setTextIfChanged(sceneDom.m1Rtu1State, state.rtu1Connected ? 'Active polling' : 'Offline');
+  setTextIfChanged(sceneDom.m1Rtu2State, state.rtu2Connected ? 'Active polling' : 'Offline');
+  setTextIfChanged(sceneDom.m1PollPct, typeof state.pollPct === 'number' ? `${state.pollPct.toFixed(1)}%` : '--');
 
-  setTextIfChanged(document.getElementById('m4-hmi-val'), state.liveConnected ? `${viewMw.toFixed(1)} MW reported` : '--');
-  setTextIfChanged(document.getElementById('m4-alarm-val'), `${state.alarms.filter((a) => a.state === 'active').length} reported`);
+  setTextIfChanged(sceneDom.m4HmiVal, state.liveConnected ? `${viewMw.toFixed(1)} MW reported` : '--');
+  setTextIfChanged(sceneDom.m4AlarmVal, `${state.alarms.filter((a) => a.state === 'active').length} reported`);
 
-  syncInlinePhysics(rf);
+  if (opsMode && state.activeTab === 'console') {
+    syncInlinePhysics(rf);
+  }
   syncFeederButtonsInPlace(rf);
   fx.syncRunning();
   fx.renderStaticSnapshot();
 }
 
 function syncInlinePhysics(rf = null) {
-  const needle = document.getElementById('sync-needle');
   const dphi = state.tieClosed ? 0 : Number(state.syncAngleDeg || 0);
   const df = state.tieClosed ? 0 : Number(state.syncDf || 0);
   const dv = state.tieClosed ? 0 : Number(state.syncDv || 0);
   const inWindow = Boolean(state.ansi25InWindow) && !state.lockout86;
 
-  needle?.setAttribute('transform', `rotate(${dphi.toFixed(1)} 110 122)`);
-  document.getElementById('sync-dphi').textContent = state.liveConnected ? `${dphi >= 0 ? '+' : ''}${dphi.toFixed(1)}°` : '--';
-  document.getElementById('sync-df').textContent = state.liveConnected ? `${df >= 0 ? '+' : ''}${df.toFixed(2)} Hz` : '--';
-  document.getElementById('sync-dv').textContent = state.liveConnected ? `${dv >= 0 ? '+' : ''}${dv.toFixed(2)} p.u.` : '--';
-  document.getElementById('sync-tie-state').textContent = state.tieClosed ? 'Closed (Live)' : 'Open (Safe)';
+  sceneDom.syncNeedle?.setAttribute('transform', `rotate(${dphi.toFixed(1)} 110 122)`);
+  setTextIfChanged(sceneDom.syncDphi, state.liveConnected ? `${dphi >= 0 ? '+' : ''}${dphi.toFixed(1)}°` : '--');
+  setTextIfChanged(sceneDom.syncDf, state.liveConnected ? `${df >= 0 ? '+' : ''}${df.toFixed(2)} Hz` : '--');
+  setTextIfChanged(sceneDom.syncDv, state.liveConnected ? `${dv >= 0 ? '+' : ''}${dv.toFixed(2)} p.u.` : '--');
+  setTextIfChanged(sceneDom.syncTieState, state.tieClosed ? 'Closed (Live)' : 'Open (Safe)');
 
-  const statusSvg = document.getElementById('sync-status-svg');
-  if (statusSvg) {
-    statusSvg.textContent = !state.liveConnected ? 'Offline' : state.tieClosed ? 'Synced' : inWindow ? 'In window' : 'Slipping';
+  if (sceneDom.syncStatusSvg) {
+    sceneDom.syncStatusSvg.textContent = !state.liveConnected
+      ? 'Offline'
+      : state.tieClosed
+        ? 'Synced'
+        : inWindow
+          ? 'In window'
+          : Math.abs(df) < 0.005
+            ? 'Static offset'
+            : 'Slipping';
   }
 
-  const dispMw = rf ? rf.totalMw : state.totalMw;
+  const dispGenMw = rf ? (typeof rf.genMw === 'number' ? rf.genMw : rf.totalMw) : state.genMw;
   const dispTr1 = rf ? rf.tr1Pct : state.tr1Pct;
   const dispTr2 = rf ? rf.tr2Pct : state.tr2Pct;
   const dispLockout = rf ? rf.lockout86 : state.lockout86;
 
-  document.getElementById('phys-gen-mw').textContent = `${dispMw.toFixed(1)} / 42.0 MW`;
-  const mGen = document.getElementById('meter-gen');
-  mGen.style.width = `${Math.min(100, Math.round((dispMw / 50) * 100))}%`;
-  mGen.className = `meter-fill ${dispMw > 42 ? 'is-danger' : dispMw > 36 ? 'is-warn' : ''}`;
+  setTextIfChanged(sceneDom.physGenMw, `${dispGenMw.toFixed(1)} / 42.0 MW`);
+  if (sceneDom.meterGen) {
+    sceneDom.meterGen.style.width = `${Math.min(100, Math.round((dispGenMw / 50) * 100))}%`;
+    sceneDom.meterGen.className = `meter-fill ${dispGenMw > 42 ? 'is-danger' : dispGenMw > 36 ? 'is-warn' : ''}`;
+  }
 
-  document.getElementById('phys-tr1-mva').textContent = dispLockout ? 'Lockout 86 trip' : `${((dispTr1 / 100) * 50).toFixed(1)} MVA (${dispTr1}%)`;
-  const mTr1 = document.getElementById('meter-tr1');
-  mTr1.style.width = `${Math.min(100, dispTr1)}%`;
-  mTr1.className = `meter-fill ${dispLockout || dispTr1 >= 100 ? 'is-danger' : dispTr1 >= 85 ? 'is-warn' : ''}`;
+  setTextIfChanged(sceneDom.physTr1Mva, dispLockout ? 'Lockout 86 trip' : `${((dispTr1 / 100) * 50).toFixed(1)} MVA (${dispTr1}%)`);
+  if (sceneDom.meterTr1) {
+    sceneDom.meterTr1.style.width = `${Math.min(100, dispTr1)}%`;
+    sceneDom.meterTr1.className = `meter-fill ${dispLockout || dispTr1 >= 100 ? 'is-danger' : dispTr1 >= 85 ? 'is-warn' : ''}`;
+  }
 
-  document.getElementById('phys-tr2-mva').textContent = state.tr2Online ? `${((dispTr2 / 100) * 50).toFixed(1)} MVA (${dispTr2}%)` : 'Standby (0%)';
-  document.getElementById('meter-tr2').style.width = `${Math.min(100, dispTr2)}%`;
+  setTextIfChanged(sceneDom.physTr2Mva, state.tr2Online ? `${((dispTr2 / 100) * 50).toFixed(1)} MVA (${dispTr2}%)` : 'Standby (0%)');
+  if (sceneDom.meterTr2) {
+    sceneDom.meterTr2.style.width = `${Math.min(100, dispTr2)}%`;
+  }
 
   const pf = !rf && state.selectedBayId ? state.livePreflight : null;
-  const gGen = document.getElementById('ghost-gen');
-  const gTr1 = document.getElementById('ghost-tr1');
-  const gTr2 = document.getElementById('ghost-tr2');
+  const gGen = sceneDom.ghostGen;
+  const gTr1 = sceneDom.ghostTr1;
+  const gTr2 = sceneDom.ghostTr2;
 
   if (pf && state.selectedBayId) {
-    const peakMw = Number(pf.predicted_clpu_peak_mw ?? dispMw);
+    const peakMw = Number(pf.predicted_clpu_peak_mw ?? state.totalMw);
     const tr1P = Math.round(pf.predicted_tr1_pct ?? dispTr1);
     const tr2P = Math.round(pf.predicted_tr2_pct ?? dispTr2);
     const ceiling = Number(pf.gt1_ceiling_mw ?? 46);
-    gGen.style.width = `${Math.min(100, Math.round((peakMw / 50) * 100))}%`;
-    gGen.classList.toggle('is-over', !state.tieClosed && peakMw > ceiling);
-    gTr1.style.width = `${Math.min(100, tr1P)}%`;
-    gTr1.classList.toggle('is-over', tr1P > 115);
-    gTr2.style.width = `${state.tr2Online ? Math.min(100, tr2P) : 0}%`;
-    gTr2.classList.toggle('is-over', state.tr2Online && tr2P > 115);
+    if (gGen) {
+      gGen.style.width = `${Math.min(100, Math.round((peakMw / 50) * 100))}%`;
+      gGen.classList.toggle('is-over', !state.tieClosed && peakMw > ceiling);
+    }
+    if (gTr1) {
+      gTr1.style.width = `${Math.min(100, tr1P)}%`;
+      gTr1.classList.toggle('is-over', tr1P > 115);
+    }
+    if (gTr2) {
+      gTr2.style.width = `${state.tr2Online ? Math.min(100, tr2P) : 0}%`;
+      gTr2.classList.toggle('is-over', state.tr2Online && tr2P > 115);
+    }
 
     const bayNum = parseInt(state.selectedBayId.slice(-1), 10);
     const info = bayDisplayInfo(bayNum);
@@ -1570,9 +1758,9 @@ function syncInlinePhysics(rf = null) {
     el.sboSummary.textContent = `Selected ${info.bayId} (${info.name}): ${actionWord} preview -> peak ${peakMw.toFixed(1)} MW, TR-1 ${tr1P}%${state.tr2Online ? `, TR-2 ${tr2P}%` : ''}`;
     el.btnSboExec.textContent = `Permit: ${actionWord} ${info.bayId}`;
   } else {
-    gGen.style.width = '0%';
-    gTr1.style.width = '0%';
-    gTr2.style.width = '0%';
+    if (gGen) gGen.style.width = '0%';
+    if (gTr1) gTr1.style.width = '0%';
+    if (gTr2) gTr2.style.width = '0%';
     el.sboBar.classList.add('is-hidden');
   }
 }
@@ -1706,6 +1894,9 @@ async function completePermitExecution() {
     ist: istStamp(),
   };
   state.operatorLog.unshift(entry);
+  if (state.operatorLog.length > MAX_OPERATOR_LOG) {
+    state.operatorLog.length = MAX_OPERATOR_LOG;
+  }
   renderOperatorLog();
   apiJson('POST', '/api/ems/operator-log', entry);
   pinArtifact(`Permit: ${ctx.device}`, `${ctx.action} (${entry.result}): ${reason}`, 'Operator Log', entry.utc);
@@ -1793,9 +1984,12 @@ async function fetchLiveSoeWindow() {
       const bk = f.breakers && f.breakers[k];
       breakers[k] = Boolean(typeof bk === 'object' ? bk.closed : bk);
     }
-    const lock = Array.isArray(f.lockouts) ? f.lockouts.length > 0 : Boolean(f.lockouts);
+    const lockoutAssets = Array.isArray(f.lockouts) ? f.lockouts.map((x) => String(x)) : [];
+    const lock = lockoutAssets.length > 0 || (!Array.isArray(f.lockouts) && Boolean(f.lockouts));
     const offStr = typeof f.offset_s === 'number' ? `T-${Math.abs(f.offset_s).toFixed(1)} s` : `Step ${i + 1}`;
-    const evtText = Array.isArray(f.events) && f.events.length ? f.events.join('; ') : `TR-1 ${Math.round(f.tr1_pct || 0)}%`;
+    const evtText = formatSoeReplayEvents(f.events, f.tr1_pct);
+    const frameGenMw = Number(f.gen_mw ?? 0);
+    const frameTotalMw = typeof f.total_load_p_mw === 'number' ? Number(f.total_load_p_mw) : frameGenMw;
     sampled.push({
       label: offStr,
       caption: `${offStr}: ${evtText}`,
@@ -1804,8 +1998,10 @@ async function fetchLiveSoeWindow() {
       busKv: Number(((f.v33_pu ?? 1) * 33.0).toFixed(1)),
       tr1Pct: Math.round(f.tr1_pct ?? 0),
       tr2Pct: Math.round(f.tr2_pct ?? 0),
-      totalMw: Number(f.gen_mw ?? 0),
+      genMw: frameGenMw,
+      totalMw: frameTotalMw,
       lockout86: lock,
+      lockoutAssets,
       busesLive: Number(f.v33_pu ?? 0) > 0.01,
       breakers,
     });
@@ -1885,20 +2081,90 @@ function renderTimelineView() {
   );
 }
 
+function normalizePin(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const source = String(raw.source || raw.label || 'Station');
+  const summary = String(raw.summary || raw.value || '');
+  const vantage = String(raw.vantage || 'Station');
+  const utc = String(raw.utc || raw.ts_utc || utcStamp());
+  const ist = raw.ist ? String(raw.ist) : '';
+  const utcSec = typeof raw.utcSec === 'number' && Number.isFinite(raw.utcSec)
+    ? raw.utcSec
+    : parseUtcSeconds(utc);
+  let id = raw.id ? String(raw.id) : '';
+  const m = id.match(/^pin-(\d+)$/);
+  if (m) {
+    state.pinSeq = Math.max(state.pinSeq, Number(m[1]));
+  } else if (!id) {
+    state.pinSeq += 1;
+    id = `pin-${state.pinSeq}`;
+  }
+  return { id, source, vantage, utc, ist, utcSec, summary };
+}
+
+function persistLocalNotesAndPins() {
+  try { localStorage.setItem(STORAGE_NOTES, el.notesArea.value); } catch {}
+  try { localStorage.setItem(STORAGE_PINS, JSON.stringify(state.pinnedArtifacts)); } catch {}
+}
+
+async function hydrateNotesFromServer() {
+  const r = await apiJson('GET', '/api/ems/notes');
+  if (disposed || !r || !r.ok || !r.data) return false;
+  const serverTxt = typeof r.data.text === 'string' ? r.data.text : typeof r.data.notes === 'string' ? r.data.notes : '';
+  const rawPins = Array.isArray(r.data.pins) ? r.data.pins : Array.isArray(r.data.pinned) ? r.data.pinned : [];
+  const normalizedServerPins = rawPins.map(normalizePin).filter(Boolean);
+
+  if (state.notesDirtyOffline) {
+    // Preserve offline edits safely while merging any server notes/pins not yet in local buffer.
+    const localTxt = el.notesArea.value;
+    if (serverTxt && !localTxt) {
+      el.notesArea.value = serverTxt;
+    } else if (serverTxt && localTxt && !localTxt.includes(serverTxt)) {
+      el.notesArea.value = `${serverTxt}\n\n${localTxt}`;
+    }
+    const existingKeys = new Set(state.pinnedArtifacts.map((p) => `${p.utc}|${p.source}|${p.summary}`));
+    for (const sp of normalizedServerPins) {
+      const k = `${sp.utc}|${sp.source}|${sp.summary}`;
+      if (!existingKeys.has(k)) {
+        state.pinnedArtifacts.push(sp);
+        existingKeys.add(k);
+      }
+    }
+    state.notesHydrated = true;
+    persistLocalNotesAndPins();
+    renderPinnedArtifacts();
+    saveLiveNotes(true);
+  } else {
+    state.notesHydrated = true;
+    el.notesArea.value = serverTxt;
+    state.pinnedArtifacts = normalizedServerPins;
+    persistLocalNotesAndPins();
+    renderPinnedArtifacts();
+  }
+  return true;
+}
+
 let notesSaveTimer = null;
 function saveLiveNotes(immediate = false) {
-  if (!state.liveConnected) return;
+  state.notesDirtyOffline = true;
+  persistLocalNotesAndPins();
+  if (!state.liveConnected || !state.notesHydrated) return;
   if (notesSaveTimer) {
     clearTimeout(notesSaveTimer);
     notesSaveTimer = null;
   }
-  const flush = () => {
+  const flush = async () => {
     notesSaveTimer = null;
-    if (disposed || !state.liveConnected) return;
-    apiJson('PUT', '/api/ems/notes', { text: el.notesArea.value, pins: state.pinnedArtifacts });
+    if (disposed || !state.liveConnected || !state.notesHydrated) return;
+    const textSnap = el.notesArea.value;
+    const pinsSnap = [...state.pinnedArtifacts];
+    const resp = await apiJson('PUT', '/api/ems/notes', { text: textSnap, pins: pinsSnap });
+    if (!disposed && resp && resp.ok && el.notesArea.value === textSnap && state.pinnedArtifacts.length === pinsSnap.length) {
+      state.notesDirtyOffline = false;
+    }
   };
-  if (immediate) flush();
-  else notesSaveTimer = setTimeout(flush, 500);
+  if (immediate) void flush();
+  else notesSaveTimer = setTimeout(() => void flush(), 500);
 }
 
 function pinArtifact(source, summary, vantage = 'Station', explicitUtc = null) {
@@ -1914,6 +2180,9 @@ function pinArtifact(source, summary, vantage = 'Station', explicitUtc = null) {
     utcSec: parseUtcSeconds(utc),
     summary,
   });
+  if (state.pinnedArtifacts.length > 100) {
+    state.pinnedArtifacts.length = 100;
+  }
   renderPinnedArtifacts();
   saveLiveNotes(true);
   logStation(`Pinned evidence from ${source} (${utc}).`, 't-ok');
@@ -1973,6 +2242,83 @@ function renderDispatch() {
   });
 }
 
+function getModuleArtifacts(m = getMod()) {
+  if (Array.isArray(m.artifacts) && m.artifacts.length) return m.artifacts;
+  return [m.artifact.split('/').pop()];
+}
+
+function getActiveEditorFilename(m = getMod()) {
+  const list = getModuleArtifacts(m);
+  if (state.editorFile && list.includes(state.editorFile)) {
+    return state.editorFile;
+  }
+  return list[0];
+}
+
+function stashCurrentEditorDraft() {
+  const curFile = state.editorLoadedFile || state.editorFile;
+  if (!curFile || !state.editorDirty) return;
+  const draft = { text: el.editorText.value, mtime: state.editorLoadedMtime, dirty: true };
+  state.editorDrafts[curFile] = draft;
+  try {
+    sessionStorage.setItem(`${userPrefix}draft_${curFile}`, JSON.stringify(draft));
+  } catch {}
+}
+
+function readStoredEditorDraft(fname) {
+  if (state.editorDrafts[fname]?.dirty) return state.editorDrafts[fname];
+  try {
+    const raw = sessionStorage.getItem(`${userPrefix}draft_${fname}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.dirty && typeof parsed.text === 'string') {
+      state.editorDrafts[fname] = parsed;
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function clearEditorDraft(fname) {
+  delete state.editorDrafts[fname];
+  try {
+    sessionStorage.removeItem(`${userPrefix}draft_${fname}`);
+  } catch {}
+}
+
+function hideEditorConflict() {
+  el.editorConflictBar?.classList.add('is-hidden');
+}
+
+function syncEditorFileSelector(m = getMod()) {
+  const list = getModuleArtifacts(m);
+  if (!list.includes(state.editorFile)) {
+    stashCurrentEditorDraft();
+    state.editorFile = list[0];
+  }
+  if (!el.editorFileSelect) return;
+  const multi = list.length > 1;
+  el.editorFileSelect.classList.toggle('is-hidden', !multi);
+  const prevVals = Array.from(el.editorFileSelect.options).map((o) => o.value).join('|');
+  const nextVals = list.join('|');
+  if (prevVals !== nextVals) {
+    el.editorFileSelect.replaceChildren();
+    list.forEach((f) => {
+      const opt = document.createElement('option');
+      opt.value = f;
+      opt.textContent = f;
+      el.editorFileSelect.appendChild(opt);
+    });
+  }
+  el.editorFileSelect.value = state.editorFile;
+}
+
+function updateEditorHeaderLabels(fname) {
+  el.editorToggleLabel.textContent = `Edit ${fname}`;
+  el.btnToggleEditor.title = `Edit ~/workspace/${fname}`;
+  el.editorPath.textContent = `~/workspace/${fname}`;
+}
+
 function updateEditorGutter() {
   const lines = el.editorText.value.split('\n').length;
   let buf = '';
@@ -1980,46 +2326,106 @@ function updateEditorGutter() {
   el.editorGutter.textContent = buf.trimEnd();
 }
 
-async function loadEditorFile(modId) {
-  if (!state.liveConnected) {
-    el.editorStatus.textContent = 'Not connected';
-    return;
-  }
-  const fname = getMod(modId).artifact.split('/').pop();
-  try {
-    const r = await transport.readFile(fname);
-    if (!r || !r.ok) {
-      el.editorStatus.textContent = 'Empty / new';
-      el.editorText.value = '';
+async function loadEditorFile(fnameOrModId, forceDisk = false) {
+  const fname = String(fnameOrModId || '').includes('.')
+    ? String(fnameOrModId)
+    : getActiveEditorFilename(getMod(fnameOrModId));
+  state.editorFile = fname;
+  updateEditorHeaderLabels(fname);
+  hideEditorConflict();
+
+  if (!forceDisk) {
+    const draft = readStoredEditorDraft(fname);
+    if (draft && draft.dirty) {
+      el.editorText.value = draft.text;
+      state.editorLoadedFile = fname;
+      state.editorLoadedMtime = draft.mtime ?? null;
+      state.editorDirty = true;
+      el.editorStatus.textContent = 'Unsaved draft';
+      el.btnEditorReload?.classList.remove('is-hidden');
       updateEditorGutter();
       return;
     }
-    const clean = String(r.text || '').replace(/\r\n/g, '\n');
-    el.editorText.value = clean;
-    state.editorDirty = false;
-    el.editorStatus.textContent = 'Synced';
-    updateEditorGutter();
+  }
+
+  if (!state.liveConnected) {
+    el.editorStatus.textContent = 'Not connected';
+    el.btnEditorReload?.classList.remove('is-hidden');
+    return;
+  }
+
+  const seq = ++state.editorLoadSeq;
+  try {
+    const r = await transport.readFile(fname);
+    if (disposed || seq !== state.editorLoadSeq) return;
+    if (r && r.ok) {
+      const clean = String(r.text || '').replace(/\r\n/g, '\n');
+      el.editorText.value = clean;
+      state.editorLoadedFile = fname;
+      state.editorLoadedMtime = typeof r.mtime === 'number' ? r.mtime : null;
+      state.editorDirty = false;
+      clearEditorDraft(fname);
+      el.editorStatus.textContent = 'Synced';
+      el.btnEditorReload?.classList.add('is-hidden');
+      updateEditorGutter();
+      return;
+    }
+    if (r && r.status === 404) {
+      el.editorText.value = '';
+      state.editorLoadedFile = fname;
+      state.editorLoadedMtime = null;
+      state.editorDirty = false;
+      clearEditorDraft(fname);
+      el.editorStatus.textContent = 'Empty / new';
+      el.btnEditorReload?.classList.add('is-hidden');
+      updateEditorGutter();
+      return;
+    }
+    if (r && r.status === 415) {
+      el.editorStatus.textContent = 'Binary or non-UTF8 file (edit in terminal)';
+      el.btnEditorReload?.classList.remove('is-hidden');
+      return;
+    }
+    // Preserve existing textarea buffer on 500/502/offline errors!
+    el.editorStatus.textContent = `Load error (${r && r.status ? `HTTP ${r.status}` : 'offline'})`;
+    el.btnEditorReload?.classList.remove('is-hidden');
   } catch {
-    el.editorStatus.textContent = 'Load failed';
+    if (disposed || seq !== state.editorLoadSeq) return;
+    el.editorStatus.textContent = 'Load failed (buffer kept)';
+    el.btnEditorReload?.classList.remove('is-hidden');
   }
 }
 
-async function saveEditorFile() {
+async function saveEditorFile(forceOverwrite = false) {
   if (!state.liveConnected) {
     el.editorStatus.textContent = 'Not connected';
     return;
   }
   const normalized = el.editorText.value.replace(/\r\n/g, '\n');
   el.editorText.value = normalized;
-  const fname = getMod().artifact.split('/').pop();
+  const fname = getActiveEditorFilename();
+  const expectedMtime = forceOverwrite ? null : state.editorLoadedMtime;
   try {
-    const r = await transport.writeFile(fname, normalized);
+    const r = await transport.writeFile(fname, normalized, expectedMtime);
+    if (disposed) return;
     if (r && r.ok) {
       state.editorDirty = false;
+      state.editorLoadedFile = fname;
+      if (typeof r.mtime === 'number') state.editorLoadedMtime = r.mtime;
+      clearEditorDraft(fname);
+      hideEditorConflict();
+      el.btnEditorReload?.classList.add('is-hidden');
       el.editorStatus.textContent = 'Saved (LF)';
       logStation(`Saved ~/workspace/${fname}.`, 't-ok');
+    } else if (r && r.status === 409 && r.error === 'file_modified_externally') {
+      el.editorStatus.textContent = 'Conflict (modified in terminal)';
+      if (el.editorConflictMsg) {
+        el.editorConflictMsg.textContent = `~/workspace/${fname} changed in the terminal since you loaded it. Reload from disk or overwrite with your editor buffer.`;
+      }
+      el.editorConflictBar?.classList.remove('is-hidden');
+      logStation(`Save conflict on ~/workspace/${fname}: modified externally in terminal.`, 't-warn');
     } else {
-      el.editorStatus.textContent = `Error ${r ? r.status : 'offline'}`;
+      el.editorStatus.textContent = `Error ${r && r.status ? r.status : 'offline'}`;
     }
   } catch {
     setConnectedState(false);
@@ -2060,10 +2466,13 @@ function setModule(modId, silent = false) {
 }
 
 async function switchModuleFromRail(modId) {
-  if (lockedFullOp && modId !== 'full_op') return;
   setModule(modId);
+  if (tabChannel) {
+    try { tabChannel.postMessage({ type: 'module', modId }); } catch {}
+  }
   if (!state.liveConnected) return;
   const cId = contractModId(modId);
+  state.lastServerModuleId = cId;
   const resp = await apiJson('POST', '/api/ems/reset-module', { module_id: cId });
   if (resp && resp.ok) {
     logStation(`Station switched active module to ${cId}.`, 't-ok');
@@ -2104,45 +2513,74 @@ async function renderLiveCheckOutcome(m, isSubmit, checkId, body) {
   };
   if (!state.attemptsByModule[m.id]) state.attemptsByModule[m.id] = [];
   state.attemptsByModule[m.id].unshift(entry);
+  if (state.attemptsByModule[m.id].length > MAX_ATTEMPTS_PER_MODULE) {
+    state.attemptsByModule[m.id].length = MAX_ATTEMPTS_PER_MODULE;
+  }
   state.attemptedModules.add(m.id);
   if (isSubmit && passed) {
     await story.refreshCaseBoard(m.contractId);
     tour.notifyEvent('first-pass');
   }
+  if (disposed) return;
   renderHeaderProgress();
   renderModuleRail();
-  renderChecksTab(entry);
-  renderHistoryTab();
-  setTab('checks');
-  logStation(`${checkId}: ${entry.title}`, passed ? 't-ok' : 't-warn');
+  // Bind visible Checks tab rendering strictly to the check's module (E-03).
+  if (state.module === m.id) {
+    renderChecksTab(entry);
+    renderHistoryTab();
+    setTab('checks');
+  }
+  logStation(`${checkId} (M${m.num}): ${entry.title}`, passed ? 't-ok' : 't-warn');
 }
 
 let activeCheckPollId = 0;
+
+function clearActiveCheckPoll() {
+  if (checkPollTimer) {
+    clearTimeout(checkPollTimer);
+    checkPollTimer = null;
+  }
+  resumePendingCheckPoll = null;
+}
 
 async function runLiveEvaluation(isSubmit) {
   if (!state.liveConnected) {
     logStation('Cannot submit while disconnected from station backend.', 't-err');
     return;
   }
+  if (state.verifyInFlight) return;
   const m = getMod();
   const cId = contractModId(m.id);
   const endpoint = isSubmit ? '/api/ems/verify' : '/api/ems/practice';
+  state.verifyInFlight = true;
+  syncEvalButtons();
+
   const resp = await apiJson('POST', endpoint, { module_id: cId });
   if (disposed) return;
   if (!resp) {
+    state.verifyInFlight = false;
+    syncEvalButtons();
     logStation('Check failed: backend not reachable.', 't-err');
     return;
   }
   if (resp.status === 429) {
+    state.verifyInFlight = false;
+    syncEvalButtons();
     const retry = resp.data?.retry_after_s || 15;
+    const msg = String(resp.data?.detail || resp.data?.error || '');
+    const alreadyRunning = /already running/i.test(msg);
     el.resultBanner.classList.remove('is-hidden', 'is-pass');
-    el.bannerTitle.textContent = `Cooldown active (${retry} s remaining)`;
-    el.bannerDetail.textContent = resp.data?.detail || resp.data?.error || 'Wait for module cooldown before retrying.';
+    el.bannerTitle.textContent = alreadyRunning
+      ? `Verification already in progress (${retry} s)`
+      : `Cooldown active (${retry} s remaining)`;
+    el.bannerDetail.textContent = msg || 'Wait for module cooldown before retrying.';
     el.btnNextMod.classList.add('is-hidden');
     setTab('checks');
     return;
   }
   if (resp.status === 409) {
+    state.verifyInFlight = false;
+    syncEvalButtons();
     el.resultBanner.classList.remove('is-hidden', 'is-pass');
     el.bannerTitle.textContent = 'Check already in progress';
     el.bannerDetail.textContent = resp.data?.detail || resp.data?.error || 'Wait for active verification to finish.';
@@ -2152,10 +2590,14 @@ async function runLiveEvaluation(isSubmit) {
   }
   const checkId = resp.data?.check_id;
   if (!checkId && resp.ok && resp.data && (resp.data.practice === true || resp.data.status === 'passed' || resp.data.status === 'failed')) {
-    renderLiveCheckOutcome(m, isSubmit, `PRAC-${Date.now().toString().slice(-4)}`, resp.data);
+    state.verifyInFlight = false;
+    syncEvalButtons();
+    void renderLiveCheckOutcome(m, isSubmit, `PRAC-${Date.now().toString().slice(-4)}`, resp.data);
     return;
   }
   if (!checkId) {
+    state.verifyInFlight = false;
+    syncEvalButtons();
     el.resultBanner.classList.remove('is-hidden', 'is-pass');
     el.bannerTitle.textContent = `Check error (HTTP ${resp.status})`;
     el.bannerDetail.textContent = resp.data?.detail || resp.data?.error || `Request to ${endpoint} failed.`;
@@ -2164,29 +2606,98 @@ async function runLiveEvaluation(isSubmit) {
     logStation(`Check error from ${endpoint} (HTTP ${resp.status}).`, 't-err');
     return;
   }
+
+  clearActiveCheckPoll();
   const pollSeq = ++activeCheckPollId;
-  el.resultBanner.classList.remove('is-hidden', 'is-pass');
-  el.bannerTitle.textContent = `Running ${isSubmit ? 'verification' : 'practice check'} (${checkId})`;
-  el.bannerDetail.textContent = 'Evaluating workspace artifact and live station telemetry...';
-  el.btnNextMod.classList.add('is-hidden');
-  setTab('checks');
+  const parsedDeadline = resp.data?.deadline_at ? Date.parse(resp.data.deadline_at) : NaN;
+  const pollDeadlineMs = Number.isFinite(parsedDeadline)
+    ? Math.max(Date.now() + 60_000, parsedDeadline + 30_000)
+    : Date.now() + 120_000;
+  let transientBackoffMs = 1500;
+
+  if (state.module === m.id) {
+    el.resultBanner.classList.remove('is-hidden', 'is-pass');
+    el.bannerTitle.textContent = `Running ${isSubmit ? 'verification' : 'practice check'} (${checkId})`;
+    el.bannerDetail.textContent = 'Evaluating workspace artifact and live station telemetry...';
+    el.btnNextMod.classList.add('is-hidden');
+    setTab('checks');
+  }
+
+  const scheduleNext = (delayMs) => {
+    if (checkPollTimer) clearTimeout(checkPollTimer);
+    checkPollTimer = setTimeout(() => {
+      checkPollTimer = null;
+      void poll();
+    }, delayMs);
+  };
 
   const poll = async () => {
     if (disposed || pollSeq !== activeCheckPollId) return;
     const r = await apiJson('GET', `/api/ems/checks/${encodeURIComponent(checkId)}`);
     if (disposed || pollSeq !== activeCheckPollId) return;
-    if (!r || !r.ok) {
-      el.bannerTitle.textContent = 'Verification status unavailable';
-      el.bannerDetail.textContent = r?.data?.detail || r?.data?.error || 'Could not read check status.';
+
+    const isTransient = !r || r.status === 0 || r.status >= 500;
+    if (isTransient) {
+      if (Date.now() < pollDeadlineMs) {
+        if (state.module === m.id) {
+          el.resultBanner.classList.remove('is-hidden', 'is-pass');
+          el.bannerTitle.textContent = 'Reconnecting to check status...';
+          el.bannerDetail.textContent = `Waiting for check ${checkId} after temporary network interruption. Retrying automatically...`;
+        }
+        const waitMs = transientBackoffMs;
+        transientBackoffMs = Math.min(8000, Math.round(transientBackoffMs * 1.5));
+        scheduleNext(waitMs);
+        return;
+      }
+      clearActiveCheckPoll();
+      state.verifyInFlight = false;
+      syncEvalButtons();
+      if (state.module === m.id) {
+        el.bannerTitle.textContent = 'Verification status timed out while disconnected';
+        el.bannerDetail.textContent = 'Reconnect and check Case Board or resubmit once back online.';
+      }
       return;
     }
+
+    if (!r.ok) {
+      clearActiveCheckPoll();
+      state.verifyInFlight = false;
+      syncEvalButtons();
+      if (state.module === m.id) {
+        el.bannerTitle.textContent = 'Verification status unavailable';
+        el.bannerDetail.textContent = r.data?.detail || r.data?.error || `HTTP ${r.status}`;
+      }
+      return;
+    }
+
+    transientBackoffMs = 1500;
     if (r.data.status === 'running') {
-      setTimeout(poll, 1000);
+      if (Date.now() >= pollDeadlineMs) {
+        clearActiveCheckPoll();
+        state.verifyInFlight = false;
+        syncEvalButtons();
+        if (state.module === m.id) {
+          el.bannerTitle.textContent = 'Verification timed out';
+          el.bannerDetail.textContent = `Check ${checkId} exceeded client polling deadline.`;
+        }
+        return;
+      }
+      scheduleNext(1000);
       return;
     }
-    renderLiveCheckOutcome(m, isSubmit, checkId, r.data);
+
+    clearActiveCheckPoll();
+    state.verifyInFlight = false;
+    syncEvalButtons();
+    void renderLiveCheckOutcome(m, isSubmit, checkId, r.data);
   };
-  setTimeout(poll, 800);
+
+  resumePendingCheckPoll = () => {
+    if (disposed || pollSeq !== activeCheckPollId) return;
+    transientBackoffMs = 1500;
+    scheduleNext(200);
+  };
+  scheduleNext(800);
 }
 
 function setAlarmCountUI(activeCount) {
@@ -2246,12 +2757,27 @@ async function refreshSoe() {
 
 async function refreshFrames() {
   const dsSel = document.getElementById('frames-dataset-select');
-  const ds = dsSel && dsSel.value ? `?dataset=${encodeURIComponent(dsSel.value)}` : '';
+  const prevValue = dsSel ? dsSel.value : '';
+  const ds = prevValue ? `?dataset=${encodeURIComponent(prevValue)}` : '';
   const resp = await apiJson('GET', `/api/ems/frames${ds}`);
-  if (!resp || !resp.ok) return;
+  if (disposed || !resp || !resp.ok) return;
   state.frames = Array.isArray(resp.data.frames) ? resp.data.frames : [];
-  if (Array.isArray(resp.data.datasets) && dsSel && dsSel.options.length === 0) {
-    dsSel.innerHTML = resp.data.datasets.map((d) => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  if (Array.isArray(resp.data.datasets) && dsSel) {
+    const incoming = resp.data.datasets.map((d) => String(d));
+    const current = Array.from(dsSel.options).map((o) => o.value);
+    const changed = incoming.length !== current.length || incoming.some((v, idx) => v !== current[idx]);
+    if (changed) {
+      dsSel.replaceChildren();
+      incoming.forEach((d) => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        dsSel.appendChild(opt);
+      });
+      if (prevValue && incoming.includes(prevValue)) {
+        dsSel.value = prevValue;
+      }
+    }
   }
   drawFramesPanel();
 }
@@ -2305,9 +2831,9 @@ function applyLiveDelta(msg) {
   if (!msg || typeof msg !== 'object') return;
   if (msg.type === 'heartbeat' || msg.type === 'pong') return;
   if (msg.type === 'file_changed') {
-    const curFile = getMod().artifact.split('/').pop();
+    const curFile = getActiveEditorFilename();
     if (state.rightTab === 'editor' && msg.filename === curFile && !state.editorDirty) {
-      loadEditorFile(state.module);
+      void loadEditorFile(curFile, true);
     }
     return;
   }
@@ -2321,10 +2847,14 @@ function applyLiveDelta(msg) {
   const prevLockout = state.lockout86;
   const s = msg.state || msg;
 
-  if (typeof s.module_id === 'string' && !state.liveInitialSynced) {
-    state.liveInitialSynced = true;
+  if (typeof s.module_id === 'string') {
     const mapped = localModId(s.module_id);
-    if (mapped !== state.module && MODULES.some((x) => x.id === mapped)) {
+    const externalSwitch = !state.liveInitialSynced
+      || msg.type === 'module_changed'
+      || (state.lastServerModuleId !== null && s.module_id !== state.lastServerModuleId);
+    state.liveInitialSynced = true;
+    state.lastServerModuleId = s.module_id;
+    if (externalSwitch && mapped !== state.module && MODULES.some((x) => x.id === mapped)) {
       setModule(mapped, true);
     }
   }
@@ -2341,7 +2871,10 @@ function applyLiveDelta(msg) {
   else if (typeof s.gen_freq_hz === 'number') state.genFreqHz = s.gen_freq_hz;
   else if (typeof s.freq_hz === 'number') state.genFreqHz = s.freq_hz;
 
-  if (typeof s.gen_mw === 'number') state.totalMw = Number(s.gen_mw.toFixed(1));
+  if (typeof s.gen_mw === 'number') state.genMw = Number(s.gen_mw.toFixed(1));
+  if (typeof s.grid_tie_mw === 'number') state.gridTieMw = Number(s.grid_tie_mw.toFixed(1));
+  if (typeof s.total_load_p_mw === 'number') state.totalMw = Number(s.total_load_p_mw.toFixed(1));
+  else if (typeof s.gen_mw === 'number') state.totalMw = Number(s.gen_mw.toFixed(1));
   if (typeof s.tr1_mva_pct === 'number') state.tr1Pct = Math.round(s.tr1_mva_pct);
   if (typeof s.tr2_mva_pct === 'number') state.tr2Pct = Math.round(s.tr2_mva_pct);
   if (typeof s.tie_closed === 'boolean') state.tieClosed = s.tie_closed;
@@ -2350,7 +2883,10 @@ function applyLiveDelta(msg) {
   if (typeof s.sync_delta_hz === 'number') state.syncDf = s.sync_delta_hz;
   if (typeof s.sync_delta_v_pu === 'number') state.syncDv = s.sync_delta_v_pu;
   if (typeof s.ansi25_in_window === 'boolean') state.ansi25InWindow = s.ansi25_in_window;
-  if (Array.isArray(s.lockouts)) state.lockout86 = s.lockouts.length > 0;
+  if (Array.isArray(s.lockouts)) {
+    state.activeLockouts = s.lockouts.map((a) => String(a));
+    state.lockout86 = state.activeLockouts.length > 0;
+  }
   if (s.districts && typeof s.districts === 'object') state.districts = { ...(state.districts || {}), ...s.districts };
   if (s.poller && typeof s.poller === 'object') {
     if (typeof s.poller.poll_continuity_pct === 'number') state.pollPct = s.poller.poll_continuity_pct;
@@ -2395,6 +2931,9 @@ function applyLiveDelta(msg) {
     tr1Pct: state.tr1Pct,
     tr2Pct: state.tr2Pct,
     mw: state.totalMw,
+    genMw: state.genMw,
+    tieMw: state.gridTieMw,
+    tieClosed: state.tieClosed,
   });
 
   if (!prevLockout && state.lockout86) {
@@ -2405,6 +2944,13 @@ function applyLiveDelta(msg) {
     tour.notifyEvent('m9-trip');
   }
   syncSceneDOM();
+}
+
+async function refreshOperatorLog() {
+  const r = await apiJson('GET', '/api/ems/operator-log');
+  if (disposed || !r || !r.ok || !Array.isArray(r.data.entries)) return;
+  state.operatorLog = r.data.entries.slice(0, MAX_OPERATOR_LOG);
+  renderOperatorLog();
 }
 
 function closeStationStream(isUnload = false) {
@@ -2432,16 +2978,29 @@ function closeStationStream(isUnload = false) {
 
 function connectStationStream() {
   if (disposed) return;
+  const seq = ++state.wsConnectSeq;
   closeStationStream(false);
-  state.wsConnectTimer = setTimeout(() => {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    setConnectedState(false);
+    return;
+  }
+  state.wsConnectTimer = setTimeout(async () => {
     state.wsConnectTimer = null;
-    if (disposed) return;
+    if (disposed || seq !== state.wsConnectSeq) return;
     let ws;
     try {
       ws = typeof transport.openEmsSocket === 'function'
-        ? transport.openEmsSocket()
+        ? await transport.openEmsSocket()
         : null;
-      if (!ws) return;
+      if (disposed || seq !== state.wsConnectSeq) {
+        if (ws) { try { ws.close(1000, 'stale'); } catch {} }
+        return;
+      }
+      if (!ws) {
+        setConnectedState(false);
+        scheduleStreamReconnect();
+        return;
+      }
     } catch {
       setConnectedState(false);
       scheduleStreamReconnect();
@@ -2453,12 +3012,34 @@ function connectStationStream() {
         try { ws.close(1000, 'stale'); } catch {}
         return;
       }
+      const isReconnect = state.wsHasConnectedOnce;
+      state.wsHasConnectedOnce = true;
       state.wsRetryMs = 4000;
+      state.lastWsRxAt = Date.now();
       setConnectedState(true);
-      logStation('Connected to live station telemetry stream.', 't-ok');
+      logStation(isReconnect ? 'Reconnected to live station telemetry stream.' : 'Connected to live station telemetry stream.', 't-ok');
+
+      if (!state.notesHydrated) {
+        void hydrateNotesFromServer();
+      } else if (state.notesDirtyOffline) {
+        saveLiveNotes(true);
+      }
+      if (typeof resumePendingCheckPoll === 'function') {
+        resumePendingCheckPoll();
+      }
+      if (isReconnect) {
+        void Promise.all([
+          story.refreshCaseBoard(),
+          refreshDispatch(),
+          refreshAlarms(),
+          refreshOperatorLog(),
+          state.activeTab === 'frames' ? refreshFrames() : Promise.resolve(),
+        ]);
+      }
     };
     ws.onmessage = (ev) => {
       if (state.stateWs !== ws || disposed) return;
+      state.lastWsRxAt = Date.now();
       try { applyLiveDelta(JSON.parse(ev.data)); } catch {}
     };
     ws.onerror = () => {
@@ -2469,7 +3050,9 @@ function connectStationStream() {
       if (state.stateWs !== ws || disposed) return;
       state.stateWs = null;
       setConnectedState(false);
-      if (typeof options.onUpstreamLost === 'function') options.onUpstreamLost(502);
+      if (typeof options.onUpstreamLost === 'function' && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+        options.onUpstreamLost(502);
+      }
       scheduleStreamReconnect();
     };
   }, 0);
@@ -2477,6 +3060,7 @@ function connectStationStream() {
 
 function scheduleStreamReconnect() {
   if (disposed || state.wsRetryTimer) return;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
   const delay = state.wsRetryMs;
   state.wsRetryMs = Math.min(15000, Math.round(state.wsRetryMs * 1.8));
   state.wsRetryTimer = setTimeout(() => {
@@ -2490,9 +3074,7 @@ async function initLiveSession() {
   if (disposed) return;
   renderBriefAndChecks();
 
-  const wsUrl = await transport.getTerminalWsUrl();
-  if (disposed) return;
-  if (wsUrl) pty.connect(wsUrl);
+  void pty.connect();
 
   await refreshStateOnce();
   if (disposed) return;
@@ -2501,23 +3083,8 @@ async function initLiveSession() {
     refreshAlarms(),
     refreshFrames(),
     story.refreshCaseBoard(),
-    apiJson('GET', '/api/ems/notes').then((r) => {
-      if (disposed || !r || !r.ok || !r.data) return;
-      const txt = typeof r.data.text === 'string' ? r.data.text : typeof r.data.notes === 'string' ? r.data.notes : null;
-      if (txt !== null) el.notesArea.value = txt;
-      const pins = Array.isArray(r.data.pins) ? r.data.pins : Array.isArray(r.data.pinned) ? r.data.pinned : null;
-      if (pins && pins.length) {
-        state.pinnedArtifacts = pins;
-        renderPinnedArtifacts();
-      }
-    }),
-    apiJson('GET', '/api/ems/operator-log').then((r) => {
-      if (disposed) return;
-      if (r && r.ok && Array.isArray(r.data.entries)) {
-        state.operatorLog = r.data.entries;
-        renderOperatorLog();
-      }
-    }),
+    hydrateNotesFromServer(),
+    refreshOperatorLog(),
   ]);
   if (disposed) return;
 
@@ -2638,6 +3205,7 @@ function wireResizers() {
     setColPct(((e.clientX - r.left) / r.width) * 100);
   });
   split.addEventListener('pointerup', () => { dragX = false; });
+  split.addEventListener('pointercancel', () => { dragX = false; });
 
   const deck = document.getElementById('deck-resize-handle');
   let dragY = false;
@@ -2675,6 +3243,7 @@ function wireResizers() {
     }
   });
   deck.addEventListener('pointerup', () => { dragY = false; });
+  deck.addEventListener('pointercancel', () => { dragY = false; });
   deck.addEventListener('keydown', (e) => {
     const cur = parseInt(deck.getAttribute('aria-valuenow') || '292', 10);
     if (e.key === 'ArrowUp') { e.preventDefault(); applyDeckH(cur + 24); }
@@ -2745,6 +3314,10 @@ function wireEvents() {
   }, sig);
 
   el.dialogCancel.addEventListener('click', closeConfirmDialog);
+  el.dialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    closeConfirmDialog();
+  });
   el.dialogConfirm.addEventListener('click', () => {
     const fn = pendingConfirmAction;
     closeConfirmDialog();
@@ -2752,6 +3325,10 @@ function wireEvents() {
   });
 
   el.permitCancel.addEventListener('click', closePermitDialog);
+  el.permitDialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    closePermitDialog();
+  });
   el.permitHoldBtn.addEventListener('click', () => {
     if (!permitResolver) return;
     if (el.permitInput.value.trim().toUpperCase() === permitResolver.device.toUpperCase()) {
@@ -2778,6 +3355,7 @@ function wireEvents() {
   };
   el.permitHoldBtn.addEventListener('pointerup', cancelHold);
   el.permitHoldBtn.addEventListener('pointerleave', cancelHold);
+  el.permitHoldBtn.addEventListener('pointercancel', cancelHold);
 
   document.querySelectorAll('[data-scene-view]').forEach((btn) => {
     btn.addEventListener('click', () => setSceneView(btn.dataset.sceneView));
@@ -2811,9 +3389,37 @@ function wireEvents() {
     if (latest) pinArtifact('Station log', latest.slice(0, 180), 'Station log');
   });
 
-  el.editorText.addEventListener('input', () => { state.editorDirty = true; el.editorStatus.textContent = 'Unsaved'; updateEditorGutter(); });
+  el.editorText.addEventListener('input', () => {
+    state.editorDirty = true;
+    el.editorStatus.textContent = 'Unsaved';
+    stashCurrentEditorDraft();
+    updateEditorGutter();
+  });
   el.editorText.addEventListener('scroll', () => { el.editorGutter.scrollTop = el.editorText.scrollTop; });
-  document.getElementById('btn-editor-save').addEventListener('click', saveEditorFile);
+  document.getElementById('btn-editor-save').addEventListener('click', () => void saveEditorFile(false));
+  el.btnEditorReload?.addEventListener('click', () => {
+    const fname = getActiveEditorFilename();
+    clearEditorDraft(fname);
+    void loadEditorFile(fname, true);
+  });
+  el.btnConflictReload?.addEventListener('click', () => {
+    const fname = getActiveEditorFilename();
+    clearEditorDraft(fname);
+    hideEditorConflict();
+    void loadEditorFile(fname, true);
+  });
+  el.btnConflictOverwrite?.addEventListener('click', () => {
+    hideEditorConflict();
+    void saveEditorFile(true);
+  });
+  el.editorFileSelect?.addEventListener('change', () => {
+    stashCurrentEditorDraft();
+    const nextFile = el.editorFileSelect.value;
+    if (nextFile) {
+      state.editorFile = nextFile;
+      void loadEditorFile(nextFile, false);
+    }
+  });
 
   const optBtn = document.getElementById('btn-stage-options');
   const optMenu = document.getElementById('stage-options-menu');
@@ -2965,22 +3571,60 @@ function wireEvents() {
   document.getElementById('btn-sbo-cancel').addEventListener('click', () => { state.selectedBayId = null; state.livePreflight = null; syncSceneDOM(); });
   el.btnSboExec.addEventListener('click', triggerPermitForSelectedBay);
   document.getElementById('btn-sync-close').addEventListener('click', triggerPermitForTieClose);
-  el.btnClear86.addEventListener('click', async () => {
-    if (!state.liveConnected) return;
-    const resp = await apiJson('POST', '/api/ems/lockout/clear', { asset: 'TR-1' });
-    if (resp && resp.ok && resp.data.ok !== false) {
-      returnSoeToLive();
-      state.soeReplay.available = false;
-      logStation('Lockout 86 cleared on TR-1.', 't-ok');
+
+  const applyGovernorSetpoint = async () => {
+    if (!state.liveConnected || !el.govFreqInput) return;
+    const freqHz = Number(el.govFreqInput.value);
+    if (!Number.isFinite(freqHz) || freqHz < 48.5 || freqHz > 51.5) {
+      logStation('Governor setpoint must be between 48.50 and 51.50 Hz.', 't-err');
+      return;
+    }
+    const resp = await apiJson('POST', '/api/ems/governor/set', { freq_hz: Number(freqHz.toFixed(2)) });
+    if (resp && resp.ok && resp.data?.ok !== false) {
+      logStation(`Governor frequency reference set to ${freqHz.toFixed(2)} Hz.`, 't-ok');
       await refreshStateOnce();
     } else {
-      logStation(`Clear lockout rejected: ${resp?.data?.detail || resp?.data?.error || 'error'}`, 't-err');
+      logStation(`Governor setpoint rejected: ${resp?.data?.detail || resp?.data?.error || 'error'}.`, 't-err');
+    }
+  };
+  el.btnGovSet?.addEventListener('click', () => void applyGovernorSetpoint());
+  el.govFreqInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void applyGovernorSetpoint();
+    }
+  });
+
+  el.btnClear86.addEventListener('click', async () => {
+    if (!state.liveConnected) return;
+    const targets = state.activeLockouts.length ? [...state.activeLockouts] : ['TR-1'];
+    let clearedAny = false;
+    for (const asset of targets) {
+      const resp = await apiJson('POST', '/api/ems/lockout/clear', { asset });
+      if (resp && resp.ok && resp.data?.ok !== false) {
+        if (resp.data?.code === 'NOT_LATCHED') {
+          logStation(`No active Lockout 86 latch on ${asset}.`, 't-dim');
+        } else {
+          clearedAny = true;
+          logStation(`Lockout 86 cleared on ${asset}.`, 't-ok');
+        }
+      } else {
+        logStation(`Clear lockout rejected on ${asset}: ${resp?.data?.detail || resp?.data?.error || 'error'}`, 't-err');
+      }
+    }
+    if (clearedAny) {
+      returnSoeToLive();
+      state.soeReplay.available = false;
+      await refreshStateOnce();
     }
   });
   document.getElementById('btn-reset-electrical').addEventListener('click', () => {
     const maxPen = state.maxTripPenaltyPct || 30;
-    const costNote = (state.module === 'm9' || state.module === 'full_op')
-      ? `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${state.tripEvents}. Resetting does not lower your trip count. `
+    const tripWarn = state.tripEvents >= 2
+      ? ' Warning: you have 2 trips logged; a 3rd trip disqualifies both Full Pass and Safe Partial.'
+      : '';
+    const costNote = state.module === 'm9'
+      ? `Each protection trip in Module 9 costs 10% (max ${maxPen}%). Trips so far: ${state.tripEvents}. Resetting does not lower your trip count.${tripWarn} `
       : '';
     openConfirmDialog({
       title: 'Reset electrical state?',
@@ -3077,8 +3721,29 @@ function wireEvents() {
   });
 
   document.getElementById('frames-dataset-select').addEventListener('change', refreshFrames);
-  document.getElementById('frames-filter-input').addEventListener('input', drawFramesPanel);
+  document.getElementById('frames-filter-input').addEventListener('input', () => {
+    if (filterDebounceTimer) clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+      filterDebounceTimer = null;
+      if (!disposed) drawFramesPanel();
+    }, 120);
+  });
   document.getElementById('btn-frames-refresh').addEventListener('click', refreshFrames);
+
+  const trackFreeHint = (level) => {
+    if (!state.liveConnected) return;
+    const cId = contractModId(state.module);
+    const key = `${cId}:${level}`;
+    if (state.hintsTracked.has(key)) return;
+    state.hintsTracked.add(key);
+    void apiJson('POST', `/api/ems/hints/${cId}/${level}`, { confirmed: true });
+  };
+  el.hintDetails1?.addEventListener('toggle', () => {
+    if (el.hintDetails1.open) trackFreeHint(1);
+  });
+  el.hintDetails2?.addEventListener('toggle', () => {
+    if (el.hintDetails2.open) trackFreeHint(2);
+  });
 
   document.getElementById('btn-unlock-l3').addEventListener('click', () => {
     const m = getMod();
@@ -3088,9 +3753,14 @@ function wireEvents() {
       confirmLabel: 'Reveal hint (-10%)',
       onConfirm: async () => {
         const resp = await apiJson('POST', `/api/ems/hints/${contractModId(m.id)}/3`, { confirmed: true });
+        if (disposed) return;
         if (resp && resp.ok) {
           state.l3Unlocked.add(m.id);
-          renderBriefAndChecks();
+          if (typeof resp.data?.hint === 'string' && resp.data.hint.trim()) {
+            state.l3HintText[m.id] = resp.data.hint.trim();
+          }
+          // Update only L3 DOM directly so unsaved File Editor buffers are never reloaded/wiped (E-02/E-06).
+          syncL3HintUI();
           logStation(`Level 3 hint unlocked for Module ${m.num} (-10% recorded).`, 't-warn');
         }
       },
@@ -3139,6 +3809,7 @@ function wireEvents() {
     setLens(((e.clientX - r.left) / r.width) * 100);
   });
   el.lensDivider.addEventListener('pointerup', () => { dragLens = false; });
+  el.lensDivider.addEventListener('pointercancel', () => { dragLens = false; });
 
   el.btnNextMod.addEventListener('click', () => {
     const cur = getMod();
@@ -3146,13 +3817,20 @@ function wireEvents() {
     if (next) { switchModuleFromRail(next.id); setTab('brief'); }
   });
 
+  // Load local notes/pins inside try/catch, but register the input listener OUTSIDE so blocked localStorage never disables Postgres saving (M-10).
   try {
     el.notesArea.value = localStorage.getItem(STORAGE_NOTES) || '';
-    el.notesArea.addEventListener('input', () => {
-      try { localStorage.setItem(STORAGE_NOTES, el.notesArea.value); } catch {}
-      saveLiveNotes();
-    });
+    const savedPinsRaw = localStorage.getItem(STORAGE_PINS);
+    if (savedPinsRaw) {
+      const parsedPins = JSON.parse(savedPinsRaw);
+      if (Array.isArray(parsedPins)) {
+        state.pinnedArtifacts = parsedPins.map(normalizePin).filter(Boolean);
+      }
+    }
   } catch {}
+  el.notesArea.addEventListener('input', () => {
+    saveLiveNotes(false);
+  });
 
   el.btnPractice.addEventListener('click', () => {
     tour.notifyEvent('practice-clicked');
@@ -3175,6 +3853,53 @@ function wireEvents() {
   const handleUnload = () => closeStationStream(true);
   window.addEventListener('beforeunload', handleUnload, sig);
   window.addEventListener('pagehide', handleUnload, sig);
+
+  // Network-drop and laptop-sleep liveness resume listeners (E-05).
+  window.addEventListener('offline', () => {
+    if (disposed) return;
+    setConnectedState(false);
+    logStation('Browser offline detected; local notes and editor drafts are preserved.', 't-warn');
+  }, sig);
+  window.addEventListener('online', () => {
+    if (disposed) return;
+    logStation('Network restored; reconnecting to station telemetry and terminal...', 't-dim');
+    state.wsRetryMs = 1000;
+    connectStationStream();
+    pty.handleNetworkOnline();
+    if (typeof resumePendingCheckPoll === 'function') resumePendingCheckPoll();
+  }, sig);
+  document.addEventListener('visibilitychange', () => {
+    if (disposed || document.hidden) return;
+    if (state.sceneDomDirtyWhileHidden) {
+      syncSceneDOM();
+    }
+    if (state.activeTab === 'trends') {
+      trends.render();
+    }
+    const stale = state.lastWsRxAt > 0 && Date.now() - state.lastWsRxAt > WS_STALE_THRESHOLD_MS;
+    if (!state.stateWs || state.stateWs.readyState !== WebSocket.OPEN || stale) {
+      state.wsRetryMs = 1000;
+      connectStationStream();
+    }
+    if (typeof resumePendingCheckPoll === 'function') resumePendingCheckPoll();
+  }, sig);
+
+  // Cross-tab awareness so switching modules in another tab keeps this tab in sync (E-17).
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      tabChannel = new BroadcastChannel('cisf-ot-grid-tab');
+      tabChannel.onmessage = (ev) => {
+        if (disposed || !ev.data) return;
+        if (ev.data.type === 'module' && typeof ev.data.modId === 'string' && ev.data.modId !== state.module) {
+          if (MODULES.some((m) => m.id === ev.data.modId)) {
+            setModule(ev.data.modId, true);
+          }
+        }
+      };
+    } catch {
+      tabChannel = null;
+    }
+  }
 }
 
 const timerIntervalId = setInterval(() => {
@@ -3185,6 +3910,19 @@ const timerIntervalId = setInterval(() => {
   if (el.objTimer) el.objTimer.textContent = `${mm}:${ss}`;
 }, 1000);
 
+const wsWatchdogIntervalId = setInterval(() => {
+  if (disposed || document.hidden) return;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  if (state.stateWs && state.stateWs.readyState === WebSocket.OPEN && state.lastWsRxAt > 0) {
+    if (Date.now() - state.lastWsRxAt > WS_STALE_THRESHOLD_MS) {
+      logStation('Station telemetry silent >12 s; forcing WebSocket reconnect...', 't-warn');
+      setConnectedState(false);
+      state.wsRetryMs = 1000;
+      connectStationStream();
+    }
+  }
+}, WS_WATCHDOG_INTERVAL_MS);
+
 loadSavedGridLayout();
 applyGridLayoutToDOM();
 buildEmptyPolicyMatrixUI();
@@ -3194,7 +3932,7 @@ try {
   if (savedLayout) setLayoutMode(savedLayout);
 } catch {}
 setTheme(state.theme, false);
-setModule(lockedFullOp ? 'full_op' : 'm1', true);
+setModule('m1', true);
 setTab('brief');
 setRightTab('terminal');
 setConnectedState(false);
@@ -3207,11 +3945,31 @@ initLiveSession();
 function dispose() {
   if (disposed) return;
   disposed = true;
+  state.wsConnectSeq += 1;
+  activeCheckPollId += 1;
   ac.abort();
   clearInterval(timerIntervalId);
+  clearInterval(wsWatchdogIntervalId);
+  clearActiveCheckPoll();
+  if (flipCleanupTimer) {
+    clearTimeout(flipCleanupTimer);
+    flipCleanupTimer = null;
+  }
+  if (railRepositionTimer) {
+    clearTimeout(railRepositionTimer);
+    railRepositionTimer = null;
+  }
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = null;
+  }
   if (notesSaveTimer) {
     clearTimeout(notesSaveTimer);
     notesSaveTimer = null;
+  }
+  if (tabChannel) {
+    try { tabChannel.close(); } catch {}
+    tabChannel = null;
   }
   stopSoeReplayTimer();
   closeStationStream(false);
@@ -3227,6 +3985,7 @@ function dispose() {
     clearTimeout(permitResolver.holdTimer);
     permitResolver = null;
   }
+  pendingConfirmAction = null;
   fx.dispose();
   pty.dispose();
   tour.dispose();
@@ -3240,6 +3999,7 @@ function dispose() {
   delete document.documentElement.dataset.deckExpanded;
   delete document.documentElement.dataset.shiftReport;
   delete document.documentElement.dataset.reducedMotion;
+  delete document.documentElement.dataset.theme;
 }
 
 return {

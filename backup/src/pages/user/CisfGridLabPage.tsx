@@ -23,11 +23,31 @@ function parseAssignmentId(raw: string | null): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
+function friendlyErrorCopy(err: unknown, fallback: string): string {
+  if (err instanceof CisfGridApiError) {
+    if (err.status === 401) {
+      return 'Your sign-in session expired. Sign in again in a new tab to resume without losing local edits.';
+    }
+    if (err.status === 502 || err.status === 503 || err.status === 504) {
+      return 'CyberRange is reconnecting to your substation session. Your local drafts are preserved.';
+    }
+    return err.message;
+  }
+  const msg = err instanceof Error ? err.message : '';
+  if (
+    err instanceof TypeError ||
+    /failed to fetch|networkerror|load failed|fetch/i.test(msg)
+  ) {
+    return 'Connection interrupted. Waiting to reconnect; your local edits are preserved.';
+  }
+  return msg || fallback;
+}
+
 export const CisfGridLabPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const assignmentId = parseAssignmentId(searchParams.get('assignment_id'));
-  const { apiFetch, token } = useAuth();
+  const { apiFetch, token, user } = useAuth();
   const api = useMemo(() => createCisfGridApi(apiFetch), [apiFetch]);
 
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -35,6 +55,7 @@ export const CisfGridLabPage: React.FC = () => {
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [error, setError] = useState('');
+  const [authExpired, setAuthExpired] = useState(false);
   const [pausedNotice, setPausedNotice] = useState('');
   const [passedModules, setPassedModules] = useState<string[]>([]);
 
@@ -46,12 +67,23 @@ export const CisfGridLabPage: React.FC = () => {
 
   const evalTokenRef = useRef<string>('');
   const evalTokenExpiryRef = useRef<number>(0);
+  const sessionReqSeqRef = useRef<number>(0);
+  const lastUpstreamPollRef = useRef<number>(0);
 
   const isStoppedUnexpectedly = Boolean(session && (session.status === 'failed' || session.stopped_unexpectedly));
-  const isRunning = session?.status === 'running' && Boolean(session.urls?.terminal) && !stopping;
   const isStoppingUnexpectedly = isStoppedUnexpectedly && session?.status === 'stopping';
+  const isStopping = stopping || Boolean(
+    session && !isStoppedUnexpectedly && ['stopping', 'cancel_requested'].includes(session.status),
+  );
+  const isRunning = Boolean(
+    session && session.status === 'running' && session.urls?.terminal && !isStoppedUnexpectedly,
+  );
   const isPreparing = Boolean(
-    session && !isRunning && !isStoppedUnexpectedly && !['stopped', 'failed'].includes(session.status),
+    session &&
+      !isRunning &&
+      !isStopping &&
+      !isStoppedUnexpectedly &&
+      ['queued', 'provisioning', 'starting'].includes(session.status),
   );
 
   const applySessionPayload = useCallback((payload: SessionInfo | null) => {
@@ -69,22 +101,27 @@ export const CisfGridLabPage: React.FC = () => {
   }, []);
 
   const refreshSession = useCallback(async (): Promise<SessionInfo | null> => {
+    const seq = ++sessionReqSeqRef.current;
     try {
       const current = await api.getCurrentSession(assignmentId);
+      if (seq !== sessionReqSeqRef.current) return null;
       setPausedNotice('');
       setError('');
+      setAuthExpired(false);
       applySessionPayload(current);
       return current;
     } catch (err) {
+      if (seq !== sessionReqSeqRef.current) return null;
+      if (err instanceof CisfGridApiError && err.status === 401) {
+        setAuthExpired(true);
+        setError(friendlyErrorCopy(err, 'Session expired.'));
+        return null;
+      }
       if (err instanceof CisfGridApiError && err.status === 409) {
         setPausedNotice(err.message);
         return null;
       }
-      if (err instanceof CisfGridApiError && err.status === 503) {
-        setError(err.message);
-        return null;
-      }
-      setError(err instanceof Error ? err.message : 'Could not check CISF OT Grid session.');
+      setError(friendlyErrorCopy(err, 'Could not check CISF OT Grid session.'));
       return null;
     }
   }, [api, applySessionPayload, assignmentId]);
@@ -106,23 +143,46 @@ export const CisfGridLabPage: React.FC = () => {
     };
   }, [api, refreshSession]);
 
-  // Poll while session is queued, provisioning, or finalizing an unexpected stop.
+  // If user re-authenticates in another tab (token updates), clear authExpired and re-check session.
   useEffect(() => {
-    if (!isPreparing && !isStoppingUnexpectedly) return;
+    if (authExpired && token) {
+      setAuthExpired(false);
+      setError('');
+      void refreshSession();
+    }
+  }, [authExpired, token, refreshSession]);
+
+  // Resume session check cleanly once browser comes back online.
+  useEffect(() => {
+    const onOnline = () => {
+      if (!authExpired && !stopping) {
+        void refreshSession();
+      }
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [authExpired, stopping, refreshSession]);
+
+  // Poll while session is queued, provisioning, stopping, or finalizing an unexpected stop.
+  useEffect(() => {
+    if ((!isPreparing && !isStopping && !isStoppingUnexpectedly) || authExpired) return;
+    if (stopping) return;
     const timer = window.setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
       void refreshSession();
     }, 3000);
     return () => window.clearInterval(timer);
-  }, [isPreparing, isStoppingUnexpectedly, refreshSession]);
+  }, [isPreparing, isStopping, isStoppingUnexpectedly, stopping, authExpired, refreshSession]);
 
   // Periodically check health of a running session so a stopped lab is caught within 30 s.
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || stopping || authExpired) return;
     const timer = window.setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
       void refreshSession();
     }, 10_000);
     return () => window.clearInterval(timer);
-  }, [isRunning, refreshSession]);
+  }, [isRunning, stopping, authExpired, refreshSession]);
 
   const ensureEvalToken = useCallback(
     async (forceRefresh = false): Promise<string> => {
@@ -138,20 +198,28 @@ export const CisfGridLabPage: React.FC = () => {
       if (fresh?.eval_token) {
         return fresh.eval_token;
       }
-      throw new Error('Evaluation token unavailable. Reload your active session.');
+      throw new CisfGridApiError(
+        'Evaluation token unavailable. Reconnect or reload your active session.',
+        403,
+        undefined,
+        'eval_token_expired',
+      );
     },
     [refreshSession],
   );
 
   const handleStart = async () => {
-    if (starting || isRunning || isPreparing || isStoppingUnexpectedly) return;
+    if (starting || isRunning || isPreparing || isStopping || isStoppingUnexpectedly) return;
+    const seq = ++sessionReqSeqRef.current;
     setStarting(true);
     setError('');
     setPausedNotice('');
     try {
       const started = await api.startSession(assignmentId, 'modules');
+      if (seq !== sessionReqSeqRef.current) return;
       applySessionPayload(started);
     } catch (err) {
+      if (seq !== sessionReqSeqRef.current) return;
       if (err instanceof CisfGridApiError && err.status === 409) {
         if (err.message.toLowerCase().includes('paused')) {
           setPausedNotice(err.message);
@@ -160,7 +228,7 @@ export const CisfGridLabPage: React.FC = () => {
           void refreshSession();
         }
       } else {
-        setError(err instanceof Error ? err.message : 'Could not start CISF OT Grid session.');
+        setError(friendlyErrorCopy(err, 'Could not start CISF OT Grid session.'));
       }
     } finally {
       setStarting(false);
@@ -169,15 +237,18 @@ export const CisfGridLabPage: React.FC = () => {
 
   const handleStop = useCallback(async () => {
     if (stopping || !session) return;
+    // Invalidate any in-flight refreshSession GET started prior to clicking End.
+    sessionReqSeqRef.current += 1;
     setStopping(true);
     setError('');
     try {
       await api.stopSession(assignmentId);
+      sessionReqSeqRef.current += 1;
       evalTokenRef.current = '';
       evalTokenExpiryRef.current = 0;
       setSession(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not stop session.');
+      setError(friendlyErrorCopy(err, 'Could not stop session.'));
     } finally {
       setStopping(false);
     }
@@ -195,37 +266,70 @@ export const CisfGridLabPage: React.FC = () => {
 
   const handleUpstreamLost = useCallback(
     (status: number) => {
-      if (status === 409 || status === 502) {
+      if (stopping || authExpired) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      const now = Date.now();
+      if (now - lastUpstreamPollRef.current < 5000) return;
+      lastUpstreamPollRef.current = now;
+      if (status === 409 || status === 502 || status === 503 || status === 504) {
         void refreshSession();
       }
     },
-    [refreshSession],
+    [stopping, authExpired, refreshSession],
   );
 
-  const clearedCount = passedModules.filter((id) => id !== 'full_op').length;
+  const clearedCount = passedModules.length;
 
   // Running state: render the full 1-to-1 V13 Living Stage EMS workspace directly.
   if (!loadingSession && isRunning && session) {
     return (
-      <div className="min-h-screen w-full bg-[var(--surface-sunken)] dark:bg-slate-950">
-        {(pausedNotice || error) && (
-          <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 pt-3 sm:px-6">
+      <div className="relative min-h-screen w-full bg-[var(--surface-sunken)] dark:bg-slate-950">
+        {(pausedNotice || error || isStopping) && (
+          <div className="pointer-events-none fixed inset-x-0 top-14 z-50 mx-auto flex max-w-2xl flex-col gap-2 px-4">
+            {isStopping && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="pointer-events-auto flex items-center gap-2.5 rounded-2xl border border-amber-300 bg-amber-50/95 px-4 py-2.5 text-sm font-medium text-amber-950 shadow-md backdrop-blur dark:border-amber-800 dark:bg-amber-950/90 dark:text-amber-100"
+              >
+                <Square className="h-4 w-4 shrink-0" />
+                <div>Stopping lab session...</div>
+              </div>
+            )}
             {pausedNotice && (
               <div
                 role="alert"
-                className="flex items-start gap-2.5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
+                className="pointer-events-auto flex items-start justify-between gap-2.5 rounded-2xl border border-amber-300 bg-amber-50/95 px-4 py-2.5 text-sm text-amber-950 shadow-md backdrop-blur dark:border-amber-800 dark:bg-amber-950/90 dark:text-amber-100"
               >
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                <div>{pausedNotice}</div>
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div>{pausedNotice}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPausedNotice('')}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold hover:bg-amber-200/60 dark:hover:bg-amber-900/60"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
             {error && (
               <div
                 role="alert"
-                className="flex items-start gap-2.5 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200"
+                className="pointer-events-auto flex items-start justify-between gap-2.5 rounded-2xl border border-rose-300 bg-rose-50/95 px-4 py-2.5 text-sm text-rose-900 shadow-md backdrop-blur dark:border-rose-800 dark:bg-rose-950/90 dark:text-rose-200"
               >
-                <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <div>{error}</div>
+                <div className="flex items-start gap-2.5">
+                  <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div>{error}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setError('')}
+                  className="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold hover:bg-rose-200/60 dark:hover:bg-rose-900/60"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
           </div>
@@ -234,6 +338,7 @@ export const CisfGridLabPage: React.FC = () => {
           key={session.session.generation}
           apiFetch={apiFetch}
           token={token ?? null}
+          userId={user?.id ?? null}
           assignmentId={assignmentId}
           mode={session.session.mode}
           initialTourPrefs={tourPrefs}
@@ -285,7 +390,7 @@ export const CisfGridLabPage: React.FC = () => {
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
                 isStoppedUnexpectedly
                   ? 'bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200'
-                  : isPreparing || starting
+                  : isStopping || isPreparing || starting
                     ? 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
               }`}
@@ -294,16 +399,18 @@ export const CisfGridLabPage: React.FC = () => {
                 className={`h-2 w-2 rounded-full ${
                   isStoppedUnexpectedly
                     ? 'bg-rose-500'
-                    : isPreparing || starting
+                    : isStopping || isPreparing || starting
                       ? 'bg-amber-400'
                       : 'bg-slate-400'
                 }`}
               />
               {isStoppedUnexpectedly
                 ? 'Lab stopped'
-                : isPreparing || starting
-                  ? 'Provisioning...'
-                  : 'Not started'}
+                : isStopping
+                  ? 'Stopping...'
+                  : isPreparing || starting
+                    ? 'Provisioning...'
+                    : 'Not started'}
             </span>
 
             {isPreparing && (
@@ -350,7 +457,17 @@ export const CisfGridLabPage: React.FC = () => {
         ) : (
           <section className="rounded-[28px] border border-[var(--line)] bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
             <div className="mx-auto max-w-3xl">
-              {isPreparing || starting ? (
+              {isStopping ? (
+                <div role="status" className="flex flex-col items-center py-8 text-center">
+                  <Mascot pose="carry" size={72} interactive={false} />
+                  <h2 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">
+                    Stopping lab session...
+                  </h2>
+                  <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    Tearing down your isolated substation containers cleanly. Your saved notes, pins, and completed module points remain stored.
+                  </p>
+                </div>
+              ) : isPreparing || starting ? (
                 <div className="flex flex-col items-center py-8 text-center">
                   <Mascot pose="carry" size={72} interactive={false} />
                   <h2 className="mt-4 font-display text-xl font-bold text-slate-900 dark:text-white">

@@ -25,7 +25,6 @@ export const CAMERA_PRESETS = {
   m8: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'network' },
   m9: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'substation' },
   m10: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'network' },
-  full_op: { transform: 'translate(0%, 0%) scale(1)', label: 'Suryanagar 220/132/33 kV', defaultView: 'substation' },
 };
 
 export const BAY_SLOTS = [
@@ -93,9 +92,15 @@ function buildSwitchgearCardLabels(s, p) {
     </g>`;
 }
 
+function sanitizeAssetBase(assetBase) {
+  return String(assetBase || './assets')
+    .replace(/\/+$/, '')
+    .replace(/["'<>]/g, '');
+}
+
 export function buildSceneSVG(blindedLensCopy = false, assetBase = './assets') {
   const p = blindedLensCopy ? 'lens-' : '';
-  const base = String(assetBase || './assets').replace(/\/+$/, '');
+  const base = sanitizeAssetBase(assetBase);
   const distLitCls = blindedLensCopy ? 'district-group is-lit' : 'district-group';
 
   return `
@@ -574,6 +579,10 @@ export class SceneFX {
     this._onVisChange = () => {
       this.tabHidden = document.hidden;
       this.syncRunning();
+      if (!this.tabHidden) {
+        this._canvasDirty = true;
+        this.renderStaticSnapshot();
+      }
     };
     document.addEventListener('visibilitychange', this._onVisChange);
 
@@ -672,6 +681,8 @@ export class SceneFX {
   }
 
   emitWireEcho(x, y, color = 'echo', view = null) {
+    if (this.tabHidden || this.offscreen || this.pausedByUser || this.reducedMotion) return;
+    if (this.ripples.length >= 24) this.ripples.shift();
     this.ripples.push({ x, y, r: 6, maxR: 42, life: 1.0, color, view });
     this._canvasDirty = true;
     this.syncRunning();
@@ -679,8 +690,10 @@ export class SceneFX {
   }
 
   emitCLPU(bayIdx) {
+    if (this.tabHidden || this.offscreen || this.pausedByUser || this.reducedMotion) return;
     const slot = BAY_SLOTS[bayIdx];
     if (!slot) return;
+    if (this.surges.length >= 12) this.surges.shift();
     this.surges.push({
       bayX: slot.bayX,
       bayY: slot.bayY,
@@ -695,10 +708,12 @@ export class SceneFX {
   }
 
   emitTripSpark(x, y) {
+    if (this.tabHidden || this.offscreen || this.pausedByUser || this.reducedMotion) return;
     const count = 18;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
       const speed = 36 + Math.random() * 68;
+      if (this.sparks.length >= 72) this.sparks.shift();
       this.sparks.push({
         x,
         y,
@@ -709,6 +724,7 @@ export class SceneFX {
         core: i % 3 === 0,
       });
     }
+    if (this.ripples.length >= 24) this.ripples.shift();
     this.ripples.push({ x, y, r: 6, maxR: 44, life: 1.0, color: 'spark', view: 'substation' });
     this._canvasDirty = true;
     this.syncRunning();
@@ -716,9 +732,11 @@ export class SceneFX {
   }
 
   emitProbeRipples(wallKeys) {
+    if (this.tabHidden || this.offscreen || this.pausedByUser || this.reducedMotion) return;
     wallKeys.forEach((key) => {
       const pt = SHIELD_POINTS[key];
       if (!pt) return;
+      if (this.ripples.length >= 24) this.ripples.shift();
       this.ripples.push({
         x: pt.x,
         y: pt.y,
@@ -759,7 +777,7 @@ export class SceneFX {
   }
 
   renderStaticSnapshot() {
-    if (this.offscreen) return;
+    if (this.tabHidden || this.offscreen || this.rafId) return;
     const st = this.getState();
     if (!st || st.cinemaActive || st.layoutMode === 'terminal') return;
     const view = st.activeView || 'city';
@@ -945,6 +963,6 @@ export class SceneFX {
     });
 
     this._lastDrawnView = view;
-    this._canvasDirty = !(view === 'city' && !this.hasActiveTransients());
+    this._canvasDirty = false;
   }
 }

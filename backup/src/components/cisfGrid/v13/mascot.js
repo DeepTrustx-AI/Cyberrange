@@ -33,9 +33,15 @@ export function createMascot({
   const safeSize = Math.max(16, Math.min(240, Number(size) || 72));
   const effLook = look || (safePose === 'point' && safeDir && DIR_LOOK[safeDir]) || { x: 0, y: 0 };
   const wrap = document.createElement('div');
-  const poseCls = `mascot mascot--${safePose}${seated ? ' mascot--seated' : ''}${className ? ` ${className}` : ''}`;
+  const safeClass = String(className || '').replace(/[^a-zA-Z0-9 _-]/g, '').trim();
+  const poseCls = `mascot mascot--${safePose}${seated ? ' mascot--seated' : ''}${safeClass ? ` ${safeClass}` : ''}`;
   const dirAttr = safePose === 'point' && safeDir ? ` data-dir="${safeDir}"` : '';
-  const safeLabel = String(label || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const safeLabel = String(label || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
   const roleAttrs = safeLabel ? ` role="img" aria-label="${safeLabel}"` : ' aria-hidden="true"';
 
   wrap.innerHTML = `<svg viewBox="0 0 120 120" class="${poseCls}" data-pose="${safePose}"${dirAttr}${roleAttrs} style="width:${safeSize}px;height:${safeSize}px;--look-x:${(effLook.x * 2.4).toFixed(2)}px;--look-y:${(effLook.y * 2).toFixed(2)}px" xmlns="http://www.w3.org/2000/svg">

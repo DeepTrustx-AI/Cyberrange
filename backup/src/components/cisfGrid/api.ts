@@ -3,8 +3,8 @@ import type {
   CaseSummary,
   CheckStatusResponse,
   CisfGridMode,
-  DispatchEntry,
   HintResponse,
+  HintsUnlockedMap,
   NotesState,
   SessionInfo,
   ShiftReportResponse,
@@ -16,12 +16,22 @@ export type ApiFetchFn = (path: string, options?: RequestInit) => Promise<Respon
 export class CisfGridApiError extends Error {
   status: number;
   retryAfterSeconds?: number;
+  errorCode?: string;
+  data?: Record<string, unknown>;
 
-  constructor(message: string, status: number, retryAfterSeconds?: number) {
+  constructor(
+    message: string,
+    status: number,
+    retryAfterSeconds?: number,
+    errorCode?: string,
+    data?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = 'CisfGridApiError';
     this.status = status;
     this.retryAfterSeconds = retryAfterSeconds;
+    this.errorCode = errorCode;
+    this.data = data;
   }
 }
 
@@ -29,21 +39,33 @@ async function readJsonOrThrow<T>(response: Response, fallback: string): Promise
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const retryHeader = response.headers.get('Retry-After');
+    const gridErrHeader = response.headers.get('X-Grid-Error-Code')?.trim() || undefined;
     let retryAfter = retryHeader && /^\d+$/.test(retryHeader) ? Number(retryHeader) : undefined;
     let message = parseApiErrorMessage(data, fallback);
-    if (data && typeof data === 'object') {
-      const rec = data as Record<string, unknown>;
+    let errorCode = gridErrHeader;
+    let rec: Record<string, unknown> | undefined;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      rec = data as Record<string, unknown>;
       if (typeof rec.error === 'string' && rec.error.trim()) {
         message = rec.error.trim();
+        if (!errorCode) errorCode = rec.error.trim();
       }
-      if (retryAfter === undefined && typeof rec.retry_after_s === 'number' && Number.isFinite(rec.retry_after_s) && rec.retry_after_s > 0) {
+      if (!errorCode && typeof rec.code === 'string' && rec.code.trim()) {
+        errorCode = rec.code.trim();
+      }
+      if (
+        retryAfter === undefined &&
+        typeof rec.retry_after_s === 'number' &&
+        Number.isFinite(rec.retry_after_s) &&
+        rec.retry_after_s > 0
+      ) {
         retryAfter = Math.ceil(rec.retry_after_s);
       }
     }
     if (retryAfter !== undefined && !message.includes(`${retryAfter}s`) && !message.includes(`${retryAfter} s`)) {
       message = `${message} (retry in ${retryAfter}s)`;
     }
-    throw new CisfGridApiError(message, response.status, retryAfter);
+    throw new CisfGridApiError(message, response.status, retryAfter, errorCode, rec);
   }
   return data as T;
 }
@@ -78,27 +100,48 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       return readJsonOrThrow<{ status: string }>(res, 'Could not stop CISF OT Grid session.');
     },
 
-    async listWorkspaceFiles(assignmentId: number | null): Promise<Array<{ name: string; size: number; mtime: number }>> {
-      const res = await apiFetch(withAssignment('/api/v1/ot-grid/workspace/files', assignmentId));
-      const data = await readJsonOrThrow<{ files?: Array<{ name: string; size: number; mtime: number }> }>(
+    async getWsTicket(assignmentId: number | null): Promise<{ ticket: string; expires_in: number }> {
+      const res = await apiFetch(withAssignment('/api/v1/ot-grid/ws-ticket', assignmentId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignment_id: assignmentId }),
+      });
+      return readJsonOrThrow<{ ticket: string; expires_in: number }>(
         res,
-        'Could not list workspace files.',
+        'Could not mint WebSocket ticket.',
       );
-      return Array.isArray(data.files) ? data.files : [];
     },
 
-    async readWorkspaceFile(filename: string, assignmentId: number | null): Promise<{ name: string; content: string; mtime?: number }> {
+    async readWorkspaceFile(
+      filename: string,
+      assignmentId: number | null,
+    ): Promise<{ name: string; content: string; bytes?: number; mtime?: number }> {
       const res = await apiFetch(withAssignment(`/api/v1/ot-grid/workspace/files/${encodeURIComponent(filename)}`, assignmentId));
-      return readJsonOrThrow<{ name: string; content: string; mtime?: number }>(res, `Could not read ${filename}.`);
+      return readJsonOrThrow<{ name: string; content: string; bytes?: number; mtime?: number }>(
+        res,
+        `Could not read ${filename}.`,
+      );
     },
 
-    async writeWorkspaceFile(filename: string, content: string, assignmentId: number | null): Promise<{ ok: boolean; name: string; size?: number; mtime?: number }> {
+    async writeWorkspaceFile(
+      filename: string,
+      content: string,
+      assignmentId: number | null,
+      expectedMtime?: number | null,
+    ): Promise<{ ok: boolean; name: string; size?: number; bytes?: number; mtime?: number }> {
+      const payload: Record<string, unknown> = { content, assignment_id: assignmentId };
+      if (typeof expectedMtime === 'number' && Number.isFinite(expectedMtime)) {
+        payload.expected_mtime = expectedMtime;
+      }
       const res = await apiFetch(`/api/v1/ot-grid/workspace/files/${encodeURIComponent(filename)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, assignment_id: assignmentId }),
+        body: JSON.stringify(payload),
       });
-      return readJsonOrThrow<{ ok: boolean; name: string; size?: number; mtime?: number }>(res, `Could not save ${filename}.`);
+      return readJsonOrThrow<{ ok: boolean; name: string; size?: number; bytes?: number; mtime?: number }>(
+        res,
+        `Could not save ${filename}.`,
+      );
     },
 
     async practiceModule(moduleId: string, assignmentId: number | null, evalToken?: string): Promise<CheckStatusResponse> {
@@ -150,14 +193,20 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       return readJsonOrThrow<HintResponse>(res, `Could not unlock level ${level} hint.`);
     },
 
-    async getCaseBoard(assignmentId: number | null): Promise<{ cases: Record<string, CaseSummary>; passed_modules: string[] }> {
+    async getCaseBoard(
+      assignmentId: number | null,
+    ): Promise<{ cases: Record<string, CaseSummary>; passed_modules: string[]; hints_unlocked?: HintsUnlockedMap }> {
       const res = await apiFetch(withAssignment('/api/v1/ot-grid/case', assignmentId));
-      return readJsonOrThrow<{ cases: Record<string, CaseSummary>; passed_modules: string[] }>(res, 'Could not load Case Board.');
+      return readJsonOrThrow<{
+        cases: Record<string, CaseSummary>;
+        passed_modules: string[];
+        hints_unlocked?: HintsUnlockedMap;
+      }>(res, 'Could not load Case Board.');
     },
 
     async getShiftReport(assignmentId: number | null): Promise<ShiftReportResponse | null> {
       const res = await apiFetch(withAssignment('/api/v1/ot-grid/shift-report', assignmentId));
-      if (res.status === 403 || res.status === 404) return null;
+      if (res.status === 404) return null;
       return readJsonOrThrow<ShiftReportResponse>(res, 'Could not load Shift Report.');
     },
 
@@ -189,25 +238,16 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       return readJsonOrThrow<TourPrefsState>(res, 'Could not save tour preferences.');
     },
 
-    async getDispatch(): Promise<DispatchEntry[]> {
-      const res = await apiFetch('/api/v1/ot-grid/proxy/ems/api/ems/dispatch');
-      const data = await readJsonOrThrow<{ entries?: DispatchEntry[] }>(res, 'Could not load dispatch feed.');
-      return Array.isArray(data.entries) ? data.entries : [];
-    },
-
-    async requestBayReadout(bayId: string): Promise<DispatchEntry> {
-      const res = await apiFetch('/api/v1/ot-grid/proxy/ems/api/ems/dispatch/bay-readout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bay_id: bayId }),
-      });
-      return readJsonOrThrow<DispatchEntry>(res, `Could not request field readout for ${bayId}.`);
-    },
-
-    emsWebSocketUrl(token?: string | null): string {
+    emsWebSocketUrl(auth?: { ticket?: string | null; token?: string | null } | string | null): string {
       const base = '/api/v1/ot-grid/proxy/ems/ws';
-      const query = token ? `?token=${encodeURIComponent(token)}` : '';
-      return apiWebSocketUrl(`${base}${query}`);
+      if (typeof auth === 'string' && auth) {
+        return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth)}`);
+      }
+      if (auth && typeof auth === 'object') {
+        if (auth.ticket) return apiWebSocketUrl(`${base}?ticket=${encodeURIComponent(auth.ticket)}`);
+        if (auth.token) return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth.token)}`);
+      }
+      return apiWebSocketUrl(base);
     },
   };
 }

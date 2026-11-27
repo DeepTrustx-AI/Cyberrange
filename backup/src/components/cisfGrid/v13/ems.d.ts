@@ -8,17 +8,34 @@ export interface V13ApiResponse {
   data: Record<string, unknown>;
 }
 
+export interface V13ReadFileResult {
+  ok: boolean;
+  status: number;
+  text: string;
+  mtime?: number | null;
+  error?: string;
+}
+
+export interface V13WriteFileResult {
+  ok: boolean;
+  status: number;
+  mtime?: number | null;
+  current_mtime?: number | null;
+  error?: string;
+}
+
 export interface V13Transport {
   apiJson: (method: string, path: string, payload?: unknown) => Promise<V13ApiResponse>;
-  readFile: (filename: string) => Promise<{ ok: boolean; status: number; text: string }>;
-  writeFile: (filename: string, content: string) => Promise<{ ok: boolean; status: number }>;
-  getEmsWsUrl: () => string | null;
-  openEmsSocket: () => WebSocket | null;
+  readFile: (filename: string) => Promise<V13ReadFileResult>;
+  writeFile: (filename: string, content: string, expectedMtime?: number | null) => Promise<V13WriteFileResult>;
+  getEmsWsUrl: () => Promise<string | null>;
+  openEmsSocket: () => Promise<WebSocket | null>;
   getTerminalWsUrl: () => Promise<string | null>;
 }
 
 export interface V13MountOptions {
   assetBase?: string;
+  userId?: number | null;
   transport: V13Transport;
   storyData?: Record<string, unknown>;
   tourData?: Record<string, unknown>;
@@ -27,7 +44,6 @@ export interface V13MountOptions {
   TerminalCtor?: typeof Terminal;
   FitAddonCtor?: typeof FitAddon;
   initialTheme?: 'daylight' | 'ember';
-  lockedFullOp?: boolean;
   onBackToAllLabs?: () => void;
   onEndSession?: () => void;
   onThemeChange?: (nextTheme: 'light' | 'dark') => void;

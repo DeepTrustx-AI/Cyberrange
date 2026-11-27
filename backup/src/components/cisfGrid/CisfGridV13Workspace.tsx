@@ -17,8 +17,9 @@ import { useTheme } from '../../context/ThemeContext';
 export interface CisfGridV13WorkspaceProps {
   apiFetch: ApiFetchFn;
   token: string | null;
+  userId: number | null;
   assignmentId: number | null;
-  mode: CisfGridMode;
+  mode: CisfGridMode | string;
   initialTourPrefs: TourPrefsState;
   ensureEvalToken: (forceRefresh?: boolean) => Promise<string>;
   onSaveTourPrefs: (prefs: TourPrefsState) => void;
@@ -31,6 +32,7 @@ export interface CisfGridV13WorkspaceProps {
 export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
   apiFetch,
   token,
+  userId,
   assignmentId,
   mode,
   initialTourPrefs,
@@ -44,6 +46,11 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
   const { theme, setTheme } = useTheme();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const handleRef = useRef<V13WorkspaceHandle | null>(null);
+  const tokenRef = useRef<string | null>(token);
+
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   const callbacksRef = useRef({
     ensureEvalToken,
@@ -89,7 +96,7 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
 
     const transport = createV13PlatformTransport({
       apiFetch,
-      token,
+      getToken: () => tokenRef.current,
       assignmentId,
       ensureEvalToken: (force) => callbacksRef.current.ensureEvalToken(force),
       onProgressUpdated: (mods) => callbacksRef.current.onProgressUpdated?.(mods),
@@ -98,6 +105,7 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
 
     const handle = mountV13Workspace({
       assetBase: '/cisf-grid/assets',
+      userId,
       transport,
       storyData: storyData as Record<string, unknown>,
       tourData: tourData as Record<string, unknown>,
@@ -106,7 +114,6 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
       TerminalCtor: Terminal,
       FitAddonCtor: FitAddon,
       initialTheme: initialThemeRef.current === 'dark' ? 'ember' : 'daylight',
-      lockedFullOp: mode === 'full_op',
       onBackToAllLabs: () => callbacksRef.current.onBackToAllLabs(),
       onEndSession: () => callbacksRef.current.onEndSession(),
       onThemeChange: (nextTheme) => {
@@ -124,7 +131,7 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
       handle.dispose();
       host.replaceChildren();
     };
-  }, [apiFetch, token, assignmentId, mode]);
+  }, [apiFetch, assignmentId, mode, userId]);
 
   // Keep V13 synced if CyberRange global theme toggles externally.
   useEffect(() => {

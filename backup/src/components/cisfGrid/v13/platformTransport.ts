@@ -1,11 +1,17 @@
 import { apiWebSocketUrl } from '../../../lib/api';
 import { CisfGridApiError, type ApiFetchFn, createCisfGridApi } from '../api';
 import type { NotesState } from '../types';
-import type { V13ApiResponse, V13Transport } from './ems';
+import type {
+  V13ApiResponse,
+  V13ReadFileResult,
+  V13Transport,
+  V13WriteFileResult,
+} from './ems';
 
 export interface PlatformTransportConfig {
   apiFetch: ApiFetchFn;
-  token: string | null;
+  token?: string | null;
+  getToken?: () => string | null;
   assignmentId: number | null;
   ensureEvalToken: (forceRefresh?: boolean) => Promise<string>;
   onProgressUpdated?: (passedModules: string[]) => void;
@@ -16,27 +22,54 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
+function isEvalTokenExpiredError(err: CisfGridApiError): boolean {
+  if (err.status !== 403) return false;
+  if (err.errorCode === 'eval_token_expired') return true;
+  return /evaluation token|eval_token/i.test(err.message);
+}
+
+function isUpstreamLossResponse(status: number, message: string): boolean {
+  if (status === 502 || status === 503 || status === 504) return true;
+  if (status === 409) {
+    return /routing is unavailable|no active.*session|session.*stopped|session.*not running/i.test(message);
+  }
+  return false;
+}
+
 function errorResponse(err: unknown): V13ApiResponse {
   if (err instanceof CisfGridApiError) {
     const data: Record<string, unknown> = {
+      ...(err.data || {}),
       error: err.message,
       detail: err.message,
     };
     if (typeof err.retryAfterSeconds === 'number') {
       data.retry_after_s = err.retryAfterSeconds;
     }
+    if (err.errorCode) {
+      data.error_code = err.errorCode;
+    }
     return { status: err.status, ok: false, data };
   }
+  const isNetworkErr =
+    err instanceof TypeError ||
+    (err instanceof Error && /failed to fetch|networkerror|load failed/i.test(err.message));
   const message = err instanceof Error ? err.message : 'Request failed';
-  return { status: 500, ok: false, data: { error: message, detail: message } };
+  return {
+    status: isNetworkErr ? 0 : 500,
+    ok: false,
+    data: { error: message, detail: message },
+  };
 }
 
 export function createV13PlatformTransport(config: PlatformTransportConfig): V13Transport {
-  const { apiFetch, token, assignmentId, ensureEvalToken, onProgressUpdated, onUpstreamLost } = config;
+  const { apiFetch, assignmentId, ensureEvalToken, onProgressUpdated, onUpstreamLost } = config;
+  const resolveToken = () =>
+    typeof config.getToken === 'function' ? config.getToken() : (config.token ?? null);
   const api = createCisfGridApi(apiFetch);
 
-  const notifyIfUpstreamLost = (status: number) => {
-    if ((status === 409 || status === 502) && onUpstreamLost) {
+  const notifyIfUpstreamLost = (status: number, message = '') => {
+    if (onUpstreamLost && isUpstreamLossResponse(status, message)) {
       onUpstreamLost(status);
     }
   };
@@ -46,12 +79,27 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
     try {
       return await fn(evalToken);
     } catch (firstErr) {
-      if (firstErr instanceof CisfGridApiError && firstErr.status === 403) {
+      if (firstErr instanceof CisfGridApiError && isEvalTokenExpiredError(firstErr)) {
         evalToken = await ensureEvalToken(true);
         return await fn(evalToken);
       }
       throw firstErr;
     }
+  }
+
+  async function resolveWsAuth(): Promise<{ ticket?: string; token?: string }> {
+    try {
+      const res = await api.getWsTicket(assignmentId);
+      if (res && typeof res.ticket === 'string' && res.ticket) {
+        return { ticket: res.ticket };
+      }
+    } catch (err) {
+      if (err instanceof CisfGridApiError && err.status !== 404 && err.status !== 405 && err.status !== 501) {
+        // On non-404 transient failure, still fall back to bearer token if available.
+      }
+    }
+    const freshToken = resolveToken();
+    return freshToken ? { token: freshToken } : {};
   }
 
   return {
@@ -86,7 +134,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
           return { status: 200, ok: true, data: asRecord(data) };
         }
 
-        // Merged Postgres + live Case Board
+        // Merged Postgres + live Case Board (includes persisted hints_unlocked)
         if (upper === 'GET' && path === '/api/ems/case') {
           const data = await api.getCaseBoard(assignmentId);
           if (Array.isArray(data.passed_modules) && onProgressUpdated) {
@@ -95,7 +143,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
           return { status: 200, ok: true, data: asRecord(data) };
         }
 
-        // Shift Report (unlocked after M10)
+        // Shift Report (preserves 403 locked vs 404 missing)
         if (upper === 'GET' && path === '/api/ems/shift-report') {
           const data = await api.getShiftReport(assignmentId);
           if (!data) {
@@ -146,49 +194,85 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
         }
         const res = await apiFetch(proxyPath, opts);
         const data = asRecord(await res.json().catch(() => ({})));
-        notifyIfUpstreamLost(res.status);
+        const msg = String(data.detail || data.error || '');
+        notifyIfUpstreamLost(res.status, msg);
         return { status: res.status, ok: res.ok, data };
       } catch (err) {
         const res = errorResponse(err);
-        notifyIfUpstreamLost(res.status);
+        const msg = String(res.data?.detail || res.data?.error || '');
+        notifyIfUpstreamLost(res.status, msg);
         return res;
       }
     },
 
-    async readFile(filename: string): Promise<{ ok: boolean; status: number; text: string }> {
+    async readFile(filename: string): Promise<V13ReadFileResult> {
       try {
         const data = await api.readWorkspaceFile(filename, assignmentId);
-        return { ok: true, status: 200, text: data.content };
+        return {
+          ok: true,
+          status: 200,
+          text: data.content,
+          mtime: typeof data.mtime === 'number' ? data.mtime : null,
+        };
       } catch (err) {
-        const status = err instanceof CisfGridApiError ? err.status : 500;
-        notifyIfUpstreamLost(status);
-        return { ok: false, status, text: '' };
+        const isApiErr = err instanceof CisfGridApiError;
+        const status = isApiErr ? err.status : err instanceof TypeError ? 0 : 500;
+        const msg = err instanceof Error ? err.message : 'Could not read file';
+        notifyIfUpstreamLost(status, msg);
+        return { ok: false, status, text: '', error: msg };
       }
     },
 
-    async writeFile(filename: string, content: string): Promise<{ ok: boolean; status: number }> {
+    async writeFile(
+      filename: string,
+      content: string,
+      expectedMtime?: number | null,
+    ): Promise<V13WriteFileResult> {
       try {
-        await api.writeWorkspaceFile(filename, content, assignmentId);
-        return { ok: true, status: 200 };
+        const data = await api.writeWorkspaceFile(filename, content, assignmentId, expectedMtime);
+        return {
+          ok: true,
+          status: 200,
+          mtime: typeof data.mtime === 'number' ? data.mtime : null,
+        };
       } catch (err) {
-        const status = err instanceof CisfGridApiError ? err.status : 500;
-        notifyIfUpstreamLost(status);
-        return { ok: false, status };
+        const isApiErr = err instanceof CisfGridApiError;
+        const status = isApiErr ? err.status : err instanceof TypeError ? 0 : 500;
+        const msg = err instanceof Error ? err.message : 'Could not save file';
+        const errCode = isApiErr ? err.errorCode : undefined;
+        const rawCurMtime = isApiErr ? err.data?.current_mtime : undefined;
+        const currentMtime = typeof rawCurMtime === 'number' ? rawCurMtime : null;
+        notifyIfUpstreamLost(status, msg);
+        return {
+          ok: false,
+          status,
+          error: errCode || msg,
+          current_mtime: currentMtime,
+        };
       }
     },
 
-    getEmsWsUrl(): string {
-      return api.emsWebSocketUrl(token);
+    async getEmsWsUrl(): Promise<string> {
+      const auth = await resolveWsAuth();
+      return api.emsWebSocketUrl(auth);
     },
 
-    openEmsSocket(): WebSocket {
-      return new WebSocket(api.emsWebSocketUrl(token));
+    async openEmsSocket(): Promise<WebSocket | null> {
+      const url = await this.getEmsWsUrl();
+      if (!url) return null;
+      return new WebSocket(url);
     },
 
     async getTerminalWsUrl(): Promise<string> {
       const base = '/api/v1/terminal/ws/cisf-ot-grid';
-      const query = token ? `?token=${encodeURIComponent(token)}` : '';
-      return apiWebSocketUrl(`${base}${query}`);
+      const auth = await resolveWsAuth();
+      if (auth.ticket) {
+        return apiWebSocketUrl(`${base}?ticket=${encodeURIComponent(auth.ticket)}`);
+      }
+      if (auth.token) {
+        return apiWebSocketUrl(`${base}?token=${encodeURIComponent(auth.token)}`);
+      }
+      return apiWebSocketUrl(base);
     },
   };
 }

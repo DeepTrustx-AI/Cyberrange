@@ -1,3 +1,9 @@
+const STATIC_SECURITY_HEADERS = {
+  'Content-Security-Policy': "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -30,7 +36,18 @@ export default {
       return fetch(newRequest);
     }
 
-    // Fallback: serve static frontend files
-    return env.ASSETS.fetch(request);
+    // Fallback: serve static frontend files with baseline browser security headers
+    const assetResponse = await env.ASSETS.fetch(request);
+    const headers = new Headers(assetResponse.headers);
+    for (const [name, value] of Object.entries(STATIC_SECURITY_HEADERS)) {
+      if (!headers.has(name)) {
+        headers.set(name, value);
+      }
+    }
+    return new Response(assetResponse.body, {
+      status: assetResponse.status,
+      statusText: assetResponse.statusText,
+      headers,
+    });
   },
 };

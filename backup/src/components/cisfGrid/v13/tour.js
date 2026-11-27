@@ -24,9 +24,9 @@ const SELECTOR_TAB_MAP = {
   '#hint-1': 'brief',
 };
 
-function readTourStorage() {
+function readTourStorage(storageKey = STORAGE_TOUR) {
   try {
-    const raw = localStorage.getItem(STORAGE_TOUR);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return { seen: false, coldOpenSeen: false, tipsSeen: {} };
     const parsed = JSON.parse(raw);
     return {
@@ -39,9 +39,9 @@ function readTourStorage() {
   }
 }
 
-function writeTourStorage(data) {
+function writeTourStorage(storageKey, data) {
   try {
-    localStorage.setItem(STORAGE_TOUR, JSON.stringify(data));
+    localStorage.setItem(storageKey || STORAGE_TOUR, JSON.stringify(data));
   } catch {
   }
 }
@@ -107,6 +107,7 @@ export class TourController {
   constructor({
     tourData = null,
     loadTourData = null,
+    storageKey = STORAGE_TOUR,
     initialPrefs = null,
     onPrefsChange = null,
     onReplayColdOpen,
@@ -119,10 +120,11 @@ export class TourController {
   } = {}) {
     this.data = tourData || null;
     this.loadTourData = loadTourData || null;
+    this.storageKey = storageKey || STORAGE_TOUR;
     this.onPrefsChange = onPrefsChange || null;
-    this.stored = readTourStorage();
+    this.stored = readTourStorage(this.storageKey);
     if (initialPrefs && typeof initialPrefs === 'object') {
-      this.applyExternalPrefs(initialPrefs);
+      this.applyExternalPrefs(initialPrefs, true);
     }
     this.onReplayColdOpen = onReplayColdOpen || (() => {});
     this.onInterruptColdOpen = onInterruptColdOpen || (() => {});
@@ -152,6 +154,10 @@ export class TourController {
     this._helpBeaconTimer = null;
     this._helpToastFadeTimer = null;
     this._helpToastRemoveTimer = null;
+    this._flyAnim = null;
+    this._flyEl = null;
+    this._tipRaf1 = null;
+    this._tipRaf2 = null;
 
     this.spotlightEl = document.getElementById('tour-spotlight');
     this._scrimParts = null;
@@ -170,20 +176,34 @@ export class TourController {
     this._keyBound = (e) => this._handleGlobalKey(e);
   }
 
-  applyExternalPrefs(prefs) {
+  applyExternalPrefs(prefs, authoritative = true) {
     if (!prefs || typeof prefs !== 'object') return;
-    if (prefs.tour_seen) this.stored.seen = true;
-    if (prefs.cold_open_seen) this.stored.coldOpenSeen = true;
-    if (Array.isArray(prefs.dismissed_tips)) {
-      prefs.dismissed_tips.forEach((tid) => {
-        if (tid) this.stored.tipsSeen[String(tid)] = true;
-      });
+    if (authoritative) {
+      const nextTips = {};
+      if (Array.isArray(prefs.dismissed_tips)) {
+        prefs.dismissed_tips.forEach((tid) => {
+          if (tid) nextTips[String(tid)] = true;
+        });
+      }
+      this.stored = {
+        seen: Boolean(prefs.tour_seen),
+        coldOpenSeen: Boolean(prefs.cold_open_seen),
+        tipsSeen: nextTips,
+      };
+    } else {
+      if (prefs.tour_seen) this.stored.seen = true;
+      if (prefs.cold_open_seen) this.stored.coldOpenSeen = true;
+      if (Array.isArray(prefs.dismissed_tips)) {
+        prefs.dismissed_tips.forEach((tid) => {
+          if (tid) this.stored.tipsSeen[String(tid)] = true;
+        });
+      }
     }
-    writeTourStorage(this.stored);
+    writeTourStorage(this.storageKey, this.stored);
   }
 
   _persistPrefs() {
-    writeTourStorage(this.stored);
+    writeTourStorage(this.storageKey, this.stored);
     if (typeof this.onPrefsChange === 'function' && !this._prefsNotifyQueued) {
       this._prefsNotifyQueued = true;
       queueMicrotask(() => {
@@ -222,6 +242,22 @@ export class TourController {
     this._clearInertRegions();
     this._clearAnchorName();
     this._disposed = true;
+    if (this._flyAnim) {
+      try { this._flyAnim.cancel(); } catch {}
+      this._flyAnim = null;
+    }
+    if (this._flyEl) {
+      this._flyEl.remove();
+      this._flyEl = null;
+    }
+    if (this._tipRaf1) {
+      cancelAnimationFrame(this._tipRaf1);
+      this._tipRaf1 = null;
+    }
+    if (this._tipRaf2) {
+      cancelAnimationFrame(this._tipRaf2);
+      this._tipRaf2 = null;
+    }
     this._hideSpotlight();
     this._closePopover(this.bubbleEl);
     this._closePopover(this.welcomeEl);
@@ -329,6 +365,7 @@ export class TourController {
     this._clearHelpArrivalBeacon();
 
     const triggerBeacon = () => {
+      if (this._disposed || !this.guideBtnEl) return;
       this.guideBtnEl.classList.add('is-dock-settled', 'is-help-highlighted');
 
       const toast = document.createElement('div');
@@ -384,6 +421,11 @@ export class TourController {
     const nearScale = Math.max(scaleEnd, 0.72);
 
     if (typeof flyer.animate === 'function') {
+      if (this._flyAnim) {
+        try { this._flyAnim.cancel(); } catch {}
+      }
+      if (this._flyEl) this._flyEl.remove();
+      this._flyEl = flyer;
       const anim = flyer.animate(
         [
           { transform: 'translate3d(0px, 0px, 0) scale(1)', opacity: 1, offset: 0 },
@@ -393,11 +435,16 @@ export class TourController {
         ],
         { duration: 1150, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' }
       );
+      this._flyAnim = anim;
       anim.onfinish = () => {
+        if (this._flyAnim === anim) this._flyAnim = null;
+        if (this._flyEl === flyer) this._flyEl = null;
         flyer.remove();
-        triggerBeacon();
+        if (!this._disposed) triggerBeacon();
       };
       anim.oncancel = () => {
+        if (this._flyAnim === anim) this._flyAnim = null;
+        if (this._flyEl === flyer) this._flyEl = null;
         flyer.remove();
       };
     } else {
@@ -1145,8 +1192,13 @@ export class TourController {
       return;
     }
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => this._showTipNow(triggerName));
+    this._tipRaf1 = requestAnimationFrame(() => {
+      this._tipRaf1 = null;
+      if (this._disposed) return;
+      this._tipRaf2 = requestAnimationFrame(() => {
+        this._tipRaf2 = null;
+        if (!this._disposed) this._showTipNow(triggerName);
+      });
     });
   }
 
@@ -1158,14 +1210,14 @@ export class TourController {
     if (!this.pendingTips.length) return;
     this._tipTimer = setTimeout(() => {
       this._tipTimer = null;
-      if (this.mode || this.isStoryOverlayActive() || !this.pendingTips.length) return;
+      if (this._disposed || this.mode || this.isStoryOverlayActive() || !this.pendingTips.length) return;
       const next = this.pendingTips.shift();
       this._showTipNow(next);
     }, 240);
   }
 
   _showTipNow(triggerName) {
-    if (!this.data || this.mode || this.isStoryOverlayActive() || window.innerWidth <= 900) return;
+    if (this._disposed || !this.data || this.mode || this.isStoryOverlayActive() || window.innerWidth <= 900) return;
     const tip = (this.data.tips || []).find((t) => t.trigger === triggerName);
     if (!tip || this.stored.tipsSeen[tip.id]) return;
 

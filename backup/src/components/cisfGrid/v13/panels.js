@@ -9,6 +9,91 @@ export function escHtml(v) {
     .replace(/'/g, '&#39;');
 }
 
+export function formatSoeDetail(raw) {
+  if (raw === null || raw === undefined) return '';
+  if (typeof raw !== 'object') return String(raw);
+  if (Array.isArray(raw)) {
+    return raw.map((x) => (typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x))).join(', ');
+  }
+  return Object.entries(raw)
+    .map(([k, v]) => `${k}=${typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}`)
+    .join(', ');
+}
+
+export function formatSoeReplayEvents(events, fallbackTr1Pct = 0) {
+  if (!Array.isArray(events) || !events.length) {
+    return `TR-1 ${Math.round(fallbackTr1Pct || 0)}%`;
+  }
+  const joined = events
+    .map((ev) => {
+      if (typeof ev === 'string') return ev;
+      if (!ev || typeof ev !== 'object') return '';
+      const d = ev.detail && typeof ev.detail === 'object'
+        ? formatSoeDetail(ev.detail)
+        : (ev.detail ?? ev.message ?? '');
+      const head = `${ev.asset || ''} ${ev.code || ''}`.trim();
+      const detailStr = String(d || '').trim();
+      return detailStr ? (head ? `${head}: ${detailStr}` : detailStr) : head;
+    })
+    .filter(Boolean)
+    .join('; ');
+  return joined || `TR-1 ${Math.round(fallbackTr1Pct || 0)}%`;
+}
+
+export function parsePolicyYamlToRules(yamlText) {
+  const text = String(yamlText || '');
+  const dpMatch = text.match(/default_policy:\s*(allow|deny)/i);
+  const defaultPolicy = dpMatch ? dpMatch[1].toLowerCase() : 'deny';
+  const rules = {};
+  const blocks = text.split(/\n\s*-\s+id:/);
+  for (let i = 1; i < blocks.length; i++) {
+    const b = blocks[i];
+    const s = b.match(/src_zone:\s*(\w+)/);
+    const d = b.match(/dst_zone:\s*(\w+)/);
+    const pt = b.match(/dst_port:\s*(\d+)/);
+    const ac = b.match(/action:\s*(allow|deny)/i);
+    if (s && d && pt && ac) {
+      const port = parseInt(pt[1], 10);
+      if (port >= 1 && port <= 65535) {
+        const key = `${s[1]}->${d[1]}:${port}`;
+        rules[key] = {
+          src: s[1],
+          dst: d[1],
+          port,
+          action: ac[1].toLowerCase(),
+        };
+      }
+    }
+  }
+  return { defaultPolicy, rules };
+}
+
+export function serializePolicyRulesToYaml(defaultPolicy, rulesMap) {
+  const dp = defaultPolicy === 'allow' ? 'allow' : 'deny';
+  const lines = [`default_policy: ${dp}`, 'rules:'];
+  let count = 0;
+  const entries = Object.values(rulesMap || {}).sort((a, b) => {
+    const ka = `${a.src}->${a.dst}:${String(a.port).padStart(5, '0')}`;
+    const kb = `${b.src}->${b.dst}:${String(b.port).padStart(5, '0')}`;
+    return ka.localeCompare(kb);
+  });
+  for (const row of entries) {
+    const port = parseInt(String(row.port), 10);
+    if ((row.action === 'allow' || row.action === 'deny') && port >= 1 && port <= 65535 && row.src && row.dst) {
+      count += 1;
+      const rid = `r-${String(row.src).toLowerCase()}-${String(row.dst).toLowerCase()}-${port}`.slice(0, 48);
+      lines.push(`  - id: ${rid}`);
+      lines.push(`    src_zone: ${row.src}`);
+      lines.push(`    dst_zone: ${row.dst}`);
+      lines.push('    protocol: tcp');
+      lines.push(`    dst_port: ${port}`);
+      lines.push(`    action: ${row.action}`);
+    }
+  }
+  if (count === 0) return `default_policy: ${dp}\nrules: []\n`;
+  return `${lines.join('\n')}\n`;
+}
+
 export class TrendsPanel {
   constructor(canvasMap, readoutEl) {
     this.canvases = canvasMap;
@@ -57,6 +142,11 @@ export class TrendsPanel {
         }
         this.render();
       });
+      cvs.addEventListener('pointercancel', () => {
+        this._dragStart = null;
+        this.hoverRatio = null;
+        this.render();
+      });
     });
   }
 
@@ -66,7 +156,14 @@ export class TrendsPanel {
     if (this.buffer.length > this.maxPoints) {
       this.buffer.shift();
       if (this.zoomRange) {
-        this.zoomRange = [Math.max(0, this.zoomRange[0] - 1), Math.max(2, this.zoomRange[1] - 1)];
+        const nextStart = this.zoomRange[0] - 1;
+        const nextEnd = this.zoomRange[1] - 1;
+        if (nextStart < 0 && nextEnd < 3) {
+          // Zoomed slice has scrolled completely off the ring buffer; return to latest live window.
+          this.zoomRange = null;
+        } else {
+          this.zoomRange = [Math.max(0, nextStart), Math.max(3, nextEnd)];
+        }
       }
     }
     this.render();
@@ -89,7 +186,7 @@ export class TrendsPanel {
   }
 
   isVisible() {
-    return Boolean(this.canvases.freq && this.canvases.freq.offsetParent !== null);
+    return !document.hidden && Boolean(this.canvases.freq && this.canvases.freq.offsetParent !== null);
   }
 
   render() {
@@ -179,6 +276,9 @@ export class TrendsPanel {
       }
     };
 
+    const maxMw = pts.reduce((acc, p) => Math.max(acc, Number(p.mw) || 0), 0);
+    const mwAxisMax = maxMw > 50 ? Math.ceil((maxMw * 1.12) / 5) * 5 : 55;
+
     drawStrip(this.canvases.freq, {
       min: 49.2, max: 50.2, band: [49.9, 50.05],
       series: [
@@ -202,12 +302,15 @@ export class TrendsPanel {
       ],
     });
     drawStrip(this.canvases.mw, {
-      min: 0, max: 55,
+      min: 0, max: mwAxisMax,
       refLines: [
         { v: 42, color: dark ? '#f2b16d' : '#c67a28' },
         { v: 46, color: dark ? '#f06a6a' : '#d63b42' },
       ],
-      series: [{ key: 'mw', color: dark ? '#ece7df' : '#262d3d' }],
+      series: [
+        { key: 'mw', color: dark ? '#ece7df' : '#262d3d' },
+        { key: 'genMw', color: dark ? '#f2b16d' : '#c67a28' },
+      ],
     });
 
     if (this.readoutEl) {
@@ -220,7 +323,10 @@ export class TrendsPanel {
         const p = pts[idx];
         const bHz = p.busHz === null ? '--' : `${p.busHz.toFixed(2)} Hz`;
         const gHz = p.genHz === null ? '--' : `${p.genHz.toFixed(2)} Hz`;
-        this.readoutEl.textContent = `${p.utc} | Bus ${bHz} · GEN ${gHz} · ${p.busKv.toFixed(1)} kV · TR-1 ${p.tr1Pct}% · TR-2 ${p.tr2Pct}% · ${p.mw.toFixed(1)} MW`;
+        const loadStr = p.tieClosed && typeof p.genMw === 'number' && typeof p.tieMw === 'number'
+          ? `${p.mw.toFixed(1)} MW (Gen ${p.genMw.toFixed(1)} / Tie ${p.tieMw.toFixed(1)})`
+          : `${p.mw.toFixed(1)} MW`;
+        this.readoutEl.textContent = `${p.utc} | Bus ${bHz} · GEN ${gHz} · ${p.busKv.toFixed(1)} kV · TR-1 ${p.tr1Pct}% · TR-2 ${p.tr2Pct}% · ${loadStr}`;
       }
     }
   }
@@ -261,15 +367,6 @@ export function renderAlarmsTable(tbodyEl, emptyEl, alarms, handlers) {
   });
 }
 
-function formatSoeDetail(raw) {
-  if (raw === null || raw === undefined) return '';
-  if (typeof raw !== 'object') return String(raw);
-  if (Array.isArray(raw)) return raw.map((x) => (typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x))).join(', ');
-  return Object.entries(raw)
-    .map(([k, v]) => `${k}=${typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}`)
-    .join(', ');
-}
-
 export function renderSoeTable(tbodyEl, emptyEl, events, onReplay) {
   if (!tbodyEl) return;
   tbodyEl.replaceChildren();
@@ -284,7 +381,7 @@ export function renderSoeTable(tbodyEl, emptyEl, events, onReplay) {
     const rawDetail = ev.event ?? ev.message ?? ev.detail;
     const detail = formatSoeDetail(rawDetail);
     const text = code && detail && !detail.includes(code) ? `${code}: ${detail}` : (detail || code);
-    const isTrip = /trip|lockout|86|51|81u|27/i.test(`${code} ${detail}`);
+    const isTrip = /trip|lockout|86|50|51|81u|81o|27/i.test(`${code} ${detail}`);
     const objAsset = rawDetail && typeof rawDetail === 'object' ? (rawDetail.asset || rawDetail.bay_id || '') : '';
     const asset = ev.asset || ev.bay_id || objAsset || ev.source || 'Station';
     tr.innerHTML = `
@@ -307,14 +404,15 @@ export function renderIncidentTimeline(axisEl, listEl, pins, findCorrelation, on
     axisEl.innerHTML = '<div class="muted-empty">Pin items from Frames, Alarms, Dispatch, Station log, or Terminal selection to build your cross-module UTC/IST incident timeline.</div>';
     return;
   }
-  const sorted = [...pins].sort((a, b) => a.utcSec - b.utcSec);
-  const minS = sorted[0].utcSec;
-  const maxS = Math.max(minS + 10, sorted[sorted.length - 1].utcSec);
+  const sorted = [...pins].sort((a, b) => (Number(a.utcSec) || 0) - (Number(b.utcSec) || 0));
+  const minS = Number(sorted[0].utcSec) || 0;
+  const maxS = Math.max(minS + 10, Number(sorted[sorted.length - 1].utcSec) || minS + 10);
 
   const track = document.createElement('div');
   track.className = 'timeline-track';
   sorted.forEach((item) => {
-    const pct = Math.max(4, Math.min(96, ((item.utcSec - minS) / (maxS - minS)) * 92 + 4));
+    const sec = Number(item.utcSec) || minS;
+    const pct = Math.max(4, Math.min(96, ((sec - minS) / (maxS - minS)) * 92 + 4));
     const corr = findCorrelation(item);
     const dot = document.createElement('button');
     dot.type = 'button';
@@ -348,8 +446,10 @@ export function renderFrameAnatomy(listEl, detailEl, frames, filterText, selecte
   const q = String(filterText || '').trim().toLowerCase();
   const filtered = (frames || []).filter((fr) => {
     if (!q) return true;
-    const hay = JSON.stringify(fr).toLowerCase();
-    return hay.includes(q);
+    if (typeof fr._searchHay !== 'string') {
+      fr._searchHay = JSON.stringify(fr).toLowerCase();
+    }
+    return fr._searchHay.includes(q);
   });
 
   listEl.replaceChildren();

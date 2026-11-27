@@ -248,7 +248,10 @@ export class GlossaryController {
       this.dialogEl.setAttribute('open', 'open');
     }
     if (termId && this.gridEl) {
-      const target = this.gridEl.querySelector(`[data-term-id="${termId}"]`);
+      const escapedId = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(String(termId))
+        : String(termId).replace(/["\\]/g, '\\$&');
+      const target = this.gridEl.querySelector(`[data-term-id="${escapedId}"]`);
       if (target) {
         requestAnimationFrame(() => {
           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
