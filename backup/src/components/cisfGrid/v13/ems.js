@@ -950,7 +950,7 @@ function renderHeaderProgress() {
 
 function renderModuleRail() {
   el.railList.replaceChildren();
-  MODULES.forEach((m) => {
+  SCORED_MODULES.forEach((m) => {
     const li = document.createElement('li');
     const btn = document.createElement('button');
     btn.type = 'button';

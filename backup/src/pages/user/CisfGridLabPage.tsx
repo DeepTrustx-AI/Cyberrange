@@ -12,7 +12,6 @@ import { SegmentedBar } from '../../components/ui/SegmentedBar';
 import { CisfGridV13Workspace } from '../../components/cisfGrid/CisfGridV13Workspace';
 import { CisfGridApiError, createCisfGridApi } from '../../components/cisfGrid/api';
 import type {
-  CisfGridMode,
   SessionInfo,
   TourPrefsState,
 } from '../../components/cisfGrid/types';
@@ -32,7 +31,6 @@ export const CisfGridLabPage: React.FC = () => {
   const api = useMemo(() => createCisfGridApi(apiFetch), [apiFetch]);
 
   const [session, setSession] = useState<SessionInfo | null>(null);
-  const [launchMode, setLaunchMode] = useState<CisfGridMode>('modules');
   const [loadingSession, setLoadingSession] = useState(true);
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
@@ -145,14 +143,13 @@ export const CisfGridLabPage: React.FC = () => {
     [refreshSession],
   );
 
-  const handleStart = async (modeOverride?: CisfGridMode) => {
+  const handleStart = async () => {
     if (starting || isRunning || isPreparing || isStoppingUnexpectedly) return;
-    const requestedMode = modeOverride ?? launchMode;
     setStarting(true);
     setError('');
     setPausedNotice('');
     try {
-      const started = await api.startSession(assignmentId, requestedMode);
+      const started = await api.startSession(assignmentId, 'modules');
       applySessionPayload(started);
     } catch (err) {
       if (err instanceof CisfGridApiError && err.status === 409) {
@@ -372,7 +369,7 @@ export const CisfGridLabPage: React.FC = () => {
                   <div className="mt-6">
                     <button
                       type="button"
-                      onClick={() => void handleStart(session?.session.mode ?? launchMode)}
+                      onClick={() => void handleStart()}
                       disabled={starting || isStoppingUnexpectedly || Boolean(pausedNotice)}
                       className="inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-700"
                     >
@@ -386,46 +383,42 @@ export const CisfGridLabPage: React.FC = () => {
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <span className="inline-flex rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">
-                        Live IEC 60870-5-104 Substation Defense
+                        Live IEC 60870-5-104 Substation Defense · 10 Modules · 1,000 pts
                       </span>
                       <h2 className="mt-3 font-display text-2xl font-extrabold text-slate-900 dark:text-white">
                         Launch your isolated substation workspace
                       </h2>
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                        Each launch provisions a private multi-container substation with a unique per-session cryptographic seed, Ed25519 key-only responder SSH, live IEC-104 RTUs, and a signed pass-only grading checker.
+                        Each launch provisions a private multi-container 220/132/33 kV substation with a unique per-session cryptographic seed, Ed25519 key-only responder SSH, live IEC-104 RTUs, Purdue zone firewall enforcement, and a signed pass-only grading checker across all ten guided modules.
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => setLaunchMode('modules')}
-                      className={`rounded-2xl border p-4 text-left transition-colors ${
-                        launchMode === 'modules'
-                          ? 'border-brand-600 bg-brand-50 dark:border-brand-400 dark:bg-brand-950/30'
-                          : 'border-[var(--line)] bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950'
-                      }`}
-                    >
-                      <div className="text-sm font-bold text-slate-900 dark:text-white">Guided Modules (1000 pts)</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                        Ten progressive modules across five acts with Clean Start, tiered hints, Practice checks, Case Board, and Shift Report.
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-[var(--line)] bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Acts 1 to 3 (M1 to M7)
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-700 dark:text-slate-300">
+                        Live IEC-104 walkdown, IOA reconstruction, historian audit, multi-vantage blinding proof, rogue SBO forensics, host pivot tracing, and binary replay-shim eradication.
                       </p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLaunchMode('full_op')}
-                      className={`rounded-2xl border p-4 text-left transition-colors ${
-                        launchMode === 'full_op'
-                          ? 'border-brand-600 bg-brand-50 dark:border-brand-400 dark:bg-brand-950/30'
-                          : 'border-[var(--line)] bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950'
-                      }`}
-                    >
-                      <div className="text-sm font-bold text-slate-900 dark:text-white">Full Operation Mode (100 pts)</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
-                        Unscripted 6-gate incident response on an independent seed with per-module Clean Start disabled.
+                    </div>
+                    <div className="rounded-2xl border border-[var(--line)] bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Acts 4 to 5 (M8 to M10)
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-700 dark:text-slate-300">
+                        Zero-downtime Purdue firewall policy, paced cold-load restoration without protection trips, and unseen-attack Zeek IEC-104 detection engineering.
                       </p>
-                    </button>
+                    </div>
+                    <div className="rounded-2xl border border-[var(--line)] bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Grading &amp; Handover
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-700 dark:text-slate-300">
+                        1,000 points across 10 modules with Practice checks, tiered hints (-10% for Level 3), Case Board evidence cards, Shift Report, and completion certificate.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="mt-6 flex flex-wrap items-center gap-3">

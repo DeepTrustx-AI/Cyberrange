@@ -100,6 +100,8 @@ test('CisfGridLabPage and V13 Living Stage port adhere to aesthetic, routing, se
   const apiSrc = await readFile(new URL('../src/components/cisfGrid/api.ts', import.meta.url), 'utf8');
 
   assert.ok(pageSrc.includes('<CisfGridV13Workspace'), 'CisfGridLabPage must mount CisfGridV13Workspace when running');
+  assert.doesNotMatch(pageSrc, /Full Operation Mode|setLaunchMode\('full_op'\)/, 'CisfGridLabPage must use guided 10-module mode only');
+  assert.ok(v13EmsSrc.includes('SCORED_MODULES.forEach((m) => {'), 'v13/ems.js rail must list only the 10 guided modules');
   assert.ok(wsBridgeSrc.includes('mountV13Workspace'), 'CisfGridV13Workspace must mount V13 workspace');
   assert.ok(wsBridgeSrc.includes("assetBase: '/cisf-grid/assets'"), 'CisfGridV13Workspace must point sprites to /cisf-grid/assets');
   assert.ok(transportSrc.includes('/api/v1/terminal/ws/cisf-ot-grid'), 'platformTransport must wire terminal WS to cisf-ot-grid');
