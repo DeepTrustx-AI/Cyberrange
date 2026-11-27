@@ -1128,6 +1128,13 @@ function renderHeaderProgress() {
   }
 }
 
+function isModuleLocked(modId) {
+  if (!['m8', 'm9', 'm10'].includes(modId)) return false;
+  if (state.clearedModules.has('m7')) return false;
+  if (['m8', 'm9', 'm10'].includes(state.module)) return false;
+  return true;
+}
+
 function renderModuleRail() {
   el.railList.replaceChildren();
   SCORED_MODULES.forEach((m) => {
@@ -1136,10 +1143,18 @@ function renderModuleRail() {
     btn.type = 'button';
     btn.className = 'rail-item-btn';
     const isCleared = state.clearedModules.has(m.id);
+    const locked = isModuleLocked(m.id);
     if (m.id === state.module) btn.classList.add('is-selected');
     if (isCleared) btn.classList.add('is-cleared');
+    if (locked) {
+      btn.classList.add('is-locked');
+      btn.setAttribute('aria-disabled', 'true');
+      btn.title = 'Complete Module 7 to unlock Modules 8 to 10';
+    }
     const discText = isCleared ? '&#10003;' : m.isFullOp ? 'OP' : m.num;
-    const subText = m.isFullOp ? m.time : `${m.pts} pts · ${m.time}`;
+    const subText = locked
+      ? `${m.pts} pts · Unlock via M7`
+      : (m.isFullOp ? m.time : `${m.pts} pts · ${m.time}`);
     btn.innerHTML = `
       <span class="rail-disc tabular">${discText}</span>
       <span class="rail-item-copy">
@@ -2476,19 +2491,30 @@ function setModule(modId, silent = false) {
 }
 
 async function switchModuleFromRail(modId) {
+  if (isModuleLocked(modId)) {
+    logStation('Complete Module 7 (decode and disable the blinding shim) before opening Modules 8 to 10.', 't-warn');
+    return;
+  }
+  const cId = contractModId(modId);
+  if (state.liveConnected) {
+    const resp = await apiJson('POST', '/api/ems/reset-module', { module_id: cId });
+    if (!resp || !resp.ok) {
+      const errMsg = resp?.data?.detail || resp?.data?.error || `HTTP ${resp ? resp.status : 0}`;
+      logStation(`Module switch to ${cId} rejected (${errMsg}).`, 't-warn');
+      return;
+    }
+    state.lastServerModuleId = cId;
+    setModule(modId);
+    if (tabChannel) {
+      try { tabChannel.postMessage({ type: 'module', modId }); } catch {}
+    }
+    logStation(`Station switched active module to ${cId}.`, 't-ok');
+    await Promise.all([refreshStateOnce(), refreshDispatch(), refreshAlarms(), refreshFrames()]);
+    return;
+  }
   setModule(modId);
   if (tabChannel) {
     try { tabChannel.postMessage({ type: 'module', modId }); } catch {}
-  }
-  if (!state.liveConnected) return;
-  const cId = contractModId(modId);
-  state.lastServerModuleId = cId;
-  const resp = await apiJson('POST', '/api/ems/reset-module', { module_id: cId });
-  if (resp && resp.ok) {
-    logStation(`Station switched active module to ${cId}.`, 't-ok');
-    await Promise.all([refreshStateOnce(), refreshDispatch(), refreshAlarms(), refreshFrames()]);
-  } else if (resp) {
-    logStation(`Module switch to ${cId} rejected (HTTP ${resp.status}).`, 't-warn');
   }
 }
 

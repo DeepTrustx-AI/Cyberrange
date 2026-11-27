@@ -1,5 +1,5 @@
 const STATIC_SECURITY_HEADERS = {
-  'Content-Security-Policy': "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+  'Content-Security-Policy': "script-src 'self' https://accounts.google.com https://checkout.razorpay.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };

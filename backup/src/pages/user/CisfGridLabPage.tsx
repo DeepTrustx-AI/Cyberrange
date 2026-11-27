@@ -126,22 +126,26 @@ export const CisfGridLabPage: React.FC = () => {
     }
   }, [api, applySessionPayload, assignmentId]);
 
-  // Initial load: fetch current session and persisted tour preferences together before rendering workspace.
+  // Initial load: fetch current session, persisted progress, and tour preferences before rendering workspace.
   useEffect(() => {
     let active = true;
     void (async () => {
-      const [, prefs] = await Promise.all([
+      const [, prefs, caseRes] = await Promise.all([
         refreshSession(),
         api.getTourPrefs().catch(() => null),
+        api.getCaseBoard(assignmentId).catch(() => null),
       ]);
       if (!active) return;
       if (prefs) setTourPrefs(prefs);
+      if (caseRes && Array.isArray(caseRes.passed_modules)) {
+        setPassedModules(caseRes.passed_modules);
+      }
       setLoadingSession(false);
     })();
     return () => {
       active = false;
     };
-  }, [api, refreshSession]);
+  }, [api, assignmentId, refreshSession]);
 
   // If user re-authenticates in another tab (token updates), clear authExpired and re-check session.
   useEffect(() => {

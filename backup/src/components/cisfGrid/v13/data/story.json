@@ -77,7 +77,7 @@
       "title": "3. The trail",
       "modules": ["m05", "m06", "m07"],
       "question": "Who sent the commands, how did they reach the control room, and what is still running?",
-      "sceneCue": "The path through the zones draws hop by hop, as the learner proves each one",
+      "sceneCue": "Inspect the Network view and Incident Timeline as you prove each lateral hop and decode the implant",
       "durationMs": 3000
     },
     {

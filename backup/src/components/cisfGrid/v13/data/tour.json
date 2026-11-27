@@ -193,7 +193,7 @@
       "targets": ["#btn-clear-86", "#btn-reset-electrical", "#nav-tab-station"],
       "pose": "think",
       "dir": "down",
-      "body": "**Clear lockout 86** resets a relay after you've checked it. **Reset electrical state** starts M9 over, and it costs points."
+      "body": "**Clear lockout 86** resets a relay after you've checked it. **Reset electrical state** starts M9 switching over cleanly. Each protection trip costs 10% (max 20%); resets themselves are free."
     },
     {
       "id": "connection-lost",
@@ -281,7 +281,7 @@
       "pose": "think",
       "dir": "down",
       "preferSide": "top",
-      "body": "Open **Evidence** -> **Timeline** for your pinned clues, or **Station** -> **Alarms & SOE** to scrub a 15-second trip replay."
+      "body": "Open **Evidence** -> **Timeline** for your pinned clues, or **Station** -> **Controls** to scrub a 15-second trip replay."
     },
     {
       "id": "guide-editor",

@@ -612,3 +612,21 @@ test('E-01/E-05/E-13/M-09 runtime: PtyTerminal resolves dynamic URLs, coalesces 
   assert.equal(sockets[1].url, 'wss://academy.deeptrustxai.com/api/v1/terminal/ws/cisf-ot-grid?ticket=tkt-2');
   pty.dispose();
 });
+
+test('Independent audit regressions: P0-2 rail lock, P2-6 tour/story parity, P3-3 pre-launch progress + CSP script-src', async () => {
+  const { readFileSync } = await import('node:fs');
+  const emsSrc = readFileSync(new URL('../src/components/cisfGrid/v13/ems.js', import.meta.url), 'utf8');
+  assert.ok(emsSrc.includes('function isModuleLocked(modId)'), 'ems.js must gate m8..m10 until m7 clears');
+  assert.ok(emsSrc.includes('Unlock via M7'), 'rail must indicate M7 unlock prerequisite');
+
+  const pageSrc = readFileSync(new URL('../src/pages/user/CisfGridLabPage.tsx', import.meta.url), 'utf8');
+  assert.ok(pageSrc.includes('api.getCaseBoard(assignmentId)'), 'CisfGridLabPage must preload persisted progress on mount');
+
+  const workerSrc = readFileSync(new URL('../../worker-entry.js', import.meta.url), 'utf8');
+  assert.ok(workerSrc.includes("script-src 'self' https://accounts.google.com https://checkout.razorpay.com"), 'worker-entry.js CSP must restrict script-src');
+
+  const tourSrc = readFileSync(new URL('../src/components/cisfGrid/v13/data/tour.json', import.meta.url), 'utf8');
+  assert.ok(tourSrc.includes('resets themselves are free'), 'tour.json m9-first-trip must reflect free resets / trip penalty');
+  assert.ok(tourSrc.includes('**Station** -> **Controls**'), 'tour.json must point replay scrubber to Station -> Controls');
+  assert.ok(!tourSrc.includes('starts M9 over, and it costs points'), 'tour.json must not carry stale reset-penalty warning');
+});
