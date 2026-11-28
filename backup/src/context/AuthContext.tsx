@@ -204,6 +204,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!data || typeof data.token !== 'string' || !data.token) {
           return null;
         }
+        const currentSub = decodeJwtSub(tokenRef.current);
+        const refreshedSub = decodeJwtSub(data.token);
+        if (currentSub && refreshedSub && currentSub !== refreshedSub) {
+          safeRemoveItem(TOKEN_KEY);
+          safeRemoveItem(REFRESH_TOKEN_KEY);
+          clearLabLocalStorage(userIdRef.current);
+          tokenRef.current = null;
+          setToken(null);
+          setUser(null);
+          setAuthorization(null);
+          return null;
+        }
         safeSetItem(TOKEN_KEY, data.token);
         if (typeof data.refresh_token === 'string' && data.refresh_token) {
           safeSetItem(REFRESH_TOKEN_KEY, data.refresh_token);
@@ -260,6 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tokenRef.current = nextToken;
       setToken(nextToken);
       if (!nextToken) {
+        clearLabLocalStorage(userIdRef.current);
         setUser(null);
         setAuthorization(null);
         return;
@@ -267,6 +280,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const prevSub = decodeJwtSub(prevToken);
       const nextSub = decodeJwtSub(nextToken);
       if (prevSub !== nextSub || userIdRef.current === null) {
+        if (prevSub !== nextSub) {
+          clearLabLocalStorage(userIdRef.current);
+        }
         setUser(null);
         setAuthorization(null);
         setIsLoading(true);
@@ -346,6 +362,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setSessionToken = useCallback(async (newToken: string, userData?: User) => {
+    const prevSub = decodeJwtSub(tokenRef.current);
+    const nextSub = decodeJwtSub(newToken);
+    if (!prevSub || prevSub !== nextSub) {
+      safeRemoveItem(REFRESH_TOKEN_KEY);
+      if (prevSub && prevSub !== nextSub) {
+        clearLabLocalStorage(userIdRef.current);
+      }
+    }
     safeSetItem(TOKEN_KEY, newToken);
     tokenRef.current = newToken;
     setToken(newToken);
@@ -476,6 +500,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (typeof data.refresh_token === 'string' && data.refresh_token) {
       safeSetItem(REFRESH_TOKEN_KEY, data.refresh_token);
+    } else {
+      safeRemoveItem(REFRESH_TOKEN_KEY);
     }
     setUser(data.user);
     await loadAuthorization(data.token || tokenRef.current);

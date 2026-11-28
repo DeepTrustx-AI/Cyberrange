@@ -2307,6 +2307,7 @@ html.dark .cg-v13-root .tab-btn.is-active { background: var(--peach-100); border
 .cg-v13-root .anatomy-ioas { display: flex; flex-direction: column; gap: 4px; padding: 6px 0 2px 12px; }
 .cg-v13-root .ioa-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .cg-v13-root .tshark-filter-preview { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); word-break: break-all; }
+.cg-v13-root .tshark-filter-preview code { white-space: pre-wrap; }
 
 .cg-v13-root .dispatch-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .cg-v13-root .dispatch-entry { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--paper); }

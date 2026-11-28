@@ -116,9 +116,31 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
 
     host.innerHTML = V13_WORKSPACE_MARKUP;
 
+    const decodeJwtSub = (raw: string | null): string | null => {
+      if (!raw) return null;
+      try {
+        const parts = raw.split('.');
+        if (parts.length !== 3) return null;
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+        const parsed = JSON.parse(atob(padded)) as { sub?: unknown };
+        return parsed?.sub != null ? String(parsed.sub) : null;
+      } catch {
+        return null;
+      }
+    };
+    const mountedSub = decodeJwtSub(tokenRef.current);
+    const isSessionActive = () => {
+      const current = tokenRef.current;
+      if (!current) return false;
+      if (!mountedSub) return true;
+      return decodeJwtSub(current) === mountedSub;
+    };
+
     const transport = createV13PlatformTransport({
       apiFetch,
       getToken: () => tokenRef.current,
+      isSessionActive,
       assignmentId,
       ensureEvalToken: (force) => callbacksRef.current.ensureEvalToken(force),
       onProgressUpdated: (mods) => callbacksRef.current.onProgressUpdated?.(mods),
@@ -132,6 +154,7 @@ export const CisfGridV13Workspace: React.FC<CisfGridV13WorkspaceProps> = ({
       generation: initialGenRef.current ?? null,
       mode: String(initialModeRef.current || 'modules'),
       transport,
+      isSessionActive,
       storyData: storyData as Record<string, unknown>,
       tourData: tourData as Record<string, unknown>,
       initialTourPrefs: initialPrefsRef.current,

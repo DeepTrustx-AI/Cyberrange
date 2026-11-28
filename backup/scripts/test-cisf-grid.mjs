@@ -680,3 +680,55 @@ test('Independent audit regressions: P0-2 rail lock, P2-6 tour/story parity, P3-
   assert.ok(workerSrc.includes("sanitizedHeaders.delete(h)") && workerSrc.includes("'x-forwarded-for'"), 'worker-entry.js must strip client-supplied forwarding headers');
   assert.ok(!workerSrc.includes("connect-src 'self' wss: ") && !headersSrc.includes("connect-src 'self' wss: "), 'CSP must not allow wildcard wss: exfiltration');
 });
+
+test('Security audit remediation: worker rejects encoded-slash traversal, panels sanitizes tshark filter, ems/AuthContext bind logout & drafts', async (t) => {
+  // 1. Worker rejects percent-encoded slash/backslash traversal on proxied prefixes before calling fetch
+  const workerMod = await import('../../worker-entry.js');
+  const origFetch = globalThis.fetch;
+  let upstreamCalls = 0;
+  globalThis.fetch = async () => {
+    upstreamCalls += 1;
+    return new Response('ok', { status: 200 });
+  };
+  t.after(() => { globalThis.fetch = origFetch; });
+
+  for (const badUrl of [
+    'https://academy.deeptrustxai.com/api/%2f..%2fadmin',
+    'https://academy.deeptrustxai.com/compliance-lab/%5csecret',
+    'https://academy.deeptrustxai.com/api/v1/..%2F..%2Finternal',
+  ]) {
+    const res = await workerMod.default.fetch(new Request(badUrl), {
+      API_ORIGIN: 'https://api-academy.deeptrustxai.com',
+      ASSETS: { fetch: async () => new Response('asset') },
+    });
+    assert.equal(res.status, 400, `Worker must reject encoded traversal ${badUrl} with 400`);
+  }
+  assert.equal(upstreamCalls, 0, 'Worker must never forward encoded traversal URLs to API_ORIGIN');
+
+  // 2. panels.js sanitizes untrusted active.tshark_filter containing newlines / shell metacharacters
+  const panelsSrc = await readFile(new URL('../src/components/cisfGrid/v13/panels.js', import.meta.url), 'utf8');
+  assert.ok(panelsSrc.includes('function sanitizeTsharkFilter'), 'panels.js must sanitize tshark_filter before display/clipboard copy');
+
+  // 3. v13Styles.css renders multiline filter whitespace visibly
+  const cssSrc = await readFile(new URL('../src/components/cisfGrid/v13/v13Styles.css', import.meta.url), 'utf8');
+  assert.ok(cssSrc.includes('.tshark-filter-preview code') && cssSrc.includes('white-space: pre-wrap'), 'v13Styles.css must set white-space: pre-wrap on .tshark-filter-preview code');
+
+  // 4. ems.js sanitizes clipboard writes, clears sessionStorage drafts on end-session/auth-change, and gates dispose() notes flush on active session
+  const emsSrc = await readFile(new URL('../src/components/cisfGrid/v13/ems.js', import.meta.url), 'utf8');
+  assert.ok(emsSrc.includes('function sanitizeClipboardText'), 'ems.js must sanitize ANSI/control chars before clipboard copy');
+  assert.ok(emsSrc.includes('function clearAllEditorDrafts'), 'ems.js must purge sessionStorage editor drafts on session end / auth change');
+  assert.ok(emsSrc.includes('isSessionActive'), 'ems.js dispose() must verify session is still bound to original user before flushing notes');
+
+  // 5. CisfGridV13Workspace & platformTransport pass session-binding guard
+  const wsSrc = await readFile(new URL('../src/components/cisfGrid/CisfGridV13Workspace.tsx', import.meta.url), 'utf8');
+  const ptSrc = await readFile(new URL('../src/components/cisfGrid/v13/platformTransport.ts', import.meta.url), 'utf8');
+  assert.ok(wsSrc.includes('isSessionActive'), 'CisfGridV13Workspace must pass isSessionActive bound to mounted subject');
+  assert.ok(ptSrc.includes('isSessionActive'), 'platformTransport must check isSessionActive before notes flush');
+
+  // 6. AuthContext purges lab storage on cross-tab signout/switch and clears stale refresh_token on subject change or login without refresh_token
+  const authSrc = await readFile(new URL('../src/context/AuthContext.tsx', import.meta.url), 'utf8');
+  const onStorageSlice = authSrc.slice(authSrc.indexOf('const onStorage ='), authSrc.indexOf("window.addEventListener('storage'"));
+  assert.ok(onStorageSlice.includes('clearLabLocalStorage'), 'AuthContext onStorage must clear lab storage on cross-tab logout or user switch');
+  const setSessionSlice = authSrc.slice(authSrc.indexOf('const setSessionToken ='), authSrc.indexOf('const logout ='));
+  assert.ok(setSessionSlice.includes('REFRESH_TOKEN_KEY'), 'AuthContext setSessionToken must clear stale REFRESH_TOKEN_KEY on subject switch');
+});

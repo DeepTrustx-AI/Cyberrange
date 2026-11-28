@@ -12,6 +12,7 @@ export interface PlatformTransportConfig {
   apiFetch: ApiFetchFn;
   token?: string | null;
   getToken?: () => string | null;
+  isSessionActive?: () => boolean;
   assignmentId: number | null;
   ensureEvalToken: (forceRefresh?: boolean) => Promise<string>;
   onProgressUpdated?: (passedModules: string[]) => void;
@@ -63,7 +64,7 @@ function errorResponse(err: unknown): V13ApiResponse {
 }
 
 export function createV13PlatformTransport(config: PlatformTransportConfig): V13Transport {
-  const { apiFetch, assignmentId, ensureEvalToken, onProgressUpdated, onUpstreamLost } = config;
+  const { apiFetch, assignmentId, ensureEvalToken, onProgressUpdated, onUpstreamLost, isSessionActive } = config;
   const api = createCisfGridApi(apiFetch);
 
   const notifyIfUpstreamLost = (status: number, message = '') => {
@@ -180,6 +181,9 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
             return { status: 200, ok: true, data: asRecord(data) };
           }
           if (upper === 'PUT') {
+            if (isSessionActive && !isSessionActive()) {
+              return { status: 401, ok: false, data: { error: 'Session no longer active for mounted user' } };
+            }
             const text = typeof bodyRec.text === 'string' ? bodyRec.text : '';
             const pins = Array.isArray(bodyRec.pins) ? (bodyRec.pins as NotesState['pins']) : [];
             const data = await api.saveNotes({ text, pins }, assignmentId);

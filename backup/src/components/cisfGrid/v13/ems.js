@@ -2262,13 +2262,24 @@ function pinArtifact(source, summary, vantage = 'Station', explicitUtc = null) {
   logStation(`Pinned evidence from ${source} (${utc}).`, 't-ok');
 }
 
+function sanitizeClipboardText(text, singleLine = false) {
+  let out = String(text ?? '')
+    .replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '')
+    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, '')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/g, '');
+  if (singleLine) {
+    out = out.replace(/[\r\n]+/g, ' ').trim();
+  }
+  return out;
+}
+
 function copySanitizedTimeline() {
   const sorted = [...state.pinnedArtifacts].sort((a, b) => a.utcSec - b.utcSec);
   const lines = ['CISF OT Incident Handover Timeline (Sanitized UTC / IST)'];
   sorted.forEach((item) => {
     lines.push(`- ${item.utc} (${item.ist || ''}) | ${item.vantage} | ${item.source}: ${item.summary}`);
   });
-  const text = lines.join('\n');
+  const text = sanitizeClipboardText(lines.join('\n'), false);
   navigator.clipboard?.writeText(text).catch(() => {});
   logStation(`Copied sanitized timeline (${sorted.length} pinned entries).`, 't-ok');
 }
@@ -2357,6 +2368,19 @@ function clearEditorDraft(fname) {
   delete state.editorDrafts[fname];
   try {
     sessionStorage.removeItem(`${draftScope}draft_${fname}`);
+  } catch {}
+}
+
+function clearAllEditorDrafts() {
+  state.editorDrafts = {};
+  try {
+    const prefix = `${draftScope}draft_`;
+    const toRemove = [];
+    for (let i = 0; i < sessionStorage.length; i += 1) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach((k) => sessionStorage.removeItem(k));
   } catch {}
 }
 
@@ -2931,8 +2955,9 @@ function drawFramesPanel() {
     {
       onSelect: (id) => { state.selectedFrameId = id; drawFramesPanel(); },
       onCopyFilter: (flt) => {
-        navigator.clipboard?.writeText(flt).catch(() => {});
-        logStation(`Copied tshark filter: ${flt}`, 't-ok');
+        const cleanFlt = sanitizeClipboardText(flt, true);
+        navigator.clipboard?.writeText(cleanFlt).catch(() => {});
+        logStation(`Copied tshark filter: ${cleanFlt}`, 't-ok');
       },
       onPinFrame: (fr, typeName) => {
         const ioaStr = (fr.ioas || []).map((o) => o.ioa).join(',');
@@ -3461,6 +3486,7 @@ function wireEvents() {
       body: 'Stopping the session removes your private task containers and deletes ~/workspace/* files. Saved notes and completed module points remain stored.',
       confirmLabel: 'End sitting',
       onConfirm: () => {
+        clearAllEditorDrafts();
         if (typeof options.onEndSession === 'function') options.onEndSession();
         else logStation('Session end requested by operator.', 't-warn');
       },
@@ -3865,7 +3891,7 @@ function wireEvents() {
   });
 
   document.getElementById('btn-export-oplog').addEventListener('click', () => {
-    const text = ['CISF OT Operator Log (UTC / IST)', ...state.operatorLog.map((e) => `- ${e.utc} (${e.ist}) | ${e.device} ${e.action} (${e.result}) | ${e.reason}`)].join('\n');
+    const text = sanitizeClipboardText(['CISF OT Operator Log (UTC / IST)', ...state.operatorLog.map((e) => `- ${e.utc} (${e.ist}) | ${e.device} ${e.action} (${e.result}) | ${e.reason}`)].join('\n'), false);
     navigator.clipboard?.writeText(text).catch(() => {});
     logStation(`Copied operator log (${state.operatorLog.length} entries).`, 't-ok');
   });
@@ -4212,12 +4238,19 @@ initLiveSession();
 
 function dispose() {
   if (disposed) return;
+  const sessionStillActive =
+    typeof options.isSessionActive !== 'function' || Boolean(options.isSessionActive());
+  if (!sessionStillActive) {
+    clearAllEditorDrafts();
+  }
   if (notesSaveTimer) {
     clearTimeout(notesSaveTimer);
     notesSaveTimer = null;
-    persistLocalNotesAndPins();
-    if (state.liveConnected && state.notesHydrated) {
-      void apiJson('PUT', '/api/ems/notes', { text: el.notesArea.value, pins: [...state.pinnedArtifacts] });
+    if (sessionStillActive) {
+      persistLocalNotesAndPins();
+      if (state.liveConnected && state.notesHydrated) {
+        void apiJson('PUT', '/api/ems/notes', { text: el.notesArea.value, pins: [...state.pinnedArtifacts] });
+      }
     }
   }
   disposed = true;

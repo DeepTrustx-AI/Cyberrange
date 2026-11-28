@@ -54,6 +54,7 @@ export interface V13MountOptions {
   onEndSession?: () => void;
   onThemeChange?: (nextTheme: 'light' | 'dark') => void;
   onUpstreamLost?: (status: number) => void;
+  isSessionActive?: () => boolean;
 }
 
 export interface V13WorkspaceHandle {

@@ -484,7 +484,7 @@ export function renderFrameAnatomy(listEl, detailEl, frames, filterText, selecte
   const ioas = Array.isArray(active.ioas) ? active.ioas : [];
   const typeName = asdu.type_name || IEC_TYPE_NAMES[asdu.type_id] || `Type ${asdu.type_id ?? '-'}`;
   const cotName = asdu.cot_name || IEC_COT_NAMES[asdu.cot] || `COT ${asdu.cot ?? '-'}`;
-  const tsharkFilter = active.tshark_filter || buildTsharkFilter(active);
+  const tsharkFilter = sanitizeTsharkFilter(active.tshark_filter, active);
 
   detailEl.innerHTML = `
     <div class="frame-detail-head">
@@ -535,6 +535,21 @@ export function renderFrameAnatomy(listEl, detailEl, frames, filterText, selecte
   detailEl.querySelector('#btn-frame-pin')?.addEventListener('click', () => {
     handlers.onPinFrame(active, typeName);
   });
+}
+
+function sanitizeTsharkFilter(raw, fr) {
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (
+      trimmed.length > 0 &&
+      trimmed.length <= 512 &&
+      !/[\r\n\x00-\x1f\x7f-\x9f`$;&|<>\\]/.test(trimmed) &&
+      /^[A-Za-z0-9_.\s=:!()\[\],"'/-]+$/.test(trimmed)
+    ) {
+      return trimmed;
+    }
+  }
+  return buildTsharkFilter(fr);
 }
 
 function buildTsharkFilter(fr) {

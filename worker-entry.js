@@ -25,6 +25,26 @@ export default {
       url.pathname.startsWith('/health') ||
       url.pathname.startsWith('/compliance-lab/')
     ) {
+      if (/%2f|%5c|%00/i.test(url.pathname)) {
+        return new Response('Bad Request', { status: 400 });
+      }
+      try {
+        const decodedPath = decodeURIComponent(url.pathname);
+        if (
+          decodedPath.includes('\\') ||
+          /(?:^|\/)\.\.(?:\/|$)/.test(decodedPath) ||
+          !(
+            decodedPath.startsWith('/api/') ||
+            decodedPath.startsWith('/health') ||
+            decodedPath.startsWith('/compliance-lab/')
+          )
+        ) {
+          return new Response('Bad Request', { status: 400 });
+        }
+      } catch {
+        return new Response('Bad Request', { status: 400 });
+      }
+
       const apiOrigin = (env && typeof env.API_ORIGIN === 'string' && env.API_ORIGIN.trim())
         ? env.API_ORIGIN.trim()
         : 'https://api-academy.deeptrustxai.com';
