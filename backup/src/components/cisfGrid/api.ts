@@ -81,7 +81,7 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
     async getCurrentSession(assignmentId: number | null): Promise<SessionInfo | null> {
       const res = await apiFetch(withAssignment('/api/v1/ot-grid/sessions/current', assignmentId));
       if (res.status === 404) return null;
-      return readJsonOrThrow<SessionInfo>(res, 'Could not read current CISF OT Grid session.');
+      return readJsonOrThrow<SessionInfo>(res, 'Could not read current Grid OT Lab session.');
     },
 
     async startSession(assignmentId: number | null, mode: CisfGridMode): Promise<SessionInfo> {
@@ -90,14 +90,14 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignment_id: assignmentId, mode }),
       });
-      return readJsonOrThrow<SessionInfo>(res, 'Could not start CISF OT Grid session.');
+      return readJsonOrThrow<SessionInfo>(res, 'Could not start Grid OT Lab session.');
     },
 
     async stopSession(assignmentId: number | null): Promise<{ status: string }> {
       const res = await apiFetch(withAssignment('/api/v1/ot-grid/sessions/current', assignmentId), {
         method: 'DELETE',
       });
-      return readJsonOrThrow<{ status: string }>(res, 'Could not stop CISF OT Grid session.');
+      return readJsonOrThrow<{ status: string }>(res, 'Could not stop Grid OT Lab session.');
     },
 
     async getWsTicket(

@@ -117,7 +117,7 @@ export const CisfGridLabPage: React.FC = () => {
         setPausedNotice(err.message);
         return null;
       }
-      setError(friendlyErrorCopy(err, 'Could not check CISF OT Grid session.'));
+      setError(friendlyErrorCopy(err, 'Could not check Grid OT Lab session.'));
       return null;
     }
   }, [api, applySessionPayload, assignmentId]);
@@ -252,7 +252,7 @@ export const CisfGridLabPage: React.FC = () => {
           void refreshSession();
         }
       } else {
-        setError(friendlyErrorCopy(err, 'Could not start CISF OT Grid session.'));
+        setError(friendlyErrorCopy(err, 'Could not start Grid OT Lab session.'));
       }
     } finally {
       setStarting(false);
@@ -401,7 +401,7 @@ export const CisfGridLabPage: React.FC = () => {
                 Operation Blackout: Ghost in the Grid
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                CISF OT Substation Defense · SN-220-MAIN Suryanagar
+                Power Grid OT Substation Defense · SN-220-MAIN Suryanagar
                 {assignmentId ? ` · Assignment #${assignmentId}` : ''}
               </p>
             </div>
@@ -481,7 +481,7 @@ export const CisfGridLabPage: React.FC = () => {
           <section className="flex min-h-[24rem] flex-col items-center justify-center gap-4 rounded-[28px] border border-[var(--line)] bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
             <Mascot pose="carry" size={72} interactive={false} />
             <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Checking your isolated CISF OT Grid session...
+              Checking your isolated Grid OT Lab session...
             </p>
           </section>
         ) : (

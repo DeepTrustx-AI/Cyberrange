@@ -2275,7 +2275,7 @@ function sanitizeClipboardText(text, singleLine = false) {
 
 function copySanitizedTimeline() {
   const sorted = [...state.pinnedArtifacts].sort((a, b) => a.utcSec - b.utcSec);
-  const lines = ['CISF OT Incident Handover Timeline (Sanitized UTC / IST)'];
+  const lines = ['Grid OT Incident Handover Timeline (Sanitized UTC / IST)'];
   sorted.forEach((item) => {
     lines.push(`- ${item.utc} (${item.ist || ''}) | ${item.vantage} | ${item.source}: ${item.summary}`);
   });
@@ -3891,7 +3891,7 @@ function wireEvents() {
   });
 
   document.getElementById('btn-export-oplog').addEventListener('click', () => {
-    const text = sanitizeClipboardText(['CISF OT Operator Log (UTC / IST)', ...state.operatorLog.map((e) => `- ${e.utc} (${e.ist}) | ${e.device} ${e.action} (${e.result}) | ${e.reason}`)].join('\n'), false);
+    const text = sanitizeClipboardText(['Grid OT Operator Log (UTC / IST)', ...state.operatorLog.map((e) => `- ${e.utc} (${e.ist}) | ${e.device} ${e.action} (${e.result}) | ${e.reason}`)].join('\n'), false);
     navigator.clipboard?.writeText(text).catch(() => {});
     logStation(`Copied operator log (${state.operatorLog.length} entries).`, 't-ok');
   });
