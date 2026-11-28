@@ -79,6 +79,7 @@ const CloudStaticSecurityLabPage = lazy(() => import('./pages/user/CloudStaticSe
 const KubernetesDriftLabPage = lazy(() => import('./pages/user/KubernetesDriftLabPage').then(m => ({ default: m.KubernetesDriftLabPage })));
 const VulnShopLabPage        = lazy(() => import('./pages/user/VulnShopLabPage').then(m => ({ default: m.VulnShopLabPage })));
 const CisfHoneypotLabPage    = lazy(() => import('./pages/user/CisfHoneypotLabPage').then(m => ({ default: m.CisfHoneypotLabPage })));
+const CisfGridLabPage        = lazy(() => import('./pages/user/CisfGridLabPage').then(m => ({ default: m.CisfGridLabPage })));
 const LiveKubernetesSecurityLabPage = lazy(() => import('./pages/user/LiveKubernetesSecurityLabPage').then(m => ({ default: m.LiveKubernetesSecurityLabPage })));
 const PuzzleLabPage         = lazy(() => import('./pages/user/PuzzleLabPage').then(m => ({ default: m.PuzzleLabPage })));
 const TechCorpLabSession    = lazy(() => import('./pages/user/TechCorpLabSession').then(m => ({ default: m.TechCorpLabSession })));
@@ -406,6 +407,14 @@ export function App() {
                 element={
                   <ProtectedRoute allowedRoles={['user', 'admin']}>
                     <CisfHoneypotLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/labs/cisf-ot-grid"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <CisfGridLabPage />
                   </ProtectedRoute>
                 }
               />

@@ -1,0 +1,344 @@
+{
+  "version": "cg-tour-v1",
+  "storageKey": "cg-tour-v1",
+  "controls": {
+    "backLabel": "Back",
+    "nextLabel": "Next",
+    "waitingLabel": "Waiting for you\u2026",
+    "skipLabel": "Skip tour",
+    "finishLabel": "Start Module 1",
+    "dismissLabel": "Got it",
+    "closeLabel": "Close",
+    "guideButtonLabel": "Help",
+    "guideHeading": "How do I\u2026",
+    "glossaryLabel": "Glossary",
+    "replayTourLabel": "Replay tour",
+    "replayColdOpenLabel": "Replay opening",
+    "stepCounterTemplate": "Step {current} of {total}",
+    "mobileSwipeHint": "Swipe or use Back and Next"
+  },
+  "welcome": {
+    "heading": "Operation Blackout",
+    "lines": [
+      "You're the responder on call tonight. Ten modules, one incident, one city to bring back.",
+      "Two minutes of setup and you'll know your way around."
+    ],
+    "primaryLabel": "Show me around",
+    "secondaryLabel": "I'll explore on my own",
+    "pose": "wave"
+  },
+  "stops": [
+    {
+      "id": "shift-glance",
+      "number": 1,
+      "heading": "Your shift at a glance",
+      "targets": ["#btn-toggle-rail", "#hdr-module-meta", "#conn-status-pill"],
+      "highlightTargets": ["#btn-toggle-rail", "#hdr-module-meta", "#progress-text", "#conn-status-pill", "#btn-end-session"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "See which module you're on, your progress, and whether the station is live. **End** closes the lab when you finish.",
+      "waitFor": null
+    },
+    {
+      "id": "start-module",
+      "number": 2,
+      "heading": "Start every module here",
+      "targets": ["#btn-obj-collapse", "#objective-card", "#btn-toggle-rail", "#module-rail"],
+      "highlightTargets": ["#btn-obj-collapse", "#objective-card", "#btn-toggle-rail"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Ten modules follow the incident in order. Click **Checklist** to see what to find and which file to hand in.",
+      "waitFor": "objective-opened"
+    },
+    {
+      "id": "station-live",
+      "number": 3,
+      "heading": "The station, live",
+      "targets": ["#btn-view-substation", "#btn-view-city", "#btn-view-network", "#breaker-legend"],
+      "highlightTargets": ["#btn-view-city", "#btn-view-substation", "#btn-view-network", "#breaker-legend"],
+      "pose": "peek",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Drawn from what the control room is told, so early on it may lie. **Red filled = closed, live. Green hollow = open, safe.** Click **Substation**.",
+      "waitFor": "view-substation"
+    },
+    {
+      "id": "your-desk",
+      "number": 4,
+      "heading": "Your desk",
+      "targets": ["#tab-bar-primary", "#nav-tab-evidence", "#tab-btn-dispatch"],
+      "highlightTargets": ["#tab-bar-primary", "#nav-tab-mission", "#nav-tab-station", "#nav-tab-evidence", "#nav-tab-progress"],
+      "pose": "think",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Four tabs run your desk: **Mission**, **Station** (Controls, Alarms, Trends), **Evidence** (Dispatch, Frames, Timeline, Notes), and **Case & Checks**. Open **Evidence**.",
+      "waitFor": "tab-dispatch"
+    },
+    {
+      "id": "real-shell",
+      "number": 5,
+      "heading": "A real shell",
+      "targets": ["#btn-right-term", "#xterm-host"],
+      "highlightTargets": ["#btn-right-term"],
+      "pose": "point",
+      "dir": "right",
+      "preferSide": "left",
+      "body": "A real Linux shell with real tools where most investigation happens. Click inside, type `id`, and press Enter.",
+      "waitFor": "terminal-enter"
+    },
+    {
+      "id": "keep-what-matters",
+      "number": 6,
+      "heading": "Keep what matters",
+      "targets": ["#btn-right-log", "#btn-term-pin"],
+      "highlightTargets": ["#btn-right-log", "#btn-term-pin"],
+      "pose": "nod",
+      "dir": "right",
+      "preferSide": "left",
+      "body": "Dashboard actions appear in **Station log**, never in your shell. **Pin** saves clues to your Timeline. Click **Station log** to peek.",
+      "waitFor": "station-log-opened"
+    },
+    {
+      "id": "rearrange-workspace",
+      "number": 7,
+      "heading": "Make the workspace yours",
+      "targets": ["#btn-layout-preset", ".panel-drag-handle", "#btn-layout-split"],
+      "highlightTargets": ["#btn-layout-preset", ".panel-drag-handle", "#btn-layout-scene", "#btn-layout-split", "#btn-layout-terminal"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Prefer the mission on the side or the terminal on the left? Drag any panel's grip handle to swap places, or pick a preset in **Layout**. Watch it swap live, then return.",
+      "waitFor": null,
+      "demoAction": "swap-panels"
+    },
+    {
+      "id": "hand-it-in",
+      "number": 8,
+      "heading": "Hand it in",
+      "targets": ["#btn-practice-check", "#btn-toggle-editor", "#submit-artifact", "#btn-submit-module", "#nav-tab-progress", "#tab-btn-checks"],
+      "highlightTargets": ["#btn-toggle-editor", "#submit-artifact", "#btn-practice-check", "#btn-submit-module", "#nav-tab-progress", "#tab-btn-checks"],
+      "pose": "walk",
+      "completePose": "cheer",
+      "dir": "right",
+      "preferSide": "left",
+      "body": "Click **Practice** for a free format check. **Submit module** grades your file; **Case & Checks** shows why. Two hints are free; the third costs 10%.",
+      "waitFor": "practice-clicked"
+    }
+  ],
+  "loopStrip": [
+    "Objective",
+    "Investigate in the shell",
+    "Pin evidence",
+    "Write your file",
+    "Practice",
+    "Submit",
+    "Read Checks"
+  ],
+  "loopStripText": "Objective \u2192 Investigate in the shell \u2192 Pin evidence \u2192 Write your file \u2192 Practice \u2192 Submit \u2192 Read Checks",
+  "finalLine": "I'm right here in **Help** anytime you need hints, the **Glossary**, or a replay. Module 1 is waiting, and Raghav's message is in **Evidence** -> **Dispatch**.",
+  "tips": [
+    {
+      "id": "frames-first-open",
+      "trigger": "frames-opened",
+      "ensureTab": "frames",
+      "heading": "Frame anatomy",
+      "targets": ["#frames-list", "#tab-btn-frames", "#nav-tab-evidence"],
+      "pose": "think",
+      "dir": "down",
+      "body": "Each row is one real IEC-104 frame from the evidence. Click one to see its parts. The filter box takes `tshark` filters."
+    },
+    {
+      "id": "m4-split-lens",
+      "trigger": "module-m04",
+      "heading": "Split lens",
+      "targets": ["#btn-split-lens"],
+      "pose": "think",
+      "dir": "up",
+      "body": "**Split lens:** the operator's screen on one side, what you've proven in the field on the other. Drag the divider."
+    },
+    {
+      "id": "first-bay-request",
+      "trigger": "bay-readout-requested",
+      "heading": "Field bay check",
+      "targets": ["#btn-dispatch-bay", "#btn-m4-baycheck", "#nav-tab-evidence"],
+      "pose": "think",
+      "dir": "down",
+      "body": "Devika walks to the bay you pick and reads its panel. Answers take a moment, as in the field."
+    },
+    {
+      "id": "m8-empty-matrix",
+      "trigger": "module-m08",
+      "ensureTab": "console",
+      "heading": "Empty policy matrix",
+      "targets": ["#policy-matrix", "#tab-btn-console", "#nav-tab-station"],
+      "pose": "think",
+      "dir": "down",
+      "body": "Every zone pair starts empty. Nothing is filled in for you: what you set is exactly what gets applied."
+    },
+    {
+      "id": "m9-sbo-first",
+      "trigger": "m9-sbo-select",
+      "heading": "Select before operate",
+      "targets": ["#sbo-confirm-bar", "#feeder-grid", "#nav-tab-station"],
+      "pose": "think",
+      "dir": "down",
+      "body": "Breakers work like real ones: **Select**, check, then **Execute**. A permit asks you to confirm each close."
+    },
+    {
+      "id": "m9-first-trip",
+      "trigger": "m9-trip",
+      "heading": "Lockout 86 and resets",
+      "targets": ["#btn-clear-86", "#btn-reset-electrical", "#nav-tab-station"],
+      "pose": "think",
+      "dir": "down",
+      "body": "**Clear lockout 86** resets a relay after you've checked it. **Reset electrical state** starts M9 switching over cleanly. Each protection trip costs 10% (max 20%); resets themselves are free."
+    },
+    {
+      "id": "connection-lost",
+      "trigger": "connection-lost",
+      "heading": "Station disconnected",
+      "targets": ["#conn-status-pill"],
+      "pose": "think",
+      "dir": "up",
+      "body": "We lost the station. Practice and Submit wait until it's back. Nothing you've written is lost."
+    },
+    {
+      "id": "first-pass-case",
+      "trigger": "first-pass",
+      "heading": "Case Board",
+      "targets": ["#tab-btn-case", "#nav-tab-progress"],
+      "pose": "think",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Your finding is on the Case Board. By Module 10 it tells the whole story, in your evidence."
+    }
+  ],
+  "guideItems": [
+    {
+      "id": "guide-objective",
+      "question": "see what this module asks me to do?",
+      "ensureTab": "brief",
+      "targets": ["#btn-obj-collapse", "#objective-card", "#nav-tab-mission"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Read the **Mission** brief below, or click **Checklist** above the map to see the steps and the answer file to hand in."
+    },
+    {
+      "id": "guide-layout",
+      "question": "rearrange or resize the panels?",
+      "targets": ["#btn-layout-preset", "#btn-layout-scene", "#btn-layout-split", "#btn-layout-terminal"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Drag any panel's **\u22ee\u22ee** grip handle to swap places, pick a preset like **Mission on Left** in **Layout**, or use **Scene / Split / Terminal** (**Alt+1, 2, 3**)."
+    },
+    {
+      "id": "guide-views",
+      "question": "switch between City, Substation, and Network?",
+      "targets": ["#btn-view-city", "#btn-view-substation", "#btn-view-network"],
+      "pose": "peek",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "Use **City**, **Substation**, and **Network** at the top of the map to switch between Suryanagar districts, switchgear bays, and network zones."
+    },
+    {
+      "id": "guide-colours",
+      "question": "read the breaker colours (Red vs Green)?",
+      "targets": ["#breaker-legend", "#btn-view-substation"],
+      "pose": "point",
+      "dir": "up",
+      "preferSide": "bottom",
+      "body": "**Red filled = closed, live power. Green hollow = open, isolated and safe.** Switch to **Substation** to see the full colour legend."
+    },
+    {
+      "id": "guide-dispatch",
+      "question": "read field reports or ask Devika for a bay check?",
+      "ensureTab": "dispatch",
+      "targets": ["#tab-btn-dispatch", "#nav-tab-evidence", "#btn-dispatch-bay"],
+      "pose": "phone",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Open **Evidence** -> **Dispatch** to read field callouts from Raghav and ask Devika Nair for a physical switchyard bay check."
+    },
+    {
+      "id": "guide-frames",
+      "question": "look inside an IEC-104 network frame?",
+      "ensureTab": "frames",
+      "targets": ["#tab-btn-frames", "#nav-tab-evidence", "#frames-list"],
+      "pose": "think",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Open **Evidence** -> **IEC-104 Frames** and click any captured row to inspect its fields. The filter box accepts `tshark` filters."
+    },
+    {
+      "id": "guide-past-event",
+      "question": "find a past event or scrub a trip replay?",
+      "ensureTab": "timeline",
+      "targets": ["#tab-btn-timeline", "#tab-btn-alarms", "#nav-tab-evidence", "#soe-replay-panel"],
+      "pose": "think",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Open **Evidence** -> **Timeline** for your pinned clues, or **Station** -> **Controls** to scrub a 15-second trip replay."
+    },
+    {
+      "id": "guide-editor",
+      "question": "edit my answer file or run a free Practice check?",
+      "targets": ["#btn-toggle-editor", "#btn-practice-check"],
+      "pose": "point",
+      "dir": "right",
+      "preferSide": "left",
+      "body": "Click **Edit file** above the terminal to edit your answer file directly, then click **Practice** at the bottom for a free format check."
+    },
+    {
+      "id": "guide-checks",
+      "question": "see why a check failed or get a hint?",
+      "ensureTab": "checks",
+      "targets": ["#tab-btn-checks", "#nav-tab-progress", "#hint-1"],
+      "pose": "think",
+      "dir": "down",
+      "preferSide": "top",
+      "body": "Open **Case & Checks** -> **Checks** to see which areas passed or failed. Progressive hints live under **Mission**; two are free and hint three costs 10%."
+    }
+  ],
+  "mobileCards": [
+    {
+      "id": "mobile-1",
+      "stops": [1, 2],
+      "heading": "Your shift at a glance",
+      "pose": "wave",
+      "body": "See which module you're on, your progress, and whether the station is live. Tap **Checklist** to see what to find and which file to hand in."
+    },
+    {
+      "id": "mobile-2",
+      "stops": [3],
+      "heading": "The station, live",
+      "pose": "peek",
+      "body": "Drawn from what the control room is told, so early on it may lie. **Red filled = closed, live. Green hollow = open, safe.**"
+    },
+    {
+      "id": "mobile-3",
+      "stops": [4],
+      "heading": "Your desk",
+      "pose": "think",
+      "body": "Four tabs run your desk: **Mission**, **Station** (Controls, Alarms, Trends), **Evidence** (Dispatch, Frames, Timeline, Notes), and **Case & Checks**."
+    },
+    {
+      "id": "mobile-4",
+      "stops": [5, 6],
+      "heading": "A real shell",
+      "pose": "nod",
+      "body": "A real Linux shell with real tools where most investigation happens. Dashboard actions go to **Station log**, never your shell. **Pin** saves clues to Timeline."
+    },
+    {
+      "id": "mobile-5",
+      "stops": [7, 8],
+      "heading": "Hand it in",
+      "pose": "cheer",
+      "body": "Click **Practice** for a free format check. **Submit module** grades your file; **Case & Checks** shows why. Open **Help** anytime for hints, the **Glossary**, or a replay.",
+      "showLoop": true
+    }
+  ]
+}

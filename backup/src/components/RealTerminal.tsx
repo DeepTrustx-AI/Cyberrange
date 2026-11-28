@@ -25,6 +25,8 @@ interface RealTerminalProps {
   /** Optional terminal title override. */
   terminalTitle?: string;
   editor?: { file: string };
+  /** When false, do not open the terminal WebSocket (e.g. while session is not RUNNING). */
+  enabled?: boolean;
 }
 
 export const RealTerminal: React.FC<RealTerminalProps> = ({
@@ -37,11 +39,17 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
   wsPath,
   terminalTitle,
   editor,
+  enabled = true,
 }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<Terminal | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const connectTimerRef = useRef<number | null>(null);
+  const enabledRef = useRef<boolean>(enabled);
+  const tokenRef = useRef<string | undefined>(token);
+  useEffect(() => { enabledRef.current = enabled; }, [enabled]);
+  useEffect(() => { tokenRef.current = token; }, [token]);
   // Tracks the cancellation token of the current socket so stale async events are silenced
   const cancelTokenRef = useRef<{ cancelled: boolean }>({ cancelled: false });
   // Accumulates the current typed command line for objective detection
@@ -80,13 +88,52 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     fitAddonRef.current.fit();
   }, []);
 
-  const connectWebSocket = () => {
-    // Cancel any previous socket's async events
+  const closeSocketCleanly = useCallback((isUnload = false) => {
     cancelTokenRef.current.cancelled = true;
-
-    if (socketRef.current) {
-      socketRef.current.close();
+    if (connectTimerRef.current !== null) {
+      window.clearTimeout(connectTimerRef.current);
+      connectTimerRef.current = null;
     }
+    const sock = socketRef.current;
+    socketRef.current = null;
+    if (!sock) return;
+    sock.onopen = null;
+    sock.onmessage = null;
+    sock.onerror = null;
+    sock.onclose = null;
+    if (sock.readyState === WebSocket.OPEN) {
+      try {
+        sock.close(1000, isUnload ? 'page unload' : 'closing');
+      } catch {
+        // Ignore already-closing socket errors.
+      }
+    } else if (sock.readyState === WebSocket.CONNECTING) {
+      if (isUnload) {
+        try {
+          sock.close(1000, 'page unload');
+        } catch {
+          // Ignore closing errors during page unload.
+        }
+      } else {
+        // Close once open so Firefox does not log "can't establish a connection" on aborted handshakes.
+        sock.onopen = () => {
+          try {
+            sock.close(1000, 'closing');
+          } catch {
+            // Ignore detached socket close errors.
+          }
+        };
+      }
+    }
+  }, []);
+
+  const connectWebSocket = () => {
+    if (!enabledRef.current) {
+      closeSocketCleanly(false);
+      setConnectionState('disconnected');
+      return;
+    }
+    closeSocketCleanly(false);
 
     // New cancellation token for this socket — captured by the closures below.
     // Renamed to avoid shadowing the `token` prop (the actual auth token string),
@@ -100,11 +147,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     const [pathOnly, existingQuery = ''] = basePath.split('?', 2);
     const params = new URLSearchParams(existingQuery);
     if (!wsPath) params.set('level', String(levelNum));
-    if (token) params.set('token', token);
+    const currentToken = tokenRef.current;
+    if (currentToken) params.set('token', currentToken);
     const query = params.toString();
     const wsUrl = apiWebSocketUrl(`${pathOnly}${query ? `?${query}` : ''}`);
 
-    console.log('[RealTerminal] Connecting to WebSocket:', wsUrl);
     const socket = new WebSocket(wsUrl);
     socket.binaryType = 'arraybuffer';
     socketRef.current = socket;
@@ -254,13 +301,29 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
       }
     });
 
-    connectWebSocket();
+    // Defer connection by a tick so React StrictMode double-mount does not
+    // open and abort a CONNECTING WebSocket (which logs an error in Firefox).
+    if (enabled) {
+      connectTimerRef.current = window.setTimeout(() => {
+        connectTimerRef.current = null;
+        if (enabledRef.current) {
+          connectWebSocket();
+        }
+      }, 0);
+    } else {
+      setConnectionState('disconnected');
+    }
 
     const handleResize = () => {
       fitTerminal();
     };
+    const handleUnload = () => {
+      closeSocketCleanly(true);
+    };
 
     window.addEventListener('resize', handleResize);
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
     const resizeObserver = new ResizeObserver(() => {
       window.requestAnimationFrame(() => {
         fitTerminal();
@@ -270,17 +333,25 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     resizeObserver.observe(terminalRef.current);
 
     return () => {
-      // Cancel the current socket's async events before closing
-      cancelTokenRef.current.cancelled = true;
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
       resizeObserver.disconnect();
       resizeDisposable.dispose();
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
+      closeSocketCleanly(false);
       term.dispose();
     };
-  }, [labId, levelNum, token, wsPath]);
+  }, [labId, levelNum, wsPath, enabled, closeSocketCleanly]);
+
+  // Reconnect cleanly without destroying xterm scrollback if token arrives after initial mount while disconnected.
+  useEffect(() => {
+    if (!token || !enabled || !termInstanceRef.current) return;
+    const sock = socketRef.current;
+    if (!sock || sock.readyState === WebSocket.CLOSED) {
+      connectWebSocket();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(token), enabled]);
 
   const sendRaw = (data: string) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) socketRef.current.send(data);
@@ -367,45 +438,48 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
     };
   }, []);
 
+  const resolvedTitle = terminalTitle || (labId === 'lab1-recon'
+    ? 'SecureGuard Red Team — Kali Linux Shell'
+    : `Puzzle Infrastructure Shell — Level ${levelNum} (student${levelNum})`);
+  const fillContainer = isFullscreen || height === '100%';
+
   return (
     <div
-      className={`relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : ''
+      className={`relative flex w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-xl ${isFullscreen ? 'fixed inset-4 z-50' : height === '100%' ? 'h-full' : ''
         } ${className}`}
     >
       {/* Terminal Header */}
-      <div className="h-10 bg-slate-900 px-4 flex items-center justify-between border-b border-slate-800 select-none">
-        <div className="flex items-center gap-2.5">
-          <div className="flex gap-1.5">
+      <div className="min-h-10 bg-slate-900 px-3 py-1.5 sm:px-4 flex items-center justify-between gap-2 border-b border-slate-800 select-none overflow-hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="flex shrink-0 gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
             <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
             <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-400 pl-2">
-            <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
-            <span>
-              {terminalTitle || (labId === 'lab1-recon'
-                ? 'SecureGuard Red Team — Kali Linux Shell'
-                : `Puzzle Infrastructure Shell — Level ${levelNum} (student${levelNum})`)}
+          <div className="flex min-w-0 items-center gap-1.5 text-xs font-mono font-bold text-slate-400 pl-1">
+            <TerminalIcon className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+            <span className="truncate" title={resolvedTitle}>
+              {resolvedTitle}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
           {/* Connection Badge */}
-          <div className="flex items-center gap-1.5 text-xs font-mono font-semibold">
+          <div className="flex shrink-0 items-center gap-1.5 text-xs font-mono font-semibold whitespace-nowrap">
             {connectionState === 'connected' && (
               <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-800/40">
-                <CheckCircle2 className="w-3 h-3" /> Connected
+                <CheckCircle2 className="w-3 h-3 shrink-0" /> Connected
               </span>
             )}
             {connectionState === 'connecting' && (
               <span className="flex items-center gap-1 text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-800/40">
-                <RefreshCw className="w-3 h-3 animate-spin" /> Connecting PTY...
+                <RefreshCw className="w-3 h-3 shrink-0 animate-spin" /> Connecting PTY...
               </span>
             )}
             {(connectionState === 'disconnected' || connectionState === 'error') && (
               <span className="flex items-center gap-1 text-rose-400 bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-800/40">
-                <AlertCircle className="w-3 h-3" /> Disconnected
+                <AlertCircle className="w-3 h-3 shrink-0" /> Disconnected
               </span>
             )}
           </div>
@@ -416,7 +490,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
               type="button"
               onClick={() => { if (editorSession) closeEditor(); else void openEditor(editor.file); }}
               disabled={!editorSession && (editorBusy || connectionState !== 'connected')}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-2 py-1 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:opacity-40"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-700 px-2 py-1 text-xs font-bold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white disabled:opacity-40"
               title={editorSession
                 ? 'Back to the terminal (your draft is kept)'
                 : `Open ~/${editor.file}, the file this challenge grades, in the code editor`}
@@ -434,8 +508,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
           {/* Reconnect Button */}
           <button
+            type="button"
             onClick={connectWebSocket}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            className="shrink-0 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
             title="Reconnect Terminal Session"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -443,10 +518,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
 
           {/* Toggle Fullscreen */}
           <button
+            type="button"
             onClick={() => {
               setIsFullscreen((current) => !current);
             }}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            className="shrink-0 p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Terminal'}
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -501,8 +577,8 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({
       <div
         ref={terminalRef}
         onClick={() => termInstanceRef.current?.focus()}
-        style={{ height: isFullscreen ? 'calc(100% - 40px)' : height }}
-        className="w-full p-2 bg-slate-950 overflow-hidden cursor-text"
+        style={fillContainer ? undefined : { height }}
+        className={`w-full p-2 bg-slate-950 overflow-hidden cursor-text ${fillContainer ? 'min-h-0 flex-1' : ''}`}
       />
     </div>
   );

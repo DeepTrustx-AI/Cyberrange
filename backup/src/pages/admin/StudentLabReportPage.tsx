@@ -170,7 +170,12 @@ export const StudentLabReportPage: React.FC = () => {
   useEffect(() => {
     const fetchReport = async () => {
       const dbGroupId = (groupId || '').replace('grp-', '');
-      const token = localStorage.getItem('token');
+      let token: string | null = null;
+      try {
+        token = localStorage.getItem('token');
+      } catch {
+        token = null;
+      }
       try {
         const assignmentQuery = assignmentId
           ? `?assignment_id=${encodeURIComponent(assignmentId)}`

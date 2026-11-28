@@ -10,13 +10,31 @@ import './mascot.css';
 // Seated, it perches on an edge (a form field, a card) with its legs dangling.
 // Interactive, it can be poked and picked up (see useMascotPlay).
 
-export type MascotPose = 'idle' | 'wave' | 'walk' | 'carry' | 'cheer' | 'think' | 'cover' | 'peek' | 'sleep' | 'sway';
+export type MascotPose =
+  | 'idle'
+  | 'wave'
+  | 'walk'
+  | 'carry'
+  | 'cheer'
+  | 'think'
+  | 'cover'
+  | 'peek'
+  | 'sleep'
+  | 'sway'
+  | 'point'
+  | 'hop'
+  | 'nod'
+  | 'phone';
+
+export type MascotPointDir = 'left' | 'right' | 'up' | 'down';
 
 /** Where the seat sits in the 120-unit drawing: line this up with the edge it sits on. */
 export const MASCOT_SEAT = 92 / 120;
 
 interface MascotProps {
   pose?: MascotPose;
+  /** Direction for pose="point" (defaults to "right" when omitted). */
+  dir?: MascotPointDir;
   size?: number;
   /** Where the eyes look, -1 to 1 on each axis. */
   look?: { x: number; y: number };
@@ -24,13 +42,13 @@ interface MascotProps {
   label?: string;
   /** Perched on an edge, legs dangling over it. */
   seated?: boolean;
-  /** Can be poked, and picked up and flung. */
+  /** Can be poked, and picked up and flung. Must remain false in lab tours/tips. */
   interactive?: boolean;
 }
 
 const BODY = 'M60 22 C88 22 99 29 99 57 C99 87 89 96 60 96 C31 96 21 87 21 57 C21 29 32 22 60 22 Z';
 
-export function Mascot({ pose = 'idle', size = 96, look, className = '', label, seated = false, interactive = false }: MascotProps) {
+export function Mascot({ pose = 'idle', dir, size = 96, look, className = '', label, seated = false, interactive = false }: MascotProps) {
   const id = useId().replace(/:/g, '');
   const svgRef = useRef<SVGSVGElement>(null);
   const { reaction, onPointerDown } = useMascotPlay(svgRef, interactive);
@@ -39,8 +57,17 @@ export function Mascot({ pose = 'idle', size = 96, look, className = '', label, 
   const style = {
     width: size,
     height: size,
-    '--look-x': `${(look?.x ?? 0) * 2.4}px`,
-    '--look-y': `${(look?.y ?? 0) * 2}px`,
+    ...(look !== undefined
+      ? {
+          '--look-x': `${look.x * 2.4}px`,
+          '--look-y': `${look.y * 2}px`,
+        }
+      : shown !== 'point'
+        ? {
+            '--look-x': '0px',
+            '--look-y': '0px',
+          }
+        : {}),
   } as CSSProperties;
 
   return (
@@ -48,6 +75,7 @@ export function Mascot({ pose = 'idle', size = 96, look, className = '', label, 
       ref={svgRef}
       viewBox="0 0 120 120"
       className={`mascot mascot--${shown}${modifiers} ${className}`}
+      data-dir={shown === 'point' ? (dir ?? 'right') : undefined}
       style={style}
       onPointerDown={onPointerDown}
       role={label ? 'img' : undefined}
@@ -162,6 +190,12 @@ export function Mascot({ pose = 'idle', size = 96, look, className = '', label, 
               <rect className="m-arm-cover" x="88" y="60" width="12" height="22" rx="6" transform="rotate(38 94 71)" />
               <ellipse fill={`url(#${id}-mitt)`} cx="74" cy="57" rx="11.4" ry="11.2" />
             </g>
+          </g>
+
+          <g className="m-phone" aria-hidden="true">
+            <rect className="m-phone-body" x="88" y="42" width="12" height="24" rx="5" />
+            <rect className="m-phone-cap" x="90" y="44.5" width="8" height="4.5" rx="2.2" />
+            <rect className="m-phone-cap" x="90" y="59" width="8" height="4.5" rx="2.2" />
           </g>
 
           <g className="m-notes">

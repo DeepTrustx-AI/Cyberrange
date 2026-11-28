@@ -1,3 +1,12 @@
+const STATIC_SECURITY_HEADERS = {
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client https://checkout.razorpay.com/v1/checkout.js https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api-academy.deeptrustxai.com wss://api-academy.deeptrustxai.com https://accounts.google.com https://api.razorpay.com https://lumberjack.razorpay.com https://cloudflareinsights.com; frame-src 'self' https://accounts.google.com https://api.razorpay.com; worker-src 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -16,21 +25,67 @@ export default {
       url.pathname.startsWith('/health') ||
       url.pathname.startsWith('/compliance-lab/')
     ) {
+      if (/%2f|%5c|%00/i.test(url.pathname)) {
+        return new Response('Bad Request', { status: 400 });
+      }
+      try {
+        const decodedPath = decodeURIComponent(url.pathname);
+        if (
+          decodedPath.includes('\\') ||
+          /(?:^|\/)\.\.(?:\/|$)/.test(decodedPath) ||
+          !(
+            decodedPath.startsWith('/api/') ||
+            decodedPath.startsWith('/health') ||
+            decodedPath.startsWith('/compliance-lab/')
+          )
+        ) {
+          return new Response('Bad Request', { status: 400 });
+        }
+      } catch {
+        return new Response('Bad Request', { status: 400 });
+      }
+
+      const apiOrigin = (env && typeof env.API_ORIGIN === 'string' && env.API_ORIGIN.trim())
+        ? env.API_ORIGIN.trim()
+        : 'https://api-academy.deeptrustxai.com';
+      const targetOrigin = new URL(apiOrigin);
       const backendUrl = new URL(request.url);
-      backendUrl.hostname = 'api-academy.deeptrustxai.com';
-      backendUrl.protocol = 'https:';
+      backendUrl.hostname = targetOrigin.hostname;
+      backendUrl.protocol = targetOrigin.protocol;
+      backendUrl.port = targetOrigin.port;
+
+      const sanitizedHeaders = new Headers(request.headers);
+      for (const h of ['x-forwarded-for', 'x-real-ip', 'forwarded', 'x-forwarded-host', 'x-forwarded-proto']) {
+        sanitizedHeaders.delete(h);
+      }
+      const cfIp = request.headers.get('CF-Connecting-IP');
+      if (cfIp) {
+        sanitizedHeaders.set('X-Forwarded-For', cfIp);
+        sanitizedHeaders.set('X-Real-IP', cfIp);
+      }
 
       const newRequest = new Request(backendUrl.toString(), {
         method: request.method,
-        headers: request.headers,
+        headers: sanitizedHeaders,
         body: request.body,
-        redirect: 'follow',
+        redirect: 'manual',
       });
 
       return fetch(newRequest);
     }
 
-    // Fallback: serve static frontend files
-    return env.ASSETS.fetch(request);
+    // Fallback: serve static frontend files with baseline browser security headers
+    const assetResponse = await env.ASSETS.fetch(request);
+    const headers = new Headers(assetResponse.headers);
+    for (const [name, value] of Object.entries(STATIC_SECURITY_HEADERS)) {
+      if (!headers.has(name)) {
+        headers.set(name, value);
+      }
+    }
+    return new Response(assetResponse.body, {
+      status: assetResponse.status,
+      statusText: assetResponse.statusText,
+      headers,
+    });
   },
 };

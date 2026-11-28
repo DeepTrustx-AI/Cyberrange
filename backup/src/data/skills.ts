@@ -60,6 +60,10 @@ export const LAB_SKILLS: Record<string, LabSkills> = {
     roles: ['Operational Technology (OT) Cybersecurity Engineering', 'Incident Response'],
     skills: ['Railway PLCs', 'Signal and switch control', 'Telemetry forensics', 'Control-plane traffic'],
   },
+  'cisf-ot-grid': {
+    roles: ['Operational Technology (OT) Cybersecurity Engineering', 'Incident Response', 'Defensive Cybersecurity'],
+    skills: ['IEC 60870-5-104', 'SCADA replay forensics', 'OT firewall segmentation', 'Cold-load restoration', 'Zeek detection engineering'],
+  },
 };
 
 export interface LabProgress {

@@ -241,6 +241,10 @@ components:
   terminal-pane:
     backgroundColor: "{colors.terminal-canvas}"
     rounded: "{rounded.3xl}"
+  living-lab-stage:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.3xl}"
+    padding: "20px"
 ---
 
 # Design System: CyberRange
@@ -449,11 +453,14 @@ Each lab shows its own clay scene from `dioramas.ts` on a shared plinth, camera 
 
 ### Cube Mascot (character)
 `Mascot` is the logo cube as a soft toy: a flat-shaded vector body with a light top, front and darker right side, a radial shine, a centred face (big eyes with glints, blush cheeks, a small smile), mitten arms and stubby legs, on a soft ground shadow. Each arm is the colour of the face it grows from (front on the left, the shaded side on the right) and tapers from inside the body, and arms and mittens take the body's top-left light, so they read as the same soft cube. Navy ink in light, apricot in Ember (see Colors). It is drawn in SVG on purpose, as a second medium beside the clay, and is sized 44 to 136px.
-- **Poses:** idle (breathes and blinks), wave, walk, carry (balances a clay block on its head), cheer (hops with arms up, happy eyes, open mouth), think (looks up, scratches its head), cover (hands over eyes), peek (one hand lowered), sleep (closed eyes, drifting z's), sway (rocks and hums, notes drifting up). The eyes can follow a look target, and the face shifts a little after them so it seems to turn its head.
+- **Poses:** idle (breathes and blinks), wave, walk, carry (balances a clay block on its head), cheer (hops with arms up, happy eyes, open mouth), think (looks up, scratches its head), cover (hands over eyes), peek (one hand lowered), sleep (closed eyes, drifting z's), sway (rocks and hums, notes drifting up), plus the four lab-tour poses: point (directional mitten + gaze via `dir="left|right|up|down"`, 240ms ease-out, holds still), hop (420ms WAAPI arc travel between tour bubbles), nod (two 180ms dips played once), and phone (clay peach handset held beside the face for Dispatch openers). The eyes can follow a look target, and the face shifts a little after them so it seems to turn its head.
 - **Seated:** perched on an edge, the seat line at 92/120 of its height (`MASCOT_SEAT`) lined up with the edge. Its hands rest on the edge and its legs hang over the front and swing, one a beat behind the other, slower when asleep and faster when it sways.
 - **Interactive** (a toy, never needed to use the page): a tap squashes it and pops a heart; five taps in 2.5s make it dizzy (spiral eyes, a wobble). Pressing and dragging picks it up: it hangs from the pointer, swings with the motion and kicks its legs, and when let go springs back to its seat with a bounce. Only the body and arms take the pointer, so dangling legs never block a field. The spring runs on requestAnimationFrame only while it moves.
-- **Allowed places, and only these:** the page and in-layout loader (carry, walking a row of clay blocks that slides beneath it; also while a lab machine starts); perched on the sign-in form's first field (hops on, waves hello, follows the pointer and the email as it is typed, covers its eyes on the password and peeks when it is shown, scratches its head at an error; left alone it waves, sways or wonders every 6 to 12 seconds, and naps after 30 seconds until you move; rides along when the field moves); the grading card (walks the progress line, cheers on a pass, thinks on a miss); the cleared celebration (cheers on top of the card); empty states; the dashboard level card (seated on its top edge, idle, cheering when new blocks arrived); the 404 page (thinks).
+- **Allowed places, and only these:** the page and in-layout loader (carry, walking a row of clay blocks that slides beneath it; also while a lab machine starts); perched on the sign-in form's first field (hops on, waves hello, follows the pointer and the email as it is typed, covers its eyes on the password and peeks when it is shown, scratches its head at an error; left alone it waves, sways or wonders every 6 to 12 seconds, and naps after 30 seconds until you move; rides along when the field moves); the grading card (walks the progress line, cheers on a pass, thinks on a miss); the cleared celebration (cheers on top of the card); empty states; the dashboard level card (seated on its top edge, idle, cheering when new blocks arrived); the 404 page (thinks); and the **eighth allowed place (user-approved Decision 6, scoped strictly to `CisfGridLabPage`)**: the lab's first-run tour (welcome card, tour bubbles, cold open's final Dispatch beat), one-time contextual tips, the Guide (`?`) menu header, and the `phone` pose on Dispatch openers (`<= 72px`, `interactive={false}`, never overlaying or overlapping the terminal).
 - **Reduced motion** stops every mascot loop; poses still change, so it reacts without moving.
+
+### Living Lab Stage (`living-lab-stage`)
+Used by `CisfGridLabPage` for live OT/SCADA telemetry visualization alongside the responder terminal. Shares the 28px white/ember-surface panel shell with a hairline ring, crisp segmented view switcher (Substation SLD, City Grid, Network Zones), tabular-nums readouts, and live-only WebSocket state (honest disconnected state when offline, zero synthetic values when disconnected). Never uses purple/violet, neon terminal chrome, or overlays over the adjacent terminal pane.
 
 ### Lab Workspace
 A compact sticky header (challenge position and title, cleared count bar, workspace status with minutes left, end), the challenge rail (cleared challenges get a mint disc, the selected one a peach-50 fill), the brief pane and the terminal. Before a machine exists the terminal column shows a wash panel with the live lab scene and a start button; while it starts, the mascot carries a block over the loader ground. Under the terminal a status bar names what the grader is doing. The in-pane code editor (CodeMirror on terminal night, JetBrains Mono 13px) replaces the terminal view until the student goes back.
@@ -502,7 +509,7 @@ One easing carries the system: `ease-out-expo` (cubic-bezier(0.16, 1, 0.3, 1)); 
 
 **The Earned Reward Rule.** "+1 block" appears only when the challenge was not already cleared, "First try" only when there was no earlier attempt at it, "Combo ×N" only after two or more back-to-back clears in this session. New blocks and new badges animate only for what changed since this browser last looked.
 
-**The Mascot Has Seven Places Rule.** The mascot appears only in the loader, on the sign-in form, on the grading card, on the celebration, in empty states, on the dashboard level card and on the 404 page. It never overlays the terminal and never decorates a panel just to fill space.
+**The Mascot Has Eight Places Rule (Decision 6 Amendment).** The mascot appears only in the loader, on the sign-in form, on the grading card, on the celebration, in empty states, on the dashboard level card, on the 404 page, and (Decision 6, scoped strictly to `CisfGridLabPage`) inside the first-run tour, one-time contextual tips, the Guide (`?`) menu header, and Dispatch openers (`<= 72px`, `interactive={false}`). It never overlays the terminal and never decorates a panel just to fill space.
 
 ## Do's and Don'ts
 
@@ -512,7 +519,7 @@ One easing carries the system: `ease-out-expo` (cubic-bezier(0.16, 1, 0.3, 1)); 
 - **Do** use peach for selected and highlighted states and mint only for completion.
 - **Do** render every 3D object through `three/world/kit.ts` and colour it from `CLAY`, so the cube and every lab scene share one material and light.
 - **Do** show module progress with the segmented bar and lab identity with the clay illustration, the same art wherever the lab appears.
-- **Do** keep the mascot in its seven places and in the logo's tones, and let it react to real events only.
+- **Do** keep the mascot in its eight allowed places (the seven platform places plus the Decision 6 `CisfGridLabPage` tour/tips/Guide/Dispatch placement) and in the logo's tones, and let it react to real events only.
 - **Do** derive every game number from real data and show an estimate only when there is history to base it on.
 - **Do** pair every light class with its Ember partner from the same ramp and check AA contrast in both themes.
 - **Do** respect reduced motion: CSS animation, mascot loops, count-ups, confetti and the 3D motion all collapse.
