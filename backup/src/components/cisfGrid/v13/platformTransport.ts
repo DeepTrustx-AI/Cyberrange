@@ -64,8 +64,6 @@ function errorResponse(err: unknown): V13ApiResponse {
 
 export function createV13PlatformTransport(config: PlatformTransportConfig): V13Transport {
   const { apiFetch, assignmentId, ensureEvalToken, onProgressUpdated, onUpstreamLost } = config;
-  const resolveToken = () =>
-    typeof config.getToken === 'function' ? config.getToken() : (config.token ?? null);
   const api = createCisfGridApi(apiFetch);
 
   const notifyIfUpstreamLost = (status: number, message = '') => {
@@ -87,7 +85,7 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
     }
   }
 
-  async function resolveWsAuth(scope: 'ems' | 'terminal'): Promise<{ ticket?: string; token?: string }> {
+  async function resolveWsAuth(scope: 'ems' | 'terminal'): Promise<{ ticket?: string }> {
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const res = await api.getWsTicket(assignmentId, scope);
@@ -96,9 +94,8 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
         }
         break;
       } catch (err) {
-        if (err instanceof CisfGridApiError && (err.status === 404 || err.status === 405 || err.status === 501)) {
-          const freshToken = resolveToken();
-          return freshToken ? { token: freshToken } : {};
+        if (err instanceof CisfGridApiError && (err.status === 401 || err.status === 403 || err.status === 404)) {
+          break;
         }
         if (attempt === 0) {
           await new Promise((r) => setTimeout(r, 250));
@@ -282,8 +279,6 @@ export function createV13PlatformTransport(config: PlatformTransportConfig): V13
       }
       if (auth.ticket) {
         params.set('ticket', auth.ticket);
-      } else if (auth.token) {
-        params.set('token', auth.token);
       }
       const qs = params.toString();
       return apiWebSocketUrl(qs ? `${base}?${qs}` : base);

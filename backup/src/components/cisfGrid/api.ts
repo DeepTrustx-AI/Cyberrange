@@ -242,7 +242,7 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
     },
 
     emsWebSocketUrl(
-      auth?: { ticket?: string | null; token?: string | null } | string | null,
+      auth?: { ticket?: string | null } | null,
       assignmentId?: number | null,
     ): string {
       const base = '/api/v1/ot-grid/proxy/ems/ws';
@@ -250,11 +250,8 @@ export function createCisfGridApi(apiFetch: ApiFetchFn) {
       if (assignmentId !== null && assignmentId !== undefined) {
         params.set('assignment_id', String(assignmentId));
       }
-      if (typeof auth === 'string' && auth) {
-        params.set('token', auth);
-      } else if (auth && typeof auth === 'object') {
-        if (auth.ticket) params.set('ticket', auth.ticket);
-        else if (auth.token) params.set('token', auth.token);
+      if (auth && typeof auth === 'object' && auth.ticket) {
+        params.set('ticket', auth.ticket);
       }
       const qs = params.toString();
       return apiWebSocketUrl(qs ? `${base}?${qs}` : base);

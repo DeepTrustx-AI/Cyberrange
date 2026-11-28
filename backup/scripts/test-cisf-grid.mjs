@@ -404,7 +404,9 @@ test('platformTransport runtime: M-07 403/eval-token retry, M-08 mtime conflicts
   ticketMode = '404';
   currentTok = 'jwt-refreshed-2';
   const fallbackTermUrl = await transportWs.getTerminalWsUrl();
-  assert.match(fallbackTermUrl, /\?token=jwt-refreshed-2$/, 'WS fallback must read fresh token dynamically after refresh');
+  assert.ok(!fallbackTermUrl.includes('token='), 'WS fallback must never leak bearer JWT in query string');
+  const fallbackEmsUrl = await transportWs.getEmsWsUrl();
+  assert.ok(!fallbackEmsUrl.includes('token='), 'EMS WS fallback must never leak bearer JWT in query string');
 });
 
 test('C-04 runtime: formatSoeReplayEvents formats SOEEvent objects via code + detail without [object Object]', async () => {
@@ -669,4 +671,12 @@ test('Independent audit regressions: P0-2 rail lock, P2-6 tour/story parity, P3-
   assert.ok(emsSrc.includes("options.mode === 'full_op' ? 'full_op' : 'm1'"), 'ems.js must honor full_op mode on initial mount');
   assert.ok(emsSrc.includes('if (!silent && isModuleLocked(modId)) return;'), 'public setModule handle must enforce M7 progression lock');
   assert.ok(workerSrc.includes("default-src 'self'") && headersSrc.includes("default-src 'self'"), 'CSP must set default-src self');
+
+  // Pass 4 regressions: no ?token= WS fallback in platformTransport/api, Worker strips spoofed X-Forwarded-For, no wildcard wss: in connect-src
+  const ptSrc = readFileSync(new URL('../src/components/cisfGrid/v13/platformTransport.ts', import.meta.url), 'utf8');
+  const gridApiSrc = readFileSync(new URL('../src/components/cisfGrid/api.ts', import.meta.url), 'utf8');
+  assert.ok(!ptSrc.includes("params.set('token'"), 'platformTransport must never place bearer JWT in WebSocket URL');
+  assert.ok(!gridApiSrc.includes("params.set('token'"), 'api.ts emsWebSocketUrl must never place bearer JWT in WebSocket URL');
+  assert.ok(workerSrc.includes("sanitizedHeaders.delete(h)") && workerSrc.includes("'x-forwarded-for'"), 'worker-entry.js must strip client-supplied forwarding headers');
+  assert.ok(!workerSrc.includes("connect-src 'self' wss: ") && !headersSrc.includes("connect-src 'self' wss: "), 'CSP must not allow wildcard wss: exfiltration');
 });

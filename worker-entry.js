@@ -1,5 +1,5 @@
 const STATIC_SECURITY_HEADERS = {
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client https://checkout.razorpay.com/v1/checkout.js https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' wss: https://api-academy.deeptrustxai.com wss://api-academy.deeptrustxai.com https://accounts.google.com https://api.razorpay.com https://lumberjack.razorpay.com https://cloudflareinsights.com; frame-src 'self' https://accounts.google.com https://api.razorpay.com; worker-src 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client https://checkout.razorpay.com/v1/checkout.js https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api-academy.deeptrustxai.com wss://api-academy.deeptrustxai.com https://accounts.google.com https://api.razorpay.com https://lumberjack.razorpay.com https://cloudflareinsights.com; frame-src 'self' https://accounts.google.com https://api.razorpay.com; worker-src 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -34,9 +34,19 @@ export default {
       backendUrl.protocol = targetOrigin.protocol;
       backendUrl.port = targetOrigin.port;
 
+      const sanitizedHeaders = new Headers(request.headers);
+      for (const h of ['x-forwarded-for', 'x-real-ip', 'forwarded', 'x-forwarded-host', 'x-forwarded-proto']) {
+        sanitizedHeaders.delete(h);
+      }
+      const cfIp = request.headers.get('CF-Connecting-IP');
+      if (cfIp) {
+        sanitizedHeaders.set('X-Forwarded-For', cfIp);
+        sanitizedHeaders.set('X-Real-IP', cfIp);
+      }
+
       const newRequest = new Request(backendUrl.toString(), {
         method: request.method,
-        headers: request.headers,
+        headers: sanitizedHeaders,
         body: request.body,
         redirect: 'manual',
       });
